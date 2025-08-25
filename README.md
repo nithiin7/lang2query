@@ -6,16 +6,23 @@ A production-ready Lang2Query agent built using LangGraph for converting natural
 
 ```
 lang2query/
-├── agent_helpers/
-│   └── customer_helper.py      # Helper functions for customer agent
-├── create_tables.py            # Database setup and table creation
-├── customer_agent.py           # Customer-specific agent logic
-├── fuzzy_wuzzy.py              # Fuzzy string matching utilities
-├── knowledge_base.py           # Knowledge base generation and management
-├── main.py                     # Main application entry point
-├── router_agent.py             # Request routing logic
+├── app/
+│   ├── main.py                 # Main application entry point
+│   ├── agents/
+│   │   ├── customer.py         # Customer agent
+│   │   ├── router.py           # Router agent
+│   │   └── helpers/
+│   │       └── customer_helper.py
+│   ├── services/
+│   │   └── fuzzy.py            # Fuzzy matching utilities
+│   └── kb/
+│       └── build_kb.py         # Knowledge base generator
+├── db/
+│   └── create_tables.py        # Database setup and table creation
 ├── kb.pkl                      # Serialized knowledge base
-├── test.csv                    # Test data
+├── scripts/                    # Helper scripts (empty placeholder)
+├── requirements.txt            # Dependencies
+├── pyproject.toml              # uv scripts, tooling config
 └── README.md                   # This file
 ```
 
@@ -29,13 +36,14 @@ lang2query/
 
 ## Usage
 
-1. **Setup Database**: Run `python create_tables.py` to set up the database and tables
-2. **Generate Knowledge Base**: Run `python knowledge_base.py` to create the knowledge base
-3. **Run Main Application**: Execute `python main.py` to start the text-to-SQL agent
+1. **Setup Database**: `uv run db`
+2. **Generate Knowledge Base**: `uv run kb`
+3. **Run Main Application**: `uv run dev`
 
 ## Architecture
 
 The system uses a multi-agent approach where:
+
 - **Router Agent**: Determines which domain agents should handle the query
 - **Domain Agents**: Extract relevant tables and columns for their domain
 - **Filter Agent**: Identifies and extracts filter conditions
@@ -55,6 +63,7 @@ The system uses a multi-agent approach where:
 ## Production Readiness
 
 This agent is designed for production use with:
+
 - Proper error handling
 - Modular architecture
 - Scalable design

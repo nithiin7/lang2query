@@ -4,12 +4,12 @@ from operator import add
 import pickle
 from IPython.display import Image
 
-from router_agent import agent_2
-from customer_agent import graph_final
+from app.agents.router import agent_2
+from app.agents.customer import graph_final
 from langgraph.constants import Send
 
-from agent_helpers.customer_helper import chain_filter_extractor, chain_query_extractor, chain_query_validator
-from fuzzy_wuzzy import call_match
+from app.agents.helpers.customer_helper import chain_filter_extractor, chain_query_extractor, chain_query_validator
+from app.services.fuzzy import call_match
 from datetime import datetime
 import json
 import tqdm

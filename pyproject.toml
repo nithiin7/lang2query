@@ -9,13 +9,13 @@ requires-python = ">=3.10"
 
 [tool.uv.scripts]
 # Run the main app
-dev = "python main.py"
+dev = "python -m app.main"
 
 # Build knowledge base
-kb = "python knowledge_base.py"
+kb = "python -m app.kb.build_kb"
 
 # Create/load database tables
-db = "python create_tables.py"
+db = "python -m db.create_tables"
 
 # Convenient REPL inside the venv
 repl = "ipython"

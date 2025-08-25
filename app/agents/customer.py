@@ -11,7 +11,7 @@ from langgraph.graph import StateGraph, START, END
 from typing import Dict, Any, TypedDict, Annotated
 from operator import add
 
-from agent_helpers.customer_helper import *
+from app.agents.helpers.customer_helper import *
 from IPython.display import Image
 
 from dotenv import load_dotenv
