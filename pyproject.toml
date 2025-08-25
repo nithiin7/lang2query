@@ -19,3 +19,49 @@ db = "python create_tables.py"
 
 # Convenient REPL inside the venv
 repl = "ipython"
+
+# Code quality
+format = "ruff format && ruff check --fix"
+lint = "ruff check"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+fix = true
+
+[tool.ruff.lint]
+select = [
+  "E",  # pycodestyle errors
+  "F",  # pyflakes
+  "I",  # isort
+  "UP", # pyupgrade
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
+]
+ignore = [
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+preview = true
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+tag_format = "v$version"
+
+[tool.commitizen.change_type_map]
+feat = "Features"
+fix = "Bug Fixes"
+perf = "Performance"
+refactor = "Refactoring"
+docs = "Documentation"
+style = "Styling"
+test = "Tests"
+build = "Build"
+ci = "CI"
+chore = "Chores"
+revert = "Reverts"

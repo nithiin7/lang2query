@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.organizeImports": true
+  },
+  "python.formatting.provider": "none",
+  "ruff.enable": true,
+  "ruff.format.args": [],
+  "ruff.lint.args": ["--fix"],
+  "python.analysis.typeCheckingMode": "basic"
+}
