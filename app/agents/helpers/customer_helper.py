@@ -1,29 +1,32 @@
-from groq import Groq
+from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-from langchain_groq import ChatGroq
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableMap, RunnableLambda
-import pickle
-import re
-from dotenv import load_dotenv
+from langchain_core.runnables import RunnableMap
+from langchain_groq import ChatGroq
+
 load_dotenv()
 
 
-llama = 'llama3-70b-8192'
+llama = "llama3-70b-8192"
 
-model = ChatAnthropic(temperature=0, model_name='claude-3-5-sonnet-20240620')
+model = ChatAnthropic(temperature=0, model_name="claude-3-5-sonnet-20240620")
 
-model_llama = ChatGroq(temperature=0, model_name=llama) 
+model_llama = ChatGroq(temperature=0, model_name=llama)
 
 ################################################ Sub question #############################
 
-template_subquestion = ChatPromptTemplate.from_messages([
-    ("system", """
+template_subquestion = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are an intelligent subquestion generator that extracts subquestions based on human instruction and the CONTEXT provided. You are part of a Text-to-SQL agent.
-"""),
-
-    ("human", '''
+""",
+        ),
+        (
+            "human",
+            """
 CONTEXT:
 This dataset pertains to Olist, the largest department store on Brazilian marketplaces.
 When a customer purchases a product from the Olist store (from a specific seller and location), the seller is notified to fulfill the order.
@@ -97,16 +100,14 @@ Table List:
 
 User question:
 {user_query}
-''')
-])
-
+""",
+        ),
+    ]
+)
 
 
 chain_subquestion = (
-    RunnableMap({
-        "tables": lambda x: x["tables"],
-        "user_query": lambda x: x["user_query"]
-    })
+    RunnableMap({"tables": lambda x: x["tables"], "user_query": lambda x: x["user_query"]})
     | template_subquestion
     | model
     | StrOutputParser()
@@ -114,16 +115,21 @@ chain_subquestion = (
 
 #########################################column selection######################333
 
-template_column = ChatPromptTemplate.from_messages([
-    ("system", """
+template_column = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are an intelligent data column selector that chooses the most relevant columns from a list of available column descriptions to help answer a subquestion ONLY.
 Your selections will be used by a SQL generation agent, so choose **only those columns** that will help write the correct SQL query for a subquestion based on main question.
 
 Act like you're preparing the exact inputs required to build the SQL logic. Also, look at main user question before selecting columns.
 BUT main PRIORITY IS TO SELECT columns for subquestion.
-"""),
-
-    ("human", '''
+""",
+        ),
+        (
+            "human",
+            """
      
 HOW TO THINK STEP BY STEP:
 - For each subquestion mentioned in subquestion below, think if <column1> in Column list might help in answering the question based on column description below. If no, check if this column can be used to answer any part of main question below.
@@ -168,17 +174,20 @@ subquestion:
      
 Main question:
 {main_question}
-    ''')
-])
-
+    """,
+        ),
+    ]
+)
 
 
 chain_column_extractor = (
-    RunnableMap({
-        "columns": lambda x: x["columns"],
-        "query": lambda x: x["query"],
-        "main_question": lambda x: x["main_question"]
-    })
+    RunnableMap(
+        {
+            "columns": lambda x: x["columns"],
+            "query": lambda x: x["query"],
+            "main_question": lambda x: x["main_question"],
+        }
+    )
     | template_column
     | model
     | StrOutputParser()
@@ -188,8 +197,11 @@ chain_column_extractor = (
 ############################### Decision#####################
 
 
-template_filter_check = ChatPromptTemplate.from_messages([
-    ("system", """
+template_filter_check = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are an expert assistant designed to help a text-to-SQL agent determine whether filters (i.e., WHERE clauses) are required for answering a user's natural language question using a SQL query on a database.
 
 Your job is to:
@@ -213,9 +225,11 @@ Example outputs:
 ["yes", ["customers", "customer_city", "Campinas"], ["orders", "order_status", "delivered, shipped"]]
 ["yes", ["order_payments", "payment_type", "credit card, boleto"]]
 ["no"]
-    """),
-
-    ("human", '''
+    """,
+        ),
+        (
+            "human",
+            """
 Given a user query and the available list of tables and column names (with sample values), decide if the SQL query to answer this question requires filters.
 
 Only return a list in the exact format described:
@@ -228,16 +242,14 @@ Here is the user question:
 
 And here is the list of available tables and columns (with sample values):
 {columns}
-''')
-])
-
+""",
+        ),
+    ]
+)
 
 
 chain_filter_extractor = (
-    RunnableMap({
-        "columns": lambda x: x["columns"],
-        "query": lambda x: x["query"]
-    })
+    RunnableMap({"columns": lambda x: x["columns"], "query": lambda x: x["query"]})
     | template_filter_check
     | model_llama
     | StrOutputParser()
@@ -246,14 +258,19 @@ chain_filter_extractor = (
 
 ########################################## QUERY generation #################################3
 
-template_sql_query = ChatPromptTemplate.from_messages([
-    ("system", """
+template_sql_query = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are an intelligent MySQL query generator. Your task is to generate syntactically correct and optimized MySQL queries based on the user's question, relevant table/column details, and optional filter values.
 
 You must respect **all the column selections** made by the previous agent. Every selected column is considered essential for logic, traceability, audit, or correctness and **must be used in the query based on its description.**
-"""),
-
-    ("human", '''
+""",
+        ),
+        (
+            "human",
+            """
 Instructions:
 - You will receive:
   - A user question
@@ -290,26 +307,31 @@ Relevant tables and columns:
 
 Applicable filters:
 {filters}
-''')
-])
-
-
+""",
+        ),
+    ]
+)
 
 
 chain_query_extractor = (
-    RunnableMap({
-        "columns": lambda x: x["columns"],
-        "query": lambda x: x["query"],
-        "filters": lambda x: x["filters"]
-    })
+    RunnableMap(
+        {
+            "columns": lambda x: x["columns"],
+            "query": lambda x: x["query"],
+            "filters": lambda x: x["filters"],
+        }
+    )
     | template_sql_query
     | model
     | StrOutputParser()
 )
 
 ############################################# Validation ################
-template_validation = ChatPromptTemplate.from_messages([
-    ("system", """
+template_validation = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are a highly capable and precise MySQL query validator.
 
 Your role is to:
@@ -322,9 +344,11 @@ Your role is to:
 7. If the query involves filtering grouped results or counting grouped records, use subqueries where appropriate to avoid logical conflicts between GROUP BY, HAVING, and aggregate functions in the SELECT clause
 
 Your output should either confirm the existing SQL query (if valid) or provide a corrected version with a clear adherence to best practices.
-    """),
-
-    ("human", '''
+    """,
+        ),
+        (
+            "human",
+            """
 
 You must enforce the following rules with **strict accuracy**:
 
@@ -351,17 +375,21 @@ You must enforce the following rules with **strict accuracy**:
 
 **SQL Query to Validate:**  
 {sql_query}
-''')
-])
+""",
+        ),
+    ]
+)
 
 
 chain_query_validator = (
-    RunnableMap({
-        "columns": lambda x: x["columns"],
-        "query": lambda x: x["query"],
-        "filters": lambda x: x["filters"],
-        'sql_query': lambda x: x["sql_query"],
-    })
+    RunnableMap(
+        {
+            "columns": lambda x: x["columns"],
+            "query": lambda x: x["query"],
+            "filters": lambda x: x["filters"],
+            "sql_query": lambda x: x["sql_query"],
+        }
+    )
     | template_validation
     | model
     | StrOutputParser()

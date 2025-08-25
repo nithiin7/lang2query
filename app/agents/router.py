@@ -1,31 +1,33 @@
-from groq import Groq
+from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-from langchain_groq import ChatGroq
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableMap, RunnableLambda
-
-from dotenv import load_dotenv
+from langchain_core.runnables import RunnableMap
 
 load_dotenv()
 
 
-mixtral = 'mixtral-8x7b-32768'
-llama = 'llama3-70b-8192'
+mixtral = "mixtral-8x7b-32768"
+llama = "llama3-70b-8192"
 
 
-#model = ChatGroq(temperature=0, model_name=llama) 
+# model = ChatGroq(temperature=0, model_name=llama)
 
-model = ChatAnthropic(temperature=0.4, model_name='claude-3-5-sonnet-20240620') 
+model = ChatAnthropic(temperature=0.4, model_name="claude-3-5-sonnet-20240620")
 
-template = ChatPromptTemplate.from_messages([
-    ("system", """
+template = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
 You are an intelligent router in text to sql system that understands the user question and 
 determines which agents might have answer to the question based on agent description. Multiple agents might answer a given user question. OUTPUT SHOULD BE IN FORM OF LIST OF strings.
 Dont give any explanation or any other verbose in the output.
-"""),
-
-    ("human", '''
+""",
+        ),
+        (
+            "human",
+            """
 Below are descriptions of different agents.
 customer agent : It contains all the details about customer and seller locations and their unique identifiers
 orders agent : It contains details about all the orders like product identifier, order identifier, products in an order, no. of items of a product in order, price of order, frieght value, order time, delivery status and its time, payment etc.
@@ -46,21 +48,15 @@ STEP BY STEP TABLE SELECTION PROCESS:
 User question:
 {question}
 
-     ''')
-])
-
-# Fix the RunnableMap implementation
-chain = (
-    RunnableMap({
-        "question": lambda x: x["question"]
-    })
-    | template 
-    | model 
-    | StrOutputParser()
+     """,
+        ),
+    ]
 )
 
+# Fix the RunnableMap implementation
+chain = RunnableMap({"question": lambda x: x["question"]}) | template | model | StrOutputParser()
+
+
 def agent_2(q):
-    response = chain.invoke({"question": q}).replace('```', '')
+    response = chain.invoke({"question": q}).replace("```", "")
     return response
-
-
