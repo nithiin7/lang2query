@@ -10,7 +10,7 @@ A production-ready, multi-language natural language to query agent built using L
 - **Fuzzy Matching**: Implements fuzzy string matching for improved query understanding
 - **Query Validation**: Multi-step validation process for query generation
 - **Dynamic Knowledge Base**: Generates knowledge base from database schema and sample data
-- **Configurable**: Easy configuration for different databases, query languages, and domains
+- **Environment-Based Configuration**: All settings configurable via environment variables
 - **Production Ready**: Proper error handling, logging, and performance optimization
 
 ## 🏗️ Project Structure
@@ -19,7 +19,7 @@ A production-ready, multi-language natural language to query agent built using L
 lang2query/
 ├── app/
 │   ├── main.py                     # Main application entry point
-│   ├── config.py                   # Configuration for databases, languages, domains
+│   ├── config.py                   # Configuration management
 │   ├── agents/
 │   │   ├── customer.py             # Customer domain agent
 │   │   ├── router.py               # Query routing agent
@@ -33,6 +33,7 @@ lang2query/
 │   └── create_tables.py            # Database setup and table creation
 ├── scripts/                         # Helper scripts
 ├── kb.pkl                          # Serialized knowledge base
+├── env.template                     # Environment variables template
 ├── requirements.txt                 # Dependencies
 ├── pyproject.toml                  # uv scripts, tooling config
 ├── Makefile                        # Development commands
@@ -54,11 +55,50 @@ lang2query/
 - **Finance**: Customers, transactions, investment products
 - **Extensible**: Easy to add new domains
 
+## ⚙️ Configuration
+
+The system is highly configurable through environment variables. Copy `env.template` to `.env` and customize:
+
+### **Required Environment Variables**
+
+```bash
+# API Keys (Required)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Database Configuration
+ACTIVE_DATABASE=mysql
+MYSQL_CONNECTION_STRING=mysql+mysqlconnector://user:pass@host/database
+```
+
+### **Optional Configuration**
+
+```bash
+# Query Language
+ACTIVE_QUERY_LANGUAGE=sql
+
+# Domain
+ACTIVE_DOMAIN=ecommerce
+
+# Models
+ROUTING_MODEL_PROVIDER=anthropic
+ROUTING_MODEL_NAME=claude-3-5-sonnet-20240620
+
+# Performance
+MAX_CONCURRENT_AGENTS=3
+TIMEOUT_SECONDS=30
+```
+
 ## 🚀 Quick Start
 
 1. **Setup Environment**:
 
    ```bash
+   # Copy environment template
+   cp env.template .env
+
+   # Edit .env with your settings
+   nano .env
+
    # Install uv and create virtual environment
    uv venv .venv
    source .venv/bin/activate
@@ -108,26 +148,16 @@ The system uses a sophisticated multi-agent approach:
 - **Query Generator**: Converts extracted information into target language queries
 - **Query Validator**: Ensures generated queries are correct and optimized
 
-## ⚙️ Configuration
-
-The system is highly configurable through `app/config.py`:
-
-- **Database**: Switch between MySQL, PostgreSQL, SQLite
-- **Query Language**: Configure for SQL, MongoDB, Elasticsearch, etc.
-- **Domain**: Adapt for e-commerce, healthcare, finance, etc.
-- **Models**: Configure different LLM providers and models
-- **Performance**: Tune timeouts, retries, and caching
-
 ## 🔧 Adding New Query Languages
 
-1. Add language configuration to `QUERY_LANGUAGE_CONFIG`
+1. Add language configuration to `QUERY_LANGUAGE_CONFIG` in `app/config.py`
 2. Create language-specific prompt templates
 3. Implement language-specific validation logic
 4. Update the query generation pipeline
 
 ## 🔧 Adding New Domains
 
-1. Add domain configuration to `DOMAIN_CONFIGS`
+1. Add domain configuration to `DOMAIN_CONFIGS` in `app/config.py`
 2. Create domain-specific agent logic
 3. Update routing and knowledge base generation
 4. Add domain-specific validation rules

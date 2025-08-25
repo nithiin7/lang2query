@@ -7,19 +7,13 @@ from dotenv import load_dotenv
 from langgraph.graph import END, START, StateGraph
 
 from app.agents.helpers.customer_helper import *
+from app.config import KB_CONFIG
 
 load_dotenv()
 
-# Load knowledge base
-with open("kb.pkl", "rb") as f:
+# Load knowledge base from config
+with open(KB_CONFIG["file_path"], "rb") as f:
     knowledge_base = pickle.load(f)
-
-# Domain table mappings
-DOMAIN_TABLE_MAPPINGS = {
-    "customer": ["customer", "sellers"],
-    "orders": ["order_items", "order_payments", "order_reviews", "orders"],
-    "product": ["products", "category_translation"],
-}
 
 
 class CustomerAgentState(TypedDict):

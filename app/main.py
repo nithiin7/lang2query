@@ -14,20 +14,28 @@ from app.agents.helpers.customer_helper import (
 )
 from app.agents.router import route_query_to_domains
 from app.services.fuzzy import apply_fuzzy_matching_to_filters
+from app.config import (
+    get_database_config,
+    get_domain_config,
+    get_table_config,
+    KB_CONFIG,
+    validate_config,
+)
 
-# Domain-specific table mappings for the current dataset
-DOMAIN_TABLE_MAPPINGS = {
-    "customer": ["customer", "sellers"],
-    "orders": ["order_items", "order_payments", "order_reviews", "orders"],
-    "product": ["products", "category_translation"],
-}
+# Validate configuration on startup
+validate_config()
 
-# Load knowledge base
-with open("kb.pkl", "rb") as f:
-    knowledge_base = pickle.load(f)
+# Get configuration
+database_config = get_database_config()
+domain_config = get_domain_config()
+table_config = get_table_config()
 
 # Database connection
-database_engine = create_engine("mysql+mysqlconnector://root:Indianarmy@localhost/txt2sql")
+database_engine = create_engine(database_config["connection_string"])
+
+# Load knowledge base
+with open(KB_CONFIG["file_path"], "rb") as f:
+    knowledge_base = pickle.load(f)
 
 
 def deduplicate_extracted_columns(agent_outputs):
@@ -91,7 +99,7 @@ def process_customer_domain(state: QueryProcessingState):
     user_query = state["user_query"]
     print("Extracting relevant tables and columns from customer domain agent...")
     agent_output = graph_final.invoke(
-        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["customer"]}
+        {"user_query": user_query, "table_lst": table_config["customer_tables"]}
     )
     return {"customer_agent_output": agent_output}
 
@@ -101,7 +109,7 @@ def process_orders_domain(state: QueryProcessingState):
     user_query = state["user_query"]
     print("Extracting relevant tables and columns from orders domain agent...")
     agent_output = graph_final.invoke(
-        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["orders"]}
+        {"user_query": user_query, "table_lst": table_config["orders_tables"]}
     )
     return {"orders_agent_output": agent_output}
 
@@ -112,7 +120,7 @@ def process_product_domain(state: QueryProcessingState):
     print(f"Processing query: {user_query}")
     print("Extracting relevant tables and columns from product domain agent...")
     agent_output = graph_final.invoke(
-        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["product"]}
+        {"user_query": user_query, "table_lst": table_config["product_tables"]}
     )
     print(f"Product agent output: {agent_output}")
     return {"product_agent_output": agent_output}

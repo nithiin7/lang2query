@@ -4,15 +4,41 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableMap
 
+from app.config import get_model_config, get_api_key
+
 load_dotenv()
+
+# Get model configuration
+routing_config = get_model_config("routing")
 
 # Model configurations
 MIXTRAL_MODEL = "mixtral-8x7b-32768"
 LLAMA_MODEL = "llama3-70b-8192"
 
-# Currently using Anthropic Claude for routing
-# model = ChatGroq(temperature=0, model_name=LLAMA_MODEL)
-routing_model = ChatAnthropic(temperature=0.4, model_name="claude-3-5-sonnet-20240620")
+# Initialize routing model based on configuration
+if routing_config["provider"] == "anthropic":
+    routing_model = ChatAnthropic(
+        temperature=routing_config["temperature"], 
+        model_name=routing_config["model"]
+    )
+elif routing_config["provider"] == "groq":
+    from langchain_groq import ChatGroq
+    routing_model = ChatGroq(
+        temperature=routing_config["temperature"], 
+        model_name=routing_config["model"]
+    )
+elif routing_config["provider"] == "openai":
+    from langchain_openai import ChatOpenAI
+    routing_model = ChatOpenAI(
+        temperature=routing_config["temperature"], 
+        model_name=routing_config["model"]
+    )
+else:
+    # Default to Anthropic
+    routing_model = ChatAnthropic(
+        temperature=routing_config["temperature"], 
+        model_name=routing_config["model"]
+    )
 
 # Router prompt template
 router_prompt_template = ChatPromptTemplate.from_messages(
@@ -47,7 +73,7 @@ STEP BY STEP DOMAIN SELECTION PROCESS:
 User question:
 {question}
 
-     """,
+      """,
         ),
     ]
 )
