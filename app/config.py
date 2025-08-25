@@ -4,7 +4,6 @@ This file contains settings that can be easily modified to support different que
 """
 
 import os
-from typing import Dict, List
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -15,25 +14,20 @@ load_dotenv()
 DATABASE_CONFIG = {
     "mysql": {
         "connection_string": os.getenv(
-            "MYSQL_CONNECTION_STRING", 
-            "mysql+mysqlconnector://root:password@localhost/database"
+            "MYSQL_CONNECTION_STRING", "mysql+mysqlconnector://root:password@localhost/database"
         ),
         "dialect": "mysql",
         "driver": "mysqlconnector",
     },
     "postgresql": {
         "connection_string": os.getenv(
-            "POSTGRESQL_CONNECTION_STRING", 
-            "postgresql://user:password@localhost/dbname"
+            "POSTGRESQL_CONNECTION_STRING", "postgresql://user:password@localhost/dbname"
         ),
         "dialect": "postgresql",
         "driver": "psycopg2",
     },
     "sqlite": {
-        "connection_string": os.getenv(
-            "SQLITE_CONNECTION_STRING", 
-            "sqlite:///./database.db"
-        ),
+        "connection_string": os.getenv("SQLITE_CONNECTION_STRING", "sqlite:///./database.db"),
         "dialect": "sqlite",
         "driver": "sqlite3",
     },
@@ -150,9 +144,12 @@ KB_CONFIG = {
 # Database Table Configuration
 TABLE_CONFIG = {
     "customer_tables": os.getenv("CUSTOMER_TABLES", "customer,sellers").split(","),
-    "orders_tables": os.getenv("ORDERS_TABLES", "order_items,order_payments,order_reviews,orders").split(","),
+    "orders_tables": os.getenv(
+        "ORDERS_TABLES", "order_items,order_payments,order_reviews,orders"
+    ).split(","),
     "product_tables": os.getenv("PRODUCT_TABLES", "products,category_translation").split(","),
 }
+
 
 def get_database_config():
     """Get the active database configuration."""
@@ -189,13 +186,13 @@ def validate_config():
     required_vars = [
         "ANTHROPIC_API_KEY",  # Required for default models
     ]
-    
+
     missing_vars = []
     for var in required_vars:
         if not os.getenv(var):
             missing_vars.append(var)
-    
+
     if missing_vars:
         raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
-    
+
     return True

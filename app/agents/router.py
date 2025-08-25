@@ -4,7 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableMap
 
-from app.config import get_model_config, get_api_key
+from app.config import get_model_config
 
 load_dotenv()
 
@@ -18,26 +18,24 @@ LLAMA_MODEL = "llama3-70b-8192"
 # Initialize routing model based on configuration
 if routing_config["provider"] == "anthropic":
     routing_model = ChatAnthropic(
-        temperature=routing_config["temperature"], 
-        model_name=routing_config["model"]
+        temperature=routing_config["temperature"], model_name=routing_config["model"]
     )
 elif routing_config["provider"] == "groq":
     from langchain_groq import ChatGroq
+
     routing_model = ChatGroq(
-        temperature=routing_config["temperature"], 
-        model_name=routing_config["model"]
+        temperature=routing_config["temperature"], model_name=routing_config["model"]
     )
 elif routing_config["provider"] == "openai":
     from langchain_openai import ChatOpenAI
+
     routing_model = ChatOpenAI(
-        temperature=routing_config["temperature"], 
-        model_name=routing_config["model"]
+        temperature=routing_config["temperature"], model_name=routing_config["model"]
     )
 else:
     # Default to Anthropic
     routing_model = ChatAnthropic(
-        temperature=routing_config["temperature"], 
-        model_name=routing_config["model"]
+        temperature=routing_config["temperature"], model_name=routing_config["model"]
     )
 
 # Router prompt template

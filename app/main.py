@@ -13,14 +13,14 @@ from app.agents.helpers.customer_helper import (
     chain_query_validator,
 )
 from app.agents.router import route_query_to_domains
-from app.services.fuzzy import apply_fuzzy_matching_to_filters
 from app.config import (
+    KB_CONFIG,
     get_database_config,
     get_domain_config,
     get_table_config,
-    KB_CONFIG,
     validate_config,
 )
+from app.services.fuzzy import apply_fuzzy_matching_to_filters
 
 # Validate configuration on startup
 validate_config()

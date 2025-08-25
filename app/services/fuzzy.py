@@ -2,7 +2,7 @@ import pandas as pd
 from rapidfuzz import fuzz, process
 from sqlalchemy import create_engine
 
-from app.config import get_database_config, FUZZY_MATCHING_CONFIG
+from app.config import FUZZY_MATCHING_CONFIG, get_database_config
 
 # Get database configuration
 database_config = get_database_config()
@@ -15,7 +15,7 @@ def find_best_fuzzy_match(input_value: str, available_choices: list[str]):
     scorer_name = FUZZY_MATCHING_CONFIG["scorer"]
     min_confidence = FUZZY_MATCHING_CONFIG["min_confidence"]
     max_candidates = FUZZY_MATCHING_CONFIG["max_candidates"]
-    
+
     # Map scorer names to actual functions
     scorer_map = {
         "ratio": fuzz.ratio,
@@ -23,13 +23,13 @@ def find_best_fuzzy_match(input_value: str, available_choices: list[str]):
         "token_sort_ratio": fuzz.token_sort_ratio,
         "token_set_ratio": fuzz.token_set_ratio,
     }
-    
+
     scorer = scorer_map.get(scorer_name, fuzz.token_set_ratio)
-    
+
     best_match, confidence_score, _ = process.extractOne(
         input_value, available_choices, scorer=scorer
     )
-    
+
     # Only return matches above minimum confidence
     if confidence_score >= min_confidence:
         return best_match, confidence_score
@@ -66,7 +66,7 @@ def apply_fuzzy_matching_to_filters(filter_conditions: list):
         # Apply fuzzy matching to each filter value
         for filter_value in filter_values:
             best_match, confidence_score = find_best_fuzzy_match(filter_value, available_values)
-            
+
             if best_match:  # Only add if we found a good match
                 matched_filters.append(
                     [
@@ -78,6 +78,8 @@ def apply_fuzzy_matching_to_filters(filter_conditions: list):
                 )
             else:
                 # Log low confidence matches for debugging
-                print(f"Low confidence match for '{filter_value}' in {table_name}.{column_name}: {confidence_score}")
+                print(
+                    f"Low confidence match for '{filter_value}' in {table_name}.{column_name}: {confidence_score}"
+                )
 
     return matched_filters
