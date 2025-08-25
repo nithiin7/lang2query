@@ -60,3 +60,4 @@ logs/
 
 # Editor settings
 .idea/
+.ruff_cache/
