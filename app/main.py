@@ -12,236 +12,277 @@ from app.agents.helpers.customer_helper import (
     chain_query_extractor,
     chain_query_validator,
 )
-from app.agents.router import agent_2
-from app.services.fuzzy import call_match
+from app.agents.router import route_query_to_domains
+from app.services.fuzzy import apply_fuzzy_matching_to_filters
 
-d_store = {
+# Domain-specific table mappings for the current dataset
+DOMAIN_TABLE_MAPPINGS = {
     "customer": ["customer", "sellers"],
     "orders": ["order_items", "order_payments", "order_reviews", "orders"],
     "product": ["products", "category_translation"],
 }
 
-
+# Load knowledge base
 with open("kb.pkl", "rb") as f:
-    loaded_dict = pickle.load(f)
+    knowledge_base = pickle.load(f)
 
-engine = create_engine("mysql+mysqlconnector://root:Indianarmy@localhost/txt2sql")
-
-
-def remove_duplicates(f):
-    s = set()
-    final = []
-    for k, v in f.items():
-        if k in ("cust_out", "order_out", "product_out"):
-            for item in v["column_extract"]:
-                key = tuple(item)
-                if key not in s:
-                    final.append(item)
-                    s.add(key)
-    return final
+# Database connection
+database_engine = create_engine("mysql+mysqlconnector://root:Indianarmy@localhost/txt2sql")
 
 
-class finalstate(TypedDict):
+def deduplicate_extracted_columns(agent_outputs):
+    """Remove duplicate columns extracted by different agents."""
+    seen_columns = set()
+    unique_columns = []
+
+    for agent_key in ("cust_out", "order_out", "product_out"):
+        if agent_key in agent_outputs:
+            for column_item in agent_outputs[agent_key]["column_extract"]:
+                column_key = tuple(column_item)
+                if column_key not in seen_columns:
+                    unique_columns.append(column_item)
+                    seen_columns.add(column_key)
+
+    return unique_columns
+
+
+class QueryProcessingState(TypedDict):
+    """State for the query processing workflow."""
+
     user_query: str
-    router_out: list[str]
-    cust_out: str
-    order_out: str
-    product_out: str
-    filtered_col: str
-    filter_extractor: list[str]
-    fuzz_match: list[str]
-    sql_query: str
-    final_query: str
+    routed_domains: list[str]
+    customer_agent_output: str
+    orders_agent_output: str
+    product_agent_output: str
+    extracted_columns: str
+    filter_conditions: list[str]
+    fuzzy_matched_filters: list[str]
+    generated_query: str
+    validated_query: str
 
 
-### Defining Nodes
+# Workflow Node Functions
 
 
-def router(state: finalstate):
-    q = state["user_query"]
-    o = agent_2(q)
-    return {"router_out": eval(o)}
+def route_query_to_domains_node(state: QueryProcessingState):
+    """Route user query to appropriate domain agents."""
+    user_query = state["user_query"]
+    routed_domains = route_query_to_domains(user_query)
+    return {"routed_domains": eval(routed_domains)}
 
 
-def route_request(state: finalstate):
-    routes = state["router_out"]
-    print("Routed request to" + str(routes) + " agents")
-    return routes
+def determine_routing_path(state: QueryProcessingState):
+    """Determine which domain agents should process the query."""
+    routed_domains = state["routed_domains"]
+    print(f"Routing query to {routed_domains} domain agents")
+    return routed_domains
 
 
-def filter_condition(state: finalstate):
-    if len(state["filter_extractor"]) == 1:
+def should_apply_fuzzy_filtering(state: QueryProcessingState):
+    """Check if fuzzy filtering is needed based on filter conditions."""
+    if len(state["filter_conditions"]) == 1:
         return "no"
     else:
         return "yes"
 
 
-def customer(state: finalstate):
-    q = state["user_query"]
-    print("Extracting relavant tables and columns from customer agent................")
-    sub = graph_final.invoke({"user_query": q, "table_lst": d_store["customer"]})
-    return {"cust_out": sub}
-
-
-def orders(state: finalstate):
-    q = state["user_query"]
-    print("Extracting relavant tables and columns from orders agent................")
-    sub = graph_final.invoke({"user_query": q, "table_lst": d_store["orders"]})
-    return {"order_out": sub}
-
-
-def product(state: finalstate):
-    q = state["user_query"]
-    print(q)
-
-    print("Extracting relavant tables and columns from product agent................")
-    sub = graph_final.invoke({"user_query": q, "table_lst": d_store["product"]})
-    print(sub)
-    return {"product_out": sub}
-
-
-def filter_check(state: finalstate):
-    q = state["user_query"]
-    f = {}
-    col_f = []
-    for key in ["order_out", "cust_out", "product_out"]:
-        if key in state:
-            f[key] = state.get(key)
-            col_f.append(state[key])
-    col_details = remove_duplicates(f)
-    print("Checking the need for filter................")
-    response = chain_filter_extractor.invoke({"columns": str(col_details), "query": q}).replace(
-        "```", ""
+def process_customer_domain(state: QueryProcessingState):
+    """Process query using customer domain agent."""
+    user_query = state["user_query"]
+    print("Extracting relevant tables and columns from customer domain agent...")
+    agent_output = graph_final.invoke(
+        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["customer"]}
     )
-    return {"filter_extractor": eval(response), "filtered_col": str(col_details)}
+    return {"customer_agent_output": agent_output}
 
 
-def fuzz_match(state: finalstate):
-    val = state["filter_extractor"]
-    print("Solving for getting right filter vaues.........")
-    lst = call_match(val)
-    print("done filtering...........................")
-    return {"fuzz_match": lst}
+def process_orders_domain(state: QueryProcessingState):
+    """Process query using orders domain agent."""
+    user_query = state["user_query"]
+    print("Extracting relevant tables and columns from orders domain agent...")
+    agent_output = graph_final.invoke(
+        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["orders"]}
+    )
+    return {"orders_agent_output": agent_output}
 
 
-def query_generation(state: finalstate):
-    q = state["user_query"]
-    tab_cols = state["filtered_col"]
-    if state.get("fuzz_match"):
-        filters = state.get("fuzz_match")
+def process_product_domain(state: QueryProcessingState):
+    """Process query using product domain agent."""
+    user_query = state["user_query"]
+    print(f"Processing query: {user_query}")
+    print("Extracting relevant tables and columns from product domain agent...")
+    agent_output = graph_final.invoke(
+        {"user_query": user_query, "table_lst": DOMAIN_TABLE_MAPPINGS["product"]}
+    )
+    print(f"Product agent output: {agent_output}")
+    return {"product_agent_output": agent_output}
+
+
+def extract_filter_conditions(state: QueryProcessingState):
+    """Extract and analyze filter conditions from the query."""
+    user_query = state["user_query"]
+    agent_outputs = {}
+    column_data = []
+
+    for agent_key in ["orders_agent_output", "customer_agent_output", "product_agent_output"]:
+        if agent_key in state:
+            agent_outputs[agent_key] = state.get(agent_key)
+            column_data.append(state[agent_key])
+
+    unique_columns = deduplicate_extracted_columns(agent_outputs)
+    print("Analyzing filter conditions...")
+
+    filter_response = chain_filter_extractor.invoke(
+        {"columns": str(unique_columns), "query": user_query}
+    ).replace("```", "")
+
+    return {"filter_conditions": eval(filter_response), "extracted_columns": str(unique_columns)}
+
+
+def apply_fuzzy_matching(state: QueryProcessingState):
+    """Apply fuzzy matching to filter values for better accuracy."""
+    filter_conditions = state["filter_conditions"]
+    print("Applying fuzzy matching to filter values...")
+    matched_filters = apply_fuzzy_matching_to_filters(filter_conditions)
+    print("Fuzzy matching completed")
+    return {"fuzzy_matched_filters": matched_filters}
+
+
+def generate_query(state: QueryProcessingState):
+    """Generate the final query in the target language."""
+    user_query = state["user_query"]
+    table_columns = state["extracted_columns"]
+
+    if state.get("fuzzy_matched_filters"):
+        filter_conditions = state.get("fuzzy_matched_filters")
     else:
-        filters = ""
-    print("Generating SQL query.........")
-    final_query = chain_query_extractor.invoke(
-        {"columns": tab_cols, "query": q, "filters": filters}
+        filter_conditions = ""
+
+    print("Generating query...")
+    generated_query = chain_query_extractor.invoke(
+        {"columns": table_columns, "query": user_query, "filters": filter_conditions}
     )
-    return {"sql_query": final_query}
+    return {"generated_query": generated_query}
 
 
-def query_validation(state: finalstate):
-    print("validating and generating final query........")
-    o = chain_query_validator.invoke(
+def validate_generated_query(state: QueryProcessingState):
+    """Validate and finalize the generated query."""
+    print("Validating and finalizing query...")
+    validated_query = chain_query_validator.invoke(
         {
-            "columns": state["filtered_col"],
+            "columns": state["extracted_columns"],
             "query": state["user_query"],
-            "filters": state.get("fuzz_match"),
-            "sql_query": state["sql_query"],
+            "filters": state.get("fuzzy_matched_filters"),
+            "sql_query": state["generated_query"],
         }
     )
-    return {"final_query": o}
+    return {"validated_query": validated_query}
 
 
-builder_final = StateGraph(finalstate)
+# Build the workflow graph
+query_workflow_builder = StateGraph(QueryProcessingState)
 
-builder_final.add_node("router", router)  # Add explicit node names
+# Add workflow nodes
+query_workflow_builder.add_node("route_query", route_query_to_domains_node)
+query_workflow_builder.add_node("customer_domain", process_customer_domain)
+query_workflow_builder.add_node("orders_domain", process_orders_domain)
+query_workflow_builder.add_node("product_domain", process_product_domain)
+query_workflow_builder.add_node("extract_filters", extract_filter_conditions)
+query_workflow_builder.add_node("fuzzy_filtering", apply_fuzzy_matching)
+query_workflow_builder.add_node("query_generation", generate_query)
+query_workflow_builder.add_node("query_validation", validate_generated_query)
 
-builder_final.add_node("customer", customer)
-builder_final.add_node("orders", orders)
-builder_final.add_node("product", product)
+# Define workflow edges
+query_workflow_builder.add_edge(START, "route_query")
 
-builder_final.add_node("filter_check", filter_check)
-builder_final.add_node("fuzz_filter", fuzz_match)
-builder_final.add_node("query_generator", query_generation)
-builder_final.add_node("query_validation", query_validation)
-
-builder_final.add_edge(START, "router")
-
-builder_final.add_conditional_edges("router", route_request, ["customer", "orders", "product"])
-
-builder_final.add_edge("customer", "filter_check")
-builder_final.add_edge("orders", "filter_check")
-builder_final.add_edge("product", "filter_check")
-
-builder_final.add_conditional_edges(
-    "filter_check", filter_condition, {"no": "query_generator", "yes": "fuzz_filter"}
+query_workflow_builder.add_conditional_edges(
+    "route_query", determine_routing_path, ["customer_domain", "orders_domain", "product_domain"]
 )
 
-builder_final.add_edge("fuzz_filter", "query_generator")
+query_workflow_builder.add_edge("customer_domain", "extract_filters")
+query_workflow_builder.add_edge("orders_domain", "extract_filters")
+query_workflow_builder.add_edge("product_domain", "extract_filters")
 
-builder_final.add_edge("query_generator", "query_validation")
+query_workflow_builder.add_conditional_edges(
+    "extract_filters",
+    should_apply_fuzzy_filtering,
+    {"no": "query_generation", "yes": "fuzzy_filtering"},
+)
 
-builder_final.add_edge("query_validation", END)
+query_workflow_builder.add_edge("fuzzy_filtering", "query_generation")
+query_workflow_builder.add_edge("query_generation", "query_validation")
+query_workflow_builder.add_edge("query_validation", END)
 
-graph_main = builder_final.compile()
+# Compile the workflow
+query_workflow = query_workflow_builder.compile()
 
 
-def safe_extract(record, key):
+def safe_extract_value(record, key):
+    """Safely extract a value from a record."""
     return record.get(key) if key in record else None
 
 
-def predict(q):
-    f = graph_main.invoke({"user_query": q})
+def process_natural_language_query(user_query: str):
+    """Process a natural language query and return the generated query."""
+    workflow_result = query_workflow.invoke({"user_query": user_query})
 
-    normalized_records = []
-
-    normalized = {
-        "user_query": f.get("user_query"),
-        "router_out": f.get("router_out"),
-        "cust_out": f.get("cust_out") if f.get("cust_out") else None,
-        "order_out": f.get("order_out") if f.get("cust_out") else None,
-        "product_out": f.get("product_out") if f.get("cust_out") else None,
-        "filtered_col": f.get("filtered_col"),
-        "filter_extractor": f.get("filter_extractor"),
-        "sql_query": f.get("sql_query"),
-        "final_query": f.get("final_query"),
+    # Normalize the results for logging/analysis
+    normalized_results = []
+    normalized_data = {
+        "user_query": workflow_result.get("user_query"),
+        "routed_domains": workflow_result.get("routed_domains"),
+        "customer_agent_output": workflow_result.get("customer_agent_output")
+        if workflow_result.get("customer_agent_output")
+        else None,
+        "orders_agent_output": workflow_result.get("orders_agent_output")
+        if workflow_result.get("customer_agent_output")
+        else None,
+        "product_agent_output": workflow_result.get("product_agent_output")
+        if workflow_result.get("customer_agent_output")
+        else None,
+        "extracted_columns": workflow_result.get("extracted_columns"),
+        "filter_conditions": workflow_result.get("filter_conditions"),
+        "generated_query": workflow_result.get("generated_query"),
+        "validated_query": workflow_result.get("validated_query"),
     }
 
-    normalized_records.append(normalized)
+    normalized_results.append(normalized_data)
 
-    df_normalized = pd.DataFrame(normalized_records)
-    df_normalized["inserted_at"] = datetime.now()
-    df_normalized["version"] = "v1"
+    # Create DataFrame for analysis
+    results_df = pd.DataFrame(normalized_results)
+    results_df["processed_at"] = datetime.now()
+    results_df["version"] = "v1"
 
-    return df_normalized, f
+    return results_df, workflow_result
 
 
 def main():
-    # Example usage
-    q = "Give me list of customers from  São Paulo state that made atleast 1 payment through credit card"
-    df, f = predict(q)
+    """Main function demonstrating the query processing workflow."""
+    # Example simple query
+    simple_query = "Give me list of customers from São Paulo state that made at least 1 payment through credit card"
+    results_df, workflow_result = process_natural_language_query(simple_query)
 
     # Example complex query
-    q2 = """For each state, compute the average review score for orders that were delayed by more than 5 days (based on estimated delivery), 
+    complex_query = """For each state, compute the average review score for orders that were delayed by more than 5 days (based on estimated delivery), 
 and where the product price was above the average price of its category. Only include states with at least 100 such orders, 
 and rank them from highest to lowest average score."""
 
-    df2, f2 = predict(q2)
+    complex_results_df, complex_workflow_result = process_natural_language_query(complex_query)
 
-    # List of test queries
-    lst = [
-        "What are the total no. of orders made?",
+    # Collection of test queries for validation
+    test_queries = [
+        "What are the total number of orders made?",
         """For each state, compute the average review score for orders that were delayed by more than 5 days (based on estimated delivery), 
     and where the product price was above the average price of its category. Only include states with at least 100 such orders, 
     and rank them from highest to lowest average score.""",
         """Among sellers who have sold at least 50 items, which seller had the highest percentage of orders with a 5-star review and what is that percentage? 
     Only include orders where the product was delivered on time (i.e., delivered on or before the estimated delivery date), and the payment was made in installments.""",
-        """
-
-    For each state, compute the average review score for orders that were delayed by more than 5 days (based on estimated delivery),
+        """For each state, compute the average review score for orders that were delayed by more than 5 days (based on estimated delivery),
     and where the product price was above the average price of its category.
-    Only include states with at least 100 such orders, and rank them from highest to lowest average score.
-    """,
+    Only include states with at least 100 such orders, and rank them from highest to lowest average score.""",
     ]
+
+    print("Query processing workflow completed successfully!")
 
 
 if __name__ == "__main__":

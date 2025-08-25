@@ -10,97 +10,122 @@ from app.agents.helpers.customer_helper import *
 
 load_dotenv()
 
+# Load knowledge base
 with open("kb.pkl", "rb") as f:
-    loaded_dict = pickle.load(f)
+    knowledge_base = pickle.load(f)
 
-d_store = {
+# Domain table mappings
+DOMAIN_TABLE_MAPPINGS = {
     "customer": ["customer", "sellers"],
     "orders": ["order_items", "order_payments", "order_reviews", "orders"],
     "product": ["products", "category_translation"],
 }
 
 
-class overallstate(TypedDict):
+class CustomerAgentState(TypedDict):
+    """State for the customer domain agent workflow."""
+
     user_query: str
     table_lst: list[str]
     table_extract: Annotated[list[str], add]
     column_extract: Annotated[list[str], add]
 
 
-def agent_subquestion(q, v):
-    response = chain_subquestion.invoke({"tables": v, "user_query": q}).replace("```", "")
+def extract_subquestions_from_query(user_query: str, table_descriptions: str):
+    """Extract subquestions from the user query using table descriptions."""
+    response = chain_subquestion.invoke(
+        {"tables": table_descriptions, "user_query": user_query}
+    ).replace("```", "")
+
+    # Extract the structured response using regex
     match = re.search(r"\[\s*\[.*?\]\s*(,\s*\[.*?\]\s*)*\]", response, re.DOTALL)
     if match:
         result = match.group(0)
-    return result
+        return result
+    return "[]"
 
 
-def solve_subquestion(q, lst):
-    final = []
-    for tab in lst:
-        desc = loaded_dict[tab][0]
-        final.append([tab, desc])
+def resolve_subquestions_to_tables(user_query: str, table_list: list[str]):
+    """Resolve subquestions to specific tables based on knowledge base."""
+    table_descriptions = []
 
-    result_dict = {item[0]: item[1] for item in final}
+    for table_name in table_list:
+        if table_name in knowledge_base:
+            description = knowledge_base[table_name][0]
+            table_descriptions.append([table_name, description])
 
-    subquestion = agent_subquestion(q, str(result_dict))
-    return subquestion
+    # Convert to dictionary for easier processing
+    table_info = {item[0]: item[1] for item in table_descriptions}
+
+    # Generate subquestions for the tables
+    subquestions = extract_subquestions_from_query(user_query, str(table_info))
+    return eval(subquestions)
 
 
-def agent_column_selection(mq, q, c):
+def extract_columns_for_subquestions(main_question: str, subquestion: str, table_columns: str):
+    """Extract relevant columns for the identified subquestions."""
     response = chain_column_extractor.invoke(
-        {"columns": c, "query": q, "main_question": mq}
+        {"columns": table_columns, "query": subquestion, "main_question": main_question}
     ).replace("```", "")
 
+    # Extract the structured response
     match = re.search(r"\[\s*\[.*?\]\s*(,\s*\[.*?\]\s*)*\]", response, re.DOTALL)
     if match:
         result = match.group(0)
     else:
         result = "[[]]"
+
     return result
 
 
-def solve_column_selection(main_q, list_sub):
-    final_col = []
-    inter = []
-    for tab in list_sub:
-        if len(tab) == 0:
+def process_table_column_extraction(subquestions: list, table_columns: str):
+    """Process table and column extraction for all subquestions."""
+    extracted_columns = []
+
+    for subquestion in subquestions:
+        if len(subquestion) == 0:
             continue
-        table_name = tab[1]
-        question = tab[0]
-        columns = loaded_dict[table_name][1]
-        out_column = agent_column_selection(main_q, question, str(columns))
-        trans_col = eval(out_column)
 
-        for col_selec in trans_col:
-            new_col = ["name of table:" + table_name] + col_selec
-            inter.append(new_col)
-        final_col.extend(inter)
-    return final_col
+        table_name = subquestion[1]
+        if table_name in knowledge_base:
+            columns_info = knowledge_base[table_name][1]
+            extracted_columns.append([table_name, columns_info])
+
+    return extracted_columns
 
 
-def sq_node(state: overallstate):
-    q = state["user_query"]
-    lst = state["table_lst"]
-    o = solve_subquestion(q, lst)
-
-    return {"table_extract": eval(o)}
+# Workflow Node Functions
 
 
-def column_node(state: overallstate):
-    subq = state["table_extract"]
-    mq = state["user_query"]
+def subquestion_extraction_node(state: CustomerAgentState):
+    """Extract subquestions from the user query."""
+    user_query = state["user_query"]
+    table_list = state["table_lst"]
 
-    o = solve_column_selection(mq, subq)
-    return {"column_extract": o}
+    subquestions = resolve_subquestions_to_tables(user_query, table_list)
+    return {"table_extract": subquestions}
 
 
-builder_final = StateGraph(overallstate)
-builder_final.add_node("subquestion", sq_node)
-builder_final.add_node("column_e", column_node)
+def column_extraction_node(state: CustomerAgentState):
+    """Extract relevant columns for the identified subquestions."""
+    subquestions = state["table_extract"]
+    main_question = state["user_query"]
 
-builder_final.add_edge(START, "subquestion")
-builder_final.add_edge("subquestion", "column_e")
+    extracted_columns = process_table_column_extraction(subquestions, table_columns)
+    return {"column_extract": extracted_columns}
 
-builder_final.add_edge("column_e", END)
-graph_final = builder_final.compile()
+
+# Build the customer agent workflow
+customer_agent_builder = StateGraph(CustomerAgentState)
+
+# Add workflow nodes
+customer_agent_builder.add_node("subquestion_extraction", subquestion_extraction_node)
+customer_agent_builder.add_node("column_extraction", column_extraction_node)
+
+# Define workflow edges
+customer_agent_builder.add_edge(START, "subquestion_extraction")
+customer_agent_builder.add_edge("subquestion_extraction", "column_extraction")
+customer_agent_builder.add_edge("column_extraction", END)
+
+# Compile the workflow
+graph_final = customer_agent_builder.compile()
