@@ -1,0 +1,63 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# uv artifacts
+.uv/
+.uv_cache/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage*
+hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Local config / env
+.env
+.env.*
+*.local
+
+# Logs
+logs/
+*.log
+
+# Data / caches
+.cache/
+**/__pycache__/
+
+# SQLite files
+*.sqlite3
+*.db
+
+# Kaggle / datasets
+*.zip
+*.tar
+*.tar.gz
+
+# Pickles and artifacts
+*.pkl
+
+# Editor settings
+.vscode/
+.idea/

@@ -1,0 +1,15 @@
+langgraph>=0.2.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-anthropic>=0.1.20
+langchain-groq>=0.1.5
+groq>=0.9.0
+anthropic>=0.34.0
+python-dotenv>=1.0.1
+SQLAlchemy>=2.0.32
+mysql-connector-python>=9.0.0
+pandas>=2.2.2
+rapidfuzz>=3.9.6
+kagglehub>=0.3.4
+ipython>=8.26.0
+tqdm>=4.66.4

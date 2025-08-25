@@ -1,0 +1,21 @@
+[project]
+name = "lang2query"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.uv]
+# You can continue to use requirements.txt for dependencies.
+# If you later want to manage deps here, move them to [project] dependencies.
+
+[tool.uv.scripts]
+# Run the main app
+dev = "python main.py"
+
+# Build knowledge base
+kb = "python knowledge_base.py"
+
+# Create/load database tables
+db = "python create_tables.py"
+
+# Convenient REPL inside the venv
+repl = "ipython"
