@@ -36,6 +36,7 @@ hypothesis/
 # Local config / env
 .env
 .env.*
+!.env.example
 *.local
 
 # Logs

@@ -1,6 +1,6 @@
 # Lang2Query Agent
 
-A production-ready, multi-language natural language to query agent built using LangGraph for converting natural language queries to structured queries in any language with high accuracy.
+A multi-language natural language to query agent built using LangGraph for converting natural language queries to structured queries in any language with high accuracy.
 
 ## 🚀 Features
 
@@ -17,26 +17,14 @@ A production-ready, multi-language natural language to query agent built using L
 
 ```
 lang2query/
-├── app/
+├── src/
 │   ├── main.py                     # Main application entry point
 │   ├── config.py                   # Configuration management
 │   ├── agents/
-│   │   ├── customer.py             # Customer domain agent
-│   │   ├── router.py               # Query routing agent
-│   │   └── helpers/
-│   │       └── customer_helper.py  # Helper functions for agents
-│   ├── services/
-│   │   └── fuzzy.py                # Fuzzy matching utilities
-│   └── kb/
-│       └── build_kb.py             # Knowledge base generator
-├── db/
-│   └── create_tables.py            # Database setup and table creation
-├── scripts/                         # Helper scripts
-├── kb.pkl                          # Serialized knowledge base
-├── env.template                     # Environment variables template
+│   │   ├── base_agent.py             # Base agent
+├── .env.example                     # Environment variables template
 ├── requirements.txt                 # Dependencies
 ├── pyproject.toml                  # uv scripts, tooling config
-├── Makefile                        # Development commands
 └── README.md                       # This file
 ```
 
@@ -44,20 +32,11 @@ lang2query/
 
 - **SQL**: MySQL, PostgreSQL, SQLite, Oracle, SQL Server
 - **MongoDB**: Aggregation pipelines, find queries
-- **Elasticsearch**: Query DSL, aggregations
-- **Cypher**: Neo4j graph queries
 - **Extensible**: Easy to add new query languages
-
-## 🗄️ Supported Domains
-
-- **E-commerce**: Customers, orders, products, payments
-- **Healthcare**: Patients, appointments, diagnoses, billing
-- **Finance**: Customers, transactions, investment products
-- **Extensible**: Easy to add new domains
 
 ## ⚙️ Configuration
 
-The system is highly configurable through environment variables. Copy `env.template` to `.env` and customize:
+The system is highly configurable through environment variables. Copy `.env.example` to `.env` and customize:
 
 ### **Required Environment Variables**
 
@@ -68,116 +47,6 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # Database Configuration
 ACTIVE_DATABASE=mysql
 MYSQL_CONNECTION_STRING=mysql+mysqlconnector://user:pass@host/database
-```
-
-### **Optional Configuration**
-
-```bash
-# Query Language
-ACTIVE_QUERY_LANGUAGE=sql
-
-# Domain
-ACTIVE_DOMAIN=ecommerce
-
-# Models
-ROUTING_MODEL_PROVIDER=anthropic
-ROUTING_MODEL_NAME=claude-3-5-sonnet-20240620
-
-# Performance
-MAX_CONCURRENT_AGENTS=3
-TIMEOUT_SECONDS=30
-```
-
-## 🚀 Quick Start
-
-1. **Setup Environment**:
-
-   ```bash
-   # Copy environment template
-   cp env.template .env
-
-   # Edit .env with your settings
-   nano .env
-
-   # Install uv and create virtual environment
-   uv venv .venv
-   source .venv/bin/activate
-   uv pip install -r requirements.txt
-   ```
-
-2. **Setup Database**:
-
-   ```bash
-   uv run db
-   ```
-
-3. **Generate Knowledge Base**:
-
-   ```bash
-   uv run kb
-   ```
-
-4. **Run the Agent**:
-   ```bash
-   uv run dev
-   ```
-
-## 🛠️ Development Commands
-
-```bash
-# Code quality
-uv run format          # Format code with Ruff
-uv run lint            # Lint code with Ruff
-
-# Development workflow
-make setup             # Setup development environment
-make format            # Format code
-make lint              # Lint code
-make hooks             # Run pre-commit hooks
-make cz                # Create conventional commit
-make bump              # Bump version and update changelog
-```
-
-## 🏗️ Architecture
-
-The system uses a sophisticated multi-agent approach:
-
-- **Router Agent**: Determines which domain agents should handle the query
-- **Domain Agents**: Extract relevant tables and columns for their domain
-- **Filter Agent**: Identifies and extracts filter conditions
-- **Query Generator**: Converts extracted information into target language queries
-- **Query Validator**: Ensures generated queries are correct and optimized
-
-## 🔧 Adding New Query Languages
-
-1. Add language configuration to `QUERY_LANGUAGE_CONFIG` in `app/config.py`
-2. Create language-specific prompt templates
-3. Implement language-specific validation logic
-4. Update the query generation pipeline
-
-## 🔧 Adding New Domains
-
-1. Add domain configuration to `DOMAIN_CONFIGS` in `app/config.py`
-2. Create domain-specific agent logic
-3. Update routing and knowledge base generation
-4. Add domain-specific validation rules
-
-## 📊 Performance & Production
-
-- **Concurrent Processing**: Multiple agents can run simultaneously
-- **Caching**: Results are cached for improved performance
-- **Error Handling**: Comprehensive error handling and retry logic
-- **Logging**: Structured logging for monitoring and debugging
-- **Metrics**: Performance metrics and query analytics
-
-## 🧪 Testing
-
-```bash
-# Run tests
-uv run test
-
-# Run with coverage
-uv run test --cov
 ```
 
 ## 📝 Contributing
