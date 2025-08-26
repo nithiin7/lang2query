@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class BaseAgent(ABC):
     """Abstract base for all agents."""
 

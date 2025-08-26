@@ -1,12 +1,15 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
+
 from .agents.sample_agent import SampleAgent
 from .config import settings
 from .utils.logger import logger
+
 
 # State definition
 class State(dict):
     input: str
     output: str
+
 
 # Agent node
 def agent_node(state: State):
@@ -14,6 +17,7 @@ def agent_node(state: State):
     result = agent.run(state["input"])
     logger.info(f"Agent output: {result}")
     return {"output": result}
+
 
 # Build graph
 def build_graph():

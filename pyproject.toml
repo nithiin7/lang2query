@@ -19,9 +19,34 @@ rich = ">=14.1.0,<15.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
+black = "^25.1.0"
+ruff = "^0.12.10"
+mypy = "^1.17.1"
+pre-commit = "^4.3.0"
+commitizen = "^4.8.3"
 
 [tool.poetry.scripts]
 agent = "src.main:main"
+format = "src.scripts:format"
+lint = "src.scripts:lint"
+lint-fix = "src.scripts:lint_fix"
+type-check = "src.scripts:type_check"
+test = "src.scripts:test"
+precommit = "src.scripts:precommit"
+commit = "src.scripts:commit"
+changelog = "src.scripts:changelog"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]   # Errors, Formatting, Imports
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
