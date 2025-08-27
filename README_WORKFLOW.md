@@ -101,7 +101,7 @@ Try these natural language requests:
 
 ## 📊 Database Schema
 
-The system uses a markdown file (`sample_db_metadata.md`) that contains:
+The system uses a markdown file (`db_metadata.md`) that contains:
 
 - **Tables**: users, orders, products, categories, order_items
 - **Columns**: name, type, nullability, keys, description, category
@@ -166,8 +166,8 @@ poetry run type-check
 
 ### Environment Variables
 
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `OPENAI_MODEL`: Model to use (default: gpt-4o-mini)
+- `API_KEY`: Your OpenAI API key
+- `MODEL`: Model to use (default: gpt-4o-mini)
 - `LOG_LEVEL`: Logging level (default: INFO)
 
 ### Model Configuration

@@ -35,7 +35,6 @@ lang2query/
 │   ├── conftest.py          # Pytest configuration
 │   ├── test_db_parser.py    # Database parser tests
 │   └── test_workflow.py     # Workflow tests
-├── sample_db_metadata.md     # Sample database schema
 ├── env.example               # Environment variables template
 ├── pyproject.toml           # Project configuration
 └── README.md                # This file

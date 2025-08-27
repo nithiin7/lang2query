@@ -25,7 +25,7 @@ class WorkflowState(TypedDict, total=False):
 def parse_schema_node(state: WorkflowState) -> WorkflowState:
     """Parse and extract database schema information."""
     try:
-        parser = MarkdownDBParser("sample_db_metadata.md")
+        parser = MarkdownDBParser("docs/db_metadata.md")
         schema_summary = parser.get_schema_summary()
 
         logger.info("Successfully parsed database schema")
@@ -41,7 +41,7 @@ def generate_query_node(state: WorkflowState) -> WorkflowState:
     try:
         # Initialize the query generation agent
         agent = QueryGenerationAgent(
-            api_key=settings.openai_api_key, db_metadata_path="sample_db_metadata.md"
+            api_key=settings.api_key, db_metadata_path="docs/db_metadata.md"
         )
 
         # Generate the query
@@ -67,7 +67,7 @@ def validate_query_node(state: WorkflowState) -> WorkflowState:
     """Validate the generated SQL query."""
     try:
         agent = QueryGenerationAgent(
-            api_key=settings.openai_api_key, db_metadata_path="sample_db_metadata.md"
+            api_key=settings.api_key, db_metadata_path="docs/db_metadata.md"
         )
 
         generated = state.get("generated_query")

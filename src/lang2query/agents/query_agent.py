@@ -26,7 +26,7 @@ class QueryGenerationAgent:
     """Agent for generating SQL queries from natural language using database schema."""
 
     def __init__(
-        self, api_key: Optional[str], db_metadata_path: str = "sample_db_metadata.md"
+        self, api_key: Optional[str], db_metadata_path: str = "db_metadata.md"
     ):
         secret_key: Optional[SecretStr] = SecretStr(api_key) if api_key else None
         self.llm = ChatOpenAI(model="gpt-4o-mini", api_key=secret_key, temperature=0.1)
