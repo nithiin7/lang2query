@@ -46,6 +46,7 @@ logs/
 # Data / caches
 .cache/
 **/__pycache__/
+.mypy_cache/
 
 # SQLite files
 *.sqlite3

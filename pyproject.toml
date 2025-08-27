@@ -9,13 +9,13 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-langgraph = ">=0.6.6,<0.7.0"
-langchain = ">=0.3.27,<0.4.0"
 openai = ">=1.101.0,<2.0.0"
 python-dotenv = ">=1.1.1,<2.0.0"
 pydantic = ">=2.11.7,<3.0.0"
 pydantic-settings = ">=2.0.0,<3.0.0"
 rich = ">=14.1.0,<15.0.0"
+langgraph = "^0.6.6"
+langchain = "^0.3.27"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
