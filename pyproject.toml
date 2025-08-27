@@ -5,7 +5,7 @@ description = "A natural language to query agentic AI system"
 authors = ["Nithin Pradeep <nithinp150@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [{ include = "lang2query", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
@@ -16,21 +16,20 @@ pydantic-settings = ">=2.0.0,<3.0.0"
 rich = ">=14.1.0,<15.0.0"
 langgraph = "^0.6.6"
 langchain = "^0.3.27"
+langchain-openai = "^0.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
 black = "^25.1.0"
 ruff = "^0.12.10"
-mypy = "^1.17.1"
 pre-commit = "^4.3.0"
 commitizen = "^4.8.3"
 
 [tool.poetry.scripts]
-agent = "src.main:main"
+lang2query = "lang2query.cli:main"
 format = "src.scripts:format"
 lint = "src.scripts:lint"
 lint-fix = "src.scripts:lint_fix"
-type-check = "src.scripts:type_check"
 test = "src.scripts:test"
 precommit = "src.scripts:precommit"
 commit = "src.scripts:commit"

@@ -4,14 +4,42 @@ A multi-language natural language to query agent built using LangGraph for conve
 
 ## 🚀 Features
 
-- **Multi-Language Support**: Generate queries in SQL, MongoDB, Elasticsearch, Cypher, and more
-- **Multi-Agent Architecture**: Uses LangGraph for orchestrating specialized domain agents
-- **Intelligent Routing**: Automatically routes queries to appropriate domain agents
-- **Fuzzy Matching**: Implements fuzzy string matching for improved query understanding
-- **Query Validation**: Multi-step validation process for query generation
-- **Dynamic Knowledge Base**: Generates knowledge base from database schema and sample data
-- **Environment-Based Configuration**: All settings configurable via environment variables
-- **Production Ready**: Proper error handling, logging, and performance optimization
+- **Natural Language Processing**: Convert plain English requests to SQL queries
+- **Database Schema Awareness**: Uses markdown-based database metadata
+- **LangGraph Workflow**: Multi-agent orchestration with state management
+- **Query Validation**: Built-in safety checks and validation
+- **Interactive CLI**: Easy-to-use command-line interface
+- **Extensible Architecture**: Easy to add new agents and workflows
+
+## 🏗️ Project Structure
+
+```
+lang2query/
+├── src/
+│   └── lang2query/           # Main package
+│       ├── __init__.py       # Package initialization and exports
+│       ├── core/             # Core workflow components
+│       │   ├── __init__.py
+│       │   └── workflow.py   # LangGraph workflow orchestration
+│       ├── agents/           # AI agent implementations
+│       │   ├── __init__.py
+│       │   └── query_agent.py # Query generation agent
+│       ├── utils/            # Utility modules
+│       │   ├── __init__.py
+│       │   ├── db_parser.py  # Database metadata parser
+│       │   └── logger.py     # Logging configuration
+│       ├── config.py         # Configuration settings
+│       ├── cli.py            # Command-line interface
+│       └── main.py           # Main entry point
+├── tests/                    # Test suite
+│   ├── conftest.py          # Pytest configuration
+│   ├── test_db_parser.py    # Database parser tests
+│   └── test_workflow.py     # Workflow tests
+├── sample_db_metadata.md     # Sample database schema
+├── env.example               # Environment variables template
+├── pyproject.toml           # Project configuration
+└── README.md                # This file
+```
 
 ## 📋 Prerequisites
 

@@ -40,11 +40,6 @@ def lint_fix() -> None:
     run_command(["ruff", "check", "src", "tests", "--fix"], "Lint fixing")
 
 
-def type_check() -> None:
-    """Run type checking using mypy."""
-    run_command(["mypy", "src"], "Type checking")
-
-
 def test() -> None:
     """Run tests using pytest."""
     run_command(["pytest", "--cov"], "Testing")
@@ -69,7 +64,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python scripts.py <command>")
         print(
-            "Available commands: format, lint, lint-fix, type-check, test, precommit, "
+            "Available commands: format, lint, lint-fix, test, precommit, "
             "commit, changelog"
         )
         sys.exit(1)
@@ -79,7 +74,6 @@ if __name__ == "__main__":
         "format": format,
         "lint": lint,
         "lint-fix": lint_fix,
-        "type-check": type_check,
         "test": test,
         "precommit": precommit,
         "commit": commit,

@@ -1,5 +1,5 @@
 run:
-	poetry run agent
+	poetry run lang2query --interactive
 
 format:
 	poetry run format
