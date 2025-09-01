@@ -1,0 +1,17 @@
+[
+    {
+        "key": "shift+alt+f",
+        "command": "editor.action.formatDocument",
+        "when": "editorHasDocumentFormattingProvider && editorTextFocus && !editorReadonly && !inCompositeEditor"
+    },
+    {
+        "key": "ctrl+shift+p",
+        "command": "python.lint",
+        "when": "editorLangId == python"
+    },
+    {
+        "key": "ctrl+shift+o",
+        "command": "python.sortImports",
+        "when": "editorLangId == python"
+    }
+]

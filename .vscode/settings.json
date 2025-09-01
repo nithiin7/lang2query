@@ -1,0 +1,24 @@
+{
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.ruffPath": "./.venv/bin/ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "python.linting.lintOnSave": true,
+    "python.linting.autoImportCompletions": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "black-formatter.args": ["--line-length", "88"],
+    "ruff.args": ["--line-length", "88"]
+}
