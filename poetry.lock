@@ -2249,7 +2249,10 @@ files = [
 [package.extras]
 cffi = ["cffi (>=1.17) ; python_version >= \"3.13\" and platform_python_implementation != \"PyPy\""]
 
+[extras]
+local-model = []
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "55b7c1a4d8ba99b45c615699ff00fea2e7b31d7226b980e4be6f0ee3d6a1650b"
+content-hash = "2d91f9a999efe0de03be0ece7e3d17dd6e3f26e53b6adfe1a7795495c7d6b4ad"

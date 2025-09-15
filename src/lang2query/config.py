@@ -1,19 +1,9 @@
-"""Configuration settings for the Lang2Query system."""
+"""
+Configuration settings for the Lang2Query application.
+"""
 
-from typing import Optional
+from pathlib import Path
 
-from pydantic_settings import BaseSettings
-
-
-class Settings(BaseSettings):
-    """Application settings."""
-
-    api_key: Optional[str] = None
-    model: str = "gpt-4o-mini"
-    log_level: str = "INFO"
-
-    class Config:
-        env_file = ".env"
-
-
-settings = Settings()
+# Base paths
+BASE_DIR = Path(__file__).parent.parent
+DOCS_DIR = BASE_DIR / "docs"

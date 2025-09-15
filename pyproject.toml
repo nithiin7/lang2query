@@ -17,6 +17,7 @@ rich = ">=14.1.0,<15.0.0"
 langgraph = "^0.6.6"
 langchain = "^0.3.27"
 langchain-openai = "^0.2.0"
+requests = ">=2.31.0,<3.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
@@ -26,7 +27,7 @@ pre-commit = "^4.3.0"
 commitizen = "^4.8.3"
 
 [tool.poetry.scripts]
-lang2query = "lang2query.cli:main"
+lang2query = "lang2query.main:main"
 format = "src.scripts:format"
 lint = "src.scripts:lint"
 lint-fix = "src.scripts:lint_fix"
@@ -34,6 +35,9 @@ test = "src.scripts:test"
 precommit = "src.scripts:precommit"
 commit = "src.scripts:commit"
 changelog = "src.scripts:changelog"
+
+[tool.poetry.extras]
+local_model = ["torch", "transformers", "accelerate", "bitsandbytes"]
 
 [tool.ruff]
 line-length = 88
