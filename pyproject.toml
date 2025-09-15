@@ -23,8 +23,7 @@ requests = ">=2.31.0,<3.0.0"
 pytest = "^8.4.1"
 black = "^25.1.0"
 ruff = "^0.12.10"
-pre-commit = "^4.3.0"
-commitizen = "^4.8.3"
+ 
 
 [tool.poetry.scripts]
 lang2query = "lang2query.main:main"
@@ -32,9 +31,7 @@ format = "src.scripts:format"
 lint = "src.scripts:lint"
 lint-fix = "src.scripts:lint_fix"
 test = "src.scripts:test"
-precommit = "src.scripts:precommit"
-commit = "src.scripts:commit"
-changelog = "src.scripts:changelog"
+ 
 
 [tool.poetry.extras]
 local_model = ["torch", "transformers", "accelerate", "bitsandbytes"]
@@ -46,10 +43,7 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I"]   # Errors, Formatting, Imports
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.1.0"
-tag_format = "v$version"
+ 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

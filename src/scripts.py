@@ -45,28 +45,13 @@ def test() -> None:
     run_command(["pytest", "--cov"], "Testing")
 
 
-def precommit() -> None:
-    """Run pre-commit hooks."""
-    run_command(["pre-commit", "run", "--all-files"], "Pre-commit hooks")
-
-
-def commit() -> None:
-    """Create a conventional commit."""
-    run_command(["cz", "commit"], "Conventional commit")
-
-
-def changelog() -> None:
-    """Generate changelog."""
-    run_command(["cz", "changelog"], "Changelog generation")
+ 
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python scripts.py <command>")
-        print(
-            "Available commands: format, lint, lint-fix, test, precommit, "
-            "commit, changelog"
-        )
+        print("Available commands: format, lint, lint-fix, test")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -75,9 +60,6 @@ if __name__ == "__main__":
         "lint": lint,
         "lint-fix": lint_fix,
         "test": test,
-        "precommit": precommit,
-        "commit": commit,
-        "changelog": changelog,
     }
 
     if command in commands:
