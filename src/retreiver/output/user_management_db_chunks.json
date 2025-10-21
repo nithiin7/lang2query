@@ -1,0 +1,168 @@
+[
+  {
+    "chunk_id": "database::user_management::Authentication",
+    "content": "Database: user_management\nSystem: User Management System\nModule: Authentication\nPurpose: Handles user authentication, profiles, and access control\n\nKey Tables:\n- users: Stores user account information and authentication data\n- user_profiles: Stores additional user profile information and preferences\n- user_roles: Defines user roles and permissions in the system\n- user_role_assignments: Links users to their assigned roles",
+    "metadata": {
+      "chunk_type": "database",
+      "database_name": "user_management",
+      "system_name": "User Management System",
+      "module_name": "Authentication",
+      "status": "Active"
+    }
+  },
+  {
+    "chunk_id": "table::user_management::Authentication::users",
+    "content": "Table: users\nPurpose: Stores user account information and authentication data",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "user_management",
+      "database_purpose": "Handles user authentication, profiles, and access control",
+      "table_name": "users",
+      "module_name": "Authentication",
+      "primary_keys": [
+        "user_id"
+      ],
+      "unique_keys": [
+        "username",
+        "email"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::user_management::Authentication::users",
+    "content": "Table: users\nPurpose: Stores user account information and authentication data\n\nuser_id INT pri no Unique identifier for each user primary\nusername VARCHAR(50) uni no Unique username for login authentication\nemail VARCHAR(100) uni no User's email address contact",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "user_management",
+      "table_name": "users",
+      "module_name": "Authentication",
+      "column_names": [
+        "user_id",
+        "username",
+        "email"
+      ],
+      "primary_keys": [
+        "user_id"
+      ],
+      "unique_keys": [
+        "username",
+        "email"
+      ],
+      "indexed_columns": []
+    }
+  },
+  {
+    "chunk_id": "table::user_management::Authentication::user_profiles",
+    "content": "Table: user_profiles\nPurpose: Stores additional user profile information and preferences",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "user_management",
+      "database_purpose": "Handles user authentication, profiles, and access control",
+      "table_name": "user_profiles",
+      "module_name": "Authentication",
+      "primary_keys": [
+        "profile_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::user_management::Authentication::user_profiles",
+    "content": "Table: user_profiles\nPurpose: Stores additional user profile information and preferences\n\nprofile_id INT pri no Unique profile identifier primary\nuser_id INT mul no Foreign key to users table foreign",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "user_management",
+      "table_name": "user_profiles",
+      "module_name": "Authentication",
+      "column_names": [
+        "profile_id",
+        "user_id"
+      ],
+      "primary_keys": [
+        "profile_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "user_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::user_management::Authentication::user_roles",
+    "content": "Table: user_roles\nPurpose: Defines user roles and permissions in the system",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "user_management",
+      "database_purpose": "Handles user authentication, profiles, and access control",
+      "table_name": "user_roles",
+      "module_name": "Authentication",
+      "primary_keys": [
+        "role_id"
+      ],
+      "unique_keys": [
+        "role_name"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::user_management::Authentication::user_roles",
+    "content": "Table: user_roles\nPurpose: Defines user roles and permissions in the system\n\nrole_id INT pri no Unique role identifier primary\nrole_name VARCHAR(50) uni no Name of the role role",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "user_management",
+      "table_name": "user_roles",
+      "module_name": "Authentication",
+      "column_names": [
+        "role_id",
+        "role_name"
+      ],
+      "primary_keys": [
+        "role_id"
+      ],
+      "unique_keys": [
+        "role_name"
+      ],
+      "indexed_columns": []
+    }
+  },
+  {
+    "chunk_id": "table::user_management::Authentication::user_role_assignments",
+    "content": "Table: user_role_assignments\nPurpose: Links users to their assigned roles",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "user_management",
+      "database_purpose": "Handles user authentication, profiles, and access control",
+      "table_name": "user_role_assignments",
+      "module_name": "Authentication",
+      "primary_keys": [
+        "assignment_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::user_management::Authentication::user_role_assignments",
+    "content": "Table: user_role_assignments\nPurpose: Links users to their assigned roles\n\nassignment_id INT pri no Unique assignment identifier primary\nuser_id INT mul no Foreign key to users table foreign\nrole_id INT mul no Foreign key to user_roles table foreign\nassigned_by INT mul yes User who assigned this role audit",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "user_management",
+      "table_name": "user_role_assignments",
+      "module_name": "Authentication",
+      "column_names": [
+        "assignment_id",
+        "user_id",
+        "role_id",
+        "assigned_by"
+      ],
+      "primary_keys": [
+        "assignment_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "user_id",
+        "role_id",
+        "assigned_by"
+      ]
+    }
+  }
+]

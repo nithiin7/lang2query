@@ -1,0 +1,171 @@
+[
+  {
+    "chunk_id": "database::payment_system::Financial",
+    "content": "Database: payment_system\nSystem: Payment Processing System\nModule: Financial\nPurpose: Handles payment processing, transactions, and financial records\n\nKey Tables:\n- payment_transactions: Records all payment transactions and their status\n- payment_methods: Stores user's saved payment methods\n- refunds: Tracks refund transactions and their processing\n- payment_gateways: Configuration for different payment gateways",
+    "metadata": {
+      "chunk_type": "database",
+      "database_name": "payment_system",
+      "system_name": "Payment Processing System",
+      "module_name": "Financial",
+      "status": "Active"
+    }
+  },
+  {
+    "chunk_id": "table::payment_system::Financial::payment_transactions",
+    "content": "Table: payment_transactions\nPurpose: Records all payment transactions and their status",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "payment_system",
+      "database_purpose": "Handles payment processing, transactions, and financial records",
+      "table_name": "payment_transactions",
+      "module_name": "Financial",
+      "primary_keys": [
+        "transaction_id"
+      ],
+      "unique_keys": [
+        "gateway_transaction_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::payment_system::Financial::payment_transactions",
+    "content": "Table: payment_transactions\nPurpose: Records all payment transactions and their status\n\ntransaction_id VARCHAR(36) pri no Unique transaction identifier (UUID) primary\nuser_id INT mul no User who initiated the payment foreign\ngateway_transaction_id VARCHAR(100) uni yes External gateway transaction ID external",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "payment_system",
+      "table_name": "payment_transactions",
+      "module_name": "Financial",
+      "column_names": [
+        "transaction_id",
+        "user_id",
+        "gateway_transaction_id"
+      ],
+      "primary_keys": [
+        "transaction_id"
+      ],
+      "unique_keys": [
+        "gateway_transaction_id"
+      ],
+      "indexed_columns": [
+        "user_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::payment_system::Financial::payment_methods",
+    "content": "Table: payment_methods\nPurpose: Stores user's saved payment methods",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "payment_system",
+      "database_purpose": "Handles payment processing, transactions, and financial records",
+      "table_name": "payment_methods",
+      "module_name": "Financial",
+      "primary_keys": [
+        "method_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::payment_system::Financial::payment_methods",
+    "content": "Table: payment_methods\nPurpose: Stores user's saved payment methods\n\nmethod_id INT pri no Unique payment method identifier primary\nuser_id INT mul no User who owns this payment method foreign",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "payment_system",
+      "table_name": "payment_methods",
+      "module_name": "Financial",
+      "column_names": [
+        "method_id",
+        "user_id"
+      ],
+      "primary_keys": [
+        "method_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "user_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::payment_system::Financial::refunds",
+    "content": "Table: refunds\nPurpose: Tracks refund transactions and their processing",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "payment_system",
+      "database_purpose": "Handles payment processing, transactions, and financial records",
+      "table_name": "refunds",
+      "module_name": "Financial",
+      "primary_keys": [
+        "refund_id"
+      ],
+      "unique_keys": [
+        "gateway_refund_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::payment_system::Financial::refunds",
+    "content": "Table: refunds\nPurpose: Tracks refund transactions and their processing\n\nrefund_id VARCHAR(36) pri no Unique refund identifier (UUID) primary\ntransaction_id VARCHAR(36) mul no Original transaction being refunded foreign\nprocessed_by INT mul yes User who processed the refund audit\ngateway_refund_id VARCHAR(100) uni yes External gateway refund ID external",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "payment_system",
+      "table_name": "refunds",
+      "module_name": "Financial",
+      "column_names": [
+        "refund_id",
+        "transaction_id",
+        "processed_by",
+        "gateway_refund_id"
+      ],
+      "primary_keys": [
+        "refund_id"
+      ],
+      "unique_keys": [
+        "gateway_refund_id"
+      ],
+      "indexed_columns": [
+        "transaction_id",
+        "processed_by"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::payment_system::Financial::payment_gateways",
+    "content": "Table: payment_gateways\nPurpose: Configuration for different payment gateways",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "payment_system",
+      "database_purpose": "Handles payment processing, transactions, and financial records",
+      "table_name": "payment_gateways",
+      "module_name": "Financial",
+      "primary_keys": [
+        "gateway_id"
+      ],
+      "unique_keys": [
+        "gateway_name"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::payment_system::Financial::payment_gateways",
+    "content": "Table: payment_gateways\nPurpose: Configuration for different payment gateways\n\ngateway_id INT pri no Unique gateway identifier primary\ngateway_name VARCHAR(50) uni no Name of the payment gateway gateway",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "payment_system",
+      "table_name": "payment_gateways",
+      "module_name": "Financial",
+      "column_names": [
+        "gateway_id",
+        "gateway_name"
+      ],
+      "primary_keys": [
+        "gateway_id"
+      ],
+      "unique_keys": [
+        "gateway_name"
+      ],
+      "indexed_columns": []
+    }
+  }
+]

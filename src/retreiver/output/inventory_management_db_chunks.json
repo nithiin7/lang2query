@@ -1,0 +1,206 @@
+[
+  {
+    "chunk_id": "database::inventory_management::Operations",
+    "content": "Database: inventory_management\nSystem: Inventory Management System\nModule: Operations\nPurpose: Manages product inventory, stock levels, and warehouse operations\n\nKey Tables:\n- products: Master catalog of all products in the system\n- inventory: Tracks current stock levels for each product\n- warehouses: Information about warehouse locations\n- stock_movements: Records all stock movements (inbound, outbound, adjustments)\n- product_categories: Hierarchical product categorization",
+    "metadata": {
+      "chunk_type": "database",
+      "database_name": "inventory_management",
+      "system_name": "Inventory Management System",
+      "module_name": "Operations",
+      "status": "Active"
+    }
+  },
+  {
+    "chunk_id": "table::inventory_management::Operations::products",
+    "content": "Table: products\nPurpose: Master catalog of all products in the system",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "inventory_management",
+      "database_purpose": "Manages product inventory, stock levels, and warehouse operations",
+      "table_name": "products",
+      "module_name": "Operations",
+      "primary_keys": [
+        "product_id"
+      ],
+      "unique_keys": [
+        "sku"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::inventory_management::Operations::products",
+    "content": "Table: products\nPurpose: Master catalog of all products in the system\n\nproduct_id INT pri no Unique product identifier primary\nsku VARCHAR(50) uni no Stock Keeping Unit code product\ncategory_id INT mul no Product category foreign",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "inventory_management",
+      "table_name": "products",
+      "module_name": "Operations",
+      "column_names": [
+        "product_id",
+        "sku",
+        "category_id"
+      ],
+      "primary_keys": [
+        "product_id"
+      ],
+      "unique_keys": [
+        "sku"
+      ],
+      "indexed_columns": [
+        "category_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::inventory_management::Operations::inventory",
+    "content": "Table: inventory\nPurpose: Tracks current stock levels for each product",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "inventory_management",
+      "database_purpose": "Manages product inventory, stock levels, and warehouse operations",
+      "table_name": "inventory",
+      "module_name": "Operations",
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::inventory_management::Operations::inventory",
+    "content": "Table: inventory\nPurpose: Tracks current stock levels for each product\n\ninventory_id INT pri no Unique inventory record identifier primary\nproduct_id INT mul no Foreign key to products table foreign\nwarehouse_id INT mul no Warehouse location foreign",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "inventory_management",
+      "table_name": "inventory",
+      "module_name": "Operations",
+      "column_names": [
+        "inventory_id",
+        "product_id",
+        "warehouse_id"
+      ],
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "product_id",
+        "warehouse_id"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::inventory_management::Operations::warehouses",
+    "content": "Table: warehouses\nPurpose: Information about warehouse locations",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "inventory_management",
+      "database_purpose": "Manages product inventory, stock levels, and warehouse operations",
+      "table_name": "warehouses",
+      "module_name": "Operations",
+      "primary_keys": [
+        "warehouse_id"
+      ],
+      "unique_keys": [
+        "warehouse_code"
+      ]
+    }
+  },
+  {
+    "chunk_id": "columns::inventory_management::Operations::warehouses",
+    "content": "Table: warehouses\nPurpose: Information about warehouse locations\n\nwarehouse_id INT pri no Unique warehouse identifier primary\nwarehouse_code VARCHAR(20) uni no Warehouse code location",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "inventory_management",
+      "table_name": "warehouses",
+      "module_name": "Operations",
+      "column_names": [
+        "warehouse_id",
+        "warehouse_code"
+      ],
+      "primary_keys": [
+        "warehouse_id"
+      ],
+      "unique_keys": [
+        "warehouse_code"
+      ],
+      "indexed_columns": []
+    }
+  },
+  {
+    "chunk_id": "table::inventory_management::Operations::stock_movements",
+    "content": "Table: stock_movements\nPurpose: Records all stock movements (inbound, outbound, adjustments)",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "inventory_management",
+      "database_purpose": "Manages product inventory, stock levels, and warehouse operations",
+      "table_name": "stock_movements",
+      "module_name": "Operations",
+      "primary_keys": [
+        "movement_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::inventory_management::Operations::stock_movements",
+    "content": "Table: stock_movements\nPurpose: Records all stock movements (inbound, outbound, adjustments)\n\nmovement_id INT pri no Unique movement identifier primary\nproduct_id INT mul no Product being moved foreign\nwarehouse_id INT mul no Warehouse involved foreign\nperformed_by INT mul yes User who performed the movement audit",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "inventory_management",
+      "table_name": "stock_movements",
+      "module_name": "Operations",
+      "column_names": [
+        "movement_id",
+        "product_id",
+        "warehouse_id",
+        "performed_by"
+      ],
+      "primary_keys": [
+        "movement_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "product_id",
+        "warehouse_id",
+        "performed_by"
+      ]
+    }
+  },
+  {
+    "chunk_id": "table::inventory_management::Operations::product_categories",
+    "content": "Table: product_categories\nPurpose: Hierarchical product categorization",
+    "metadata": {
+      "chunk_type": "table",
+      "database_name": "inventory_management",
+      "database_purpose": "Manages product inventory, stock levels, and warehouse operations",
+      "table_name": "product_categories",
+      "module_name": "Operations",
+      "primary_keys": [
+        "category_id"
+      ],
+      "unique_keys": []
+    }
+  },
+  {
+    "chunk_id": "columns::inventory_management::Operations::product_categories",
+    "content": "Table: product_categories\nPurpose: Hierarchical product categorization\n\ncategory_id INT pri no Unique category identifier primary\nparent_category_id INT mul yes Parent category for hierarchy foreign",
+    "metadata": {
+      "chunk_type": "column",
+      "database_name": "inventory_management",
+      "table_name": "product_categories",
+      "module_name": "Operations",
+      "column_names": [
+        "category_id",
+        "parent_category_id"
+      ],
+      "primary_keys": [
+        "category_id"
+      ],
+      "unique_keys": [],
+      "indexed_columns": [
+        "parent_category_id"
+      ]
+    }
+  }
+]
