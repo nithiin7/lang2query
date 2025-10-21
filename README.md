@@ -10,6 +10,25 @@
 
 ## 🚀 Quick Start
 
+### Option 1: Docker (Recommended)
+
+```bash
+git clone https://github.com/yourusername/lang2query.git
+cd lang2query
+
+# Copy environment file
+cp env.example .env
+# Edit .env with your OpenAI API key
+
+# Start with Docker Compose
+docker-compose up -d
+```
+
+**Web Interface**: Visit `http://localhost:3000` for the modern web UI  
+**API Documentation**: Visit `http://localhost:8000/docs` for interactive API docs
+
+### Option 2: Local Development
+
 ```bash
 git clone https://github.com/yourusername/lang2query.git
 cd lang2query
@@ -23,9 +42,6 @@ make download
 # Start the application
 make run
 ```
-
-**Web Interface**: Visit `http://localhost:3000` for the modern web UI  
-**API Documentation**: Visit `http://localhost:8000/docs` for interactive API docs
 
 ## ✨ Features
 
@@ -98,6 +114,16 @@ make run
 | `make venv`     | Create Python virtual environment                   |
 | `make clean`    | Clean up temporary files                            |
 | `make test`     | Run test suite                                      |
+
+### 🐳 Docker Commands
+
+| Command | Description |
+|---------|-------------|
+| `docker-compose up -d` | Start all services in background |
+| `docker-compose down` | Stop all services |
+| `docker-compose logs -f` | View logs in real-time |
+| `docker-compose build` | Rebuild all images |
+| `docker-compose -f docker-compose.dev.yml up -d` | Start development environment |
 
 ## 🚀 Usage
 
@@ -241,6 +267,8 @@ lang2query/
 │   │   ├── components/           # React components
 │   │   ├── lib/                  # Utilities and API client
 │   │   └── types/                # TypeScript definitions
+│   ├── Dockerfile                # Frontend production image
+│   ├── Dockerfile.dev            # Frontend development image
 │   └── package.json
 ├── src/                          # Python backend
 │   ├── agents/                   # LangGraph agents
@@ -248,9 +276,45 @@ lang2query/
 │   ├── retreiver/                # Knowledge base system
 │   ├── tools/                    # LangChain tools
 │   └── workflow.py               # Main workflow
+├── docker-compose.yml            # Production Docker setup
+├── docker-compose.dev.yml        # Development Docker setup
+├── Dockerfile                    # Backend production image
+├── .dockerignore                 # Docker ignore file
+├── env.example                   # Environment variables template
 ├── requirements.txt              # Python dependencies
 └── Makefile                     # Build automation
 ```
+
+## 🐳 Docker Setup
+
+Lang2Query includes comprehensive Docker support for easy deployment and development.
+
+### Quick Docker Start
+
+```bash
+# Clone and start with Docker
+git clone https://github.com/yourusername/lang2query.git
+cd lang2query
+cp env.example .env
+# Edit .env with your API keys
+docker-compose up -d
+```
+
+### Docker Services
+
+- **Backend**: FastAPI application with LangGraph agents
+- **Frontend**: Next.js React application
+- **Redis**: Caching and session storage
+- **ChromaDB**: Vector database for knowledge retrieval
+
+### Development with Docker
+
+```bash
+# Start development environment with hot reload
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+For detailed Docker documentation, see [DOCKER.md](DOCKER.md).
 
 ## 🤝 Contributing
 

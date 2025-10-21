@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Lang2Query Backend (Development)
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lang2query-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PROVIDER=chatgpt
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=gpt-4o
+      - KB_DIRECTORY=/app/src/kb
+      - COLLECTION_NAME=sql_generation_kb
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - PYTHONPATH=/app
+    volumes:
+      - ./src:/app/src
+      - ./requirements.txt:/app/requirements.txt
+      - ./Makefile:/app/Makefile
+      - ./src/kb:/app/src/kb
+      - ./src/retreiver/input:/app/src/retreiver/input
+      - ./src/retreiver/output:/app/src/retreiver/output
+    networks:
+      - lang2query-network
+    restart: unless-stopped
+    command: ["python", "-m", "src.api.app"]
+
+  # Lang2Query Frontend (Development)
+  frontend-dev:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.dev
+    container_name: lang2query-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    depends_on:
+      - backend-dev
+    networks:
+      - lang2query-network
+    restart: unless-stopped
+    command: ["npm", "run", "dev"]
+
+  # Redis (for caching and session storage)
+  redis:
+    image: redis:7-alpine
+    container_name: lang2query-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - lang2query-network
+    restart: unless-stopped
+
+  # ChromaDB (for vector storage)
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: lang2query-chromadb-dev
+    ports:
+      - "8001:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    volumes:
+      - chroma_data_dev:/chroma/chroma
+    networks:
+      - lang2query-network
+    restart: unless-stopped
+
+volumes:
+  redis_data_dev:
+    driver: local
+  chroma_data_dev:
+    driver: local
+
+networks:
+  lang2query-network:
+    driver: bridge
