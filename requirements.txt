@@ -1,0 +1,16 @@
+transformers
+torch
+urllib3
+requests
+pydantic
+langgraph
+langchain
+langchain-core
+langchain-ollama
+streamlit
+chromadb
+sentence-transformers
+fastapi
+uvicorn[standard]
+websockets
+python-dotenv

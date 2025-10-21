@@ -1,269 +1,110 @@
-# Lang2Query Agent
+# Text2Query
 
-A multi-language natural language to query agent built using LangGraph for converting natural language queries to structured queries in any language with high accuracy.
+Natural language to SQL query generator using LangGraph agents and knowledge base retrieval.
 
-## 🚀 Features
+## Quick Start
 
-- **Natural Language Processing**: Convert plain English requests to SQL queries
-- **Database Schema Awareness**: Uses markdown-based database metadata
-- **LangGraph Workflow**: Multi-agent orchestration with state management
-- **Query Validation**: Built-in safety checks and validation
-- **Interactive CLI**: Easy-to-use command-line interface
-- **Extensible Architecture**: Easy to add new agents and workflows
-
-## 🏗️ Project Structure
-
-```
-lang2query/
-├── src/
-│   └── lang2query/           # Main package
-│       ├── __init__.py       # Package initialization and exports
-│       ├── core/             # Core workflow components
-│       │   ├── __init__.py
-│       │   └── workflow.py   # LangGraph workflow orchestration
-│       ├── agents/           # AI agent implementations
-│       │   ├── __init__.py
-│       │   └── query_agent.py # Query generation agent
-│       ├── utils/            # Utility modules
-│       │   ├── __init__.py
-│       │   ├── db_parser.py  # Database metadata parser
-│       │   └── logger.py     # Logging configuration
-│       ├── config.py         # Configuration settings
-│       ├── cli.py            # Command-line interface
-│       └── main.py           # Main entry point
-├── tests/                    # Test suite
-│   ├── conftest.py          # Pytest configuration
-│   ├── test_db_parser.py    # Database parser tests
-│   └── test_workflow.py     # Workflow tests
-├── env.example               # Environment variables template
-├── pyproject.toml           # Project configuration
-└── README.md                # This file
-```
-
-## 📋 Prerequisites
-
-- Python 3.12 or higher
-- Poetry (for dependency management)
-
-## 🛠️ Installation
-
-### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/lang2query.git
-cd lang2query
-```
+git clone <repository-url>
+cd Text2Query
 
-### 2. Install Poetry (if not already installed)
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-### 3. Install dependencies
-```bash
-poetry install
-```
-
-### 4. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-## 🏃‍♂️ Running the Application
-
-### Quick Start
-```bash
-# Using Poetry
-poetry run agent
-
-# Using Make
+make venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+make install
+make download
 make run
 ```
 
-### Alternative Run Methods
-```bash
-# Direct Python execution
-poetry run python src/main.py
+## Features
 
-# Activate virtual environment first
-poetry shell
-python src/main.py
-```
+- **Multi-Agent System**: LangGraph workflow with intelligent query routing
+- **Knowledge Base**: Vector search over documentation using ChromaDB
+- **Interactive CLI**: Easy-to-use command-line interface
+- **Modern Web UI**: Next.js frontend with real-time WebSocket updates
+- **Live Status Updates**: Real-time workflow progress with WebSocket streaming
+- **FastAPI Backend**: High-performance async API with WebSocket support
+- **Makefile Automation**: Simple setup and execution commands
 
-## 🏗️ Project Structure
+## Installation
 
-```
-lang2query/
-├── src/
-│   ├── main.py                     # Main application entry point
-│   ├── config.py                   # Configuration management
-│   ├── agent_graph.py              # LangGraph agent orchestration
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   ├── base_agent.py          # Base agent class
-│   │   └── sample_agent.py        # Sample agent implementation
-│   └── utils/
-│       ├── __init__.py
-│       └── logger.py               # Logging utilities
-├── tests/                          # Test suite
-├── .env.example                    # Environment variables template
-├── pyproject.toml                  # Poetry configuration and dependencies
-├── poetry.lock                     # Locked dependency versions
-├── Makefile                        # Development commands
-└── README.md                       # This file
-```
+### Requirements
 
-## 🎯 Supported Query Languages
+- Python 3.8+
+- Git
 
-- **SQL**: MySQL, PostgreSQL, SQLite, Oracle, SQL Server
-- **MongoDB**: Aggregation pipelines, find queries
-- **Extensible**: Easy to add new query languages
-
-## ⚙️ Configuration
-
-The system is highly configurable through environment variables. Copy `.env.example` to `.env` and customize:
-
-### **Required Environment Variables**
+### Setup
 
 ```bash
-# API Keys (Required)
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+git clone <repository-url>
+cd Text2Query
 
-# Database Configuration
-ACTIVE_DATABASE=mysql
-MYSQL_CONNECTION_STRING=mysql+mysqlconnector://user:pass@host/database
+make venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+make install
+make download
 ```
 
-## 🧪 Development
+### Make Commands
 
-### Code Quality Commands
 ```bash
-# Format code
-make format
-poetry run format
-
-# Lint code
-make lint
-poetry run lint
-
-# Fix linting issues
-make lint-fix
-poetry run lint-fix
-
-# Type checking
-make type-check
-poetry run type-check
-
-# Run tests
-make test
-poetry run test
+make run       # Run the application
+make download  # Download models
+make install   # Install dependencies
+make venv      # Create virtual environment
+make clean     # Clean up files
 ```
 
-### Pre-commit Hooks
+## Usage
+
+### Interactive CLI Mode
+
 ```bash
-# Install pre-commit hooks
-poetry run precommit install
-
-# Run all pre-commit checks
-poetry run precommit run --all-files
+make run
 ```
 
-### Commit Standards
+### Web Interface (Next.js + FastAPI)
+
+#### Backend (FastAPI)
+
 ```bash
-# Use conventional commits
-poetry run commit
-
-# Generate changelog
-poetry run changelog
+cd src
+python -m api.app
+# or
+uvicorn api.app:create_app --factory --host 0.0.0.0 --port 8000
 ```
 
-## 📦 Dependencies
+#### Frontend (Next.js)
 
-### Core Dependencies
-- **LangGraph** (≥0.6.6): Agent orchestration framework
-- **LangChain** (≥0.3.27): LLM integration and utilities
-- **OpenAI** (≥1.101.0): OpenAI API client
-- **Pydantic** (≥2.11.7): Data validation and settings
-- **Rich** (≥14.1.0): Terminal formatting and UI
-
-### Development Dependencies
-- **pytest**: Testing framework
-- **black**: Code formatter
-- **ruff**: Fast Python linter
-- **mypy**: Static type checker
-- **pre-commit**: Git hooks for code quality
-- **commitizen**: Conventional commit management
-
-## 🚀 Deployment
-
-### Local Development
 ```bash
-# Install in development mode
-poetry install
-
-# Run with hot reload (if implemented)
-poetry run agent
+cd app
+npm install
+npm run dev
 ```
 
-### Production
-```bash
-# Build the package
-poetry build
+Access the modern web interface at `http://localhost:3000` with:
 
-# Install in production
-pip install dist/lang2query-*.whl
-```
+- **Mode Selection**: Choose between Interactive and Normal processing modes
+- **Live WebSocket Updates**: Real-time workflow progress with live status updates
+- **Dynamic State Display**: See databases, tables, and columns as they're identified
+- **Clean Results Display**: View formatted SQL queries and workflow summaries
+- **Responsive UI**: Modern interface with real-time progress indicators
 
-## 📝 Contributing
+Enter natural language queries like:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow conventional commit standards
-4. Run code quality checks before committing
-5. Add tests for new features
-6. Update documentation
-7. Submit a pull request
+- "Show me all customers with pending KYC"
+- "List all tables in the database"
+- "Find transactions from last month"
 
-### Development Setup
-```bash
-# Install development dependencies
-poetry install --with dev
+### Configuration
 
-# Set up pre-commit hooks
-poetry run precommit install
-```
+Edit `src/config.py` to change:
 
-## 🐛 Troubleshooting
+- `PROVIDER`: "ollama", "nvidia", or "local"
+- `OLLAMA_MODEL`: Model name for Ollama
+- `NVIDIA_MODEL`: Model for NVIDIA API
 
-### Common Issues
+## Requirements
 
-1. **Poetry not found**: Install Poetry using the official installer
-2. **Python version mismatch**: Ensure you have Python 3.12+
-3. **Environment variables**: Check that `.env` file exists and is properly configured
-4. **Dependencies**: Run `poetry install` to ensure all dependencies are installed
-
-### Getting Help
-
-1. Check the documentation
-2. Search existing issues
-3. Create a new issue with detailed information including:
-   - Python version
-   - Poetry version
-   - Error messages
-   - Steps to reproduce
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For issues and questions:
-
-1. Check the documentation
-2. Search existing issues
-3. Create a new issue with detailed information
-
-## 🔄 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+- Python 3.8+
+- Dependencies: See `requirements.txt`
+- Models: Auto-downloaded via `make download`
