@@ -101,10 +101,6 @@ class MetadataAgent(BaseAgent):
             "2. `get_columns_by_table('database_name', ['table_name'])` → gets column details\n"
             "3. Respond with results\n\n"
 
-            "**EXAMPLE:** 'list columns in user_state_transition_audit'\n"
-            "→ complex_filter_search('user_state_transition_audit', {'chunk_type': 'table'})\n"
-            "→ get_columns_by_table('wallet', ['user_state_transition_audit'])\n\n"
-
             "## 🛠️ TOOLS QUICK REFERENCE:\n\n"
             "**DISCOVERY:**\n"
             "• `get_all_databases()` - List all databases\n"
