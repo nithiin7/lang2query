@@ -48,7 +48,7 @@ make run
 ### 🤖 AI-Powered Query Generation
 
 - **Multi-Agent Workflow**: Intelligent LangGraph agents for database identification, table selection, and SQL generation
-- **Natural Language Processing**: Convert complex queries like "Show me all customers with pending KYC" into precise SQL
+- **Natural Language Processing**: Convert complex queries like "Show me all customers with pending verification" into precise SQL
 - **Context-Aware**: Understands database schemas and relationships for accurate query generation
 
 ### 🧠 Knowledge Base & Retrieval
@@ -117,13 +117,13 @@ make run
 
 ### 🐳 Docker Commands
 
-| Command | Description |
-|---------|-------------|
-| `docker-compose up -d` | Start all services in background |
-| `docker-compose down` | Stop all services |
-| `docker-compose logs -f` | View logs in real-time |
-| `docker-compose build` | Rebuild all images |
-| `docker-compose -f docker-compose.dev.yml up -d` | Start development environment |
+| Command                                          | Description                      |
+| ------------------------------------------------ | -------------------------------- |
+| `docker-compose up -d`                           | Start all services in background |
+| `docker-compose down`                            | Stop all services                |
+| `docker-compose logs -f`                         | View logs in real-time           |
+| `docker-compose build`                           | Rebuild all images               |
+| `docker-compose -f docker-compose.dev.yml up -d` | Start development environment    |
 
 ## 🚀 Usage
 
@@ -147,7 +147,7 @@ This will start both the FastAPI backend (`http://localhost:8000`) and Next.js f
 
 #### Example Queries:
 
-- "Show me all customers with pending KYC verification"
+- "Show me all customers with pending verification"
 - "List all payment transactions from last month"
 - "Find products with low inventory levels"
 - "Get user profiles created in the last 30 days"

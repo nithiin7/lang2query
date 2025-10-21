@@ -103,7 +103,7 @@ class TableIdentifier(BaseAgent):
 
 2. **Analyze the query requirements carefully:**
    - What entities are mentioned? (customers, users, accounts, transactions, wallet_events, etc.)
-   - What specific data is needed? (dates, statuses, amounts, KYC info, transaction details, etc.)
+   - What specific data is needed? (dates, statuses, amounts, verification info, transaction details, etc.)
    - What filters/conditions? (date ranges, status checks, amount thresholds, etc.)
    - What relationships need to be joined? (customer to transactions, accounts to wallet_events, etc.)
 

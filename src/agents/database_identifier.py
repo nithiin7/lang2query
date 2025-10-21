@@ -101,13 +101,13 @@ class DatabaseIdentifierAgent(BaseAgent):
 
 3. **Identify ALL required data domains**: Break down the query into components:
    - What entities are mentioned? (users, customers, accounts, transactions, etc.)
-   - What business domains are involved? (user management, payments, KYC, etc.)
+   - What business domains are involved? (user management, payments, etc.)
    - What specific data types are needed? (profile data, transaction history, verification status, etc.)
-   - What cross-domain relationships exist? (user + payment data, customer + KYC data, etc.)
+   - What cross-domain relationships exist? (user + payment data, customer + verification data, etc.)
 
 4. **Think about data dependencies**: Most complex queries require multiple databases:
    - User/Account databases + Transaction/Payment databases
-   - Customer databases + Identity/KYC databases
+   - Customer databases + Identity/Verification databases
    - Profile databases + Activity/Audit databases
    - Core business data + Reference/Lookup databases
 

@@ -1,6 +1,5 @@
 import os
 import sys
-import ssl
 import warnings
 import json
 from pathlib import Path
@@ -18,12 +17,6 @@ from src.retriever.sql_kb_chunker import SQLKnowledgeBaseChunker
 
 # Add the parent directory to Python path to allow absolute imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-ssl._create_default_https_context = ssl._create_unverified_context
-os.environ['CURL_CA_BUNDLE'] = ''
-os.environ['REQUESTS_CA_BUNDLE'] = ''
-os.environ['PYTHONWARNINGS'] = 'ignore:Unverified HTTPS request'
-warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
 
 class BGE_M3_EmbeddingFunction(embedding_functions.EmbeddingFunction):

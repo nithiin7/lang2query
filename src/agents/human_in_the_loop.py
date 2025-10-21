@@ -316,26 +316,6 @@ Return ONLY the JSON structure matching the required schema. Do not include expl
 For "use wallet.user table as well":
 1. Call: validate_table_exists("wallet.user")
 2. If VALID: include "wallet.user" in suggested_values
-3. Return:
-{{
-  "selected_values": ["wallet.user_state_transition_audit", "kyc.kyc_user_detail", "wallet.wallet_detail"],
-  "suggested_values": ["wallet.user"],
-  "approval_status": "MODIFY",
-  "feedback_summary": "Validated and added wallet.user table to the current selection",
-  "modification_type": "add",
-}}
-
-For "use nonexistent.table":
-1. Call: validate_table_exists("nonexistent.table")
-2. If INVALID: search for alternatives or exclude
-3. Return:
-{{
-  "selected_values": ["wallet.user_state_transition_audit", "kyc.kyc_user_detail", "wallet.wallet_detail"],
-  "suggested_values": [],
-  "approval_status": "APPROVE",
-  "feedback_summary": "nonexistent.table not found in knowledge base, proceeding with current selection",
-  "modification_type": "approve",
-}}
 
 **CRITICAL:**
 - **Always call validation tools** before including items in suggested_values

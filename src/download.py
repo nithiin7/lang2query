@@ -1,50 +1,14 @@
 #!/usr/bin/env python3
 """
-Model Download Script - Download and cache models locally with SSL verification disabled
+Model Download Script - Download and cache models locally
 """
 
-import os
-import ssl
-import warnings
 from pathlib import Path
-import requests
-import urllib3
 from sentence_transformers import SentenceTransformer
 from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
 
-# Disable SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-warnings.filterwarnings('ignore', message='Unverified HTTPS request')
-
-# Disable SSL verification globally
-ssl._create_default_https_context = ssl._create_unverified_context
-os.environ['CURL_CA_BUNDLE'] = ''
-os.environ['REQUESTS_CA_BUNDLE'] = ''
-os.environ['PYTHONWARNINGS'] = 'ignore:Unverified HTTPS request'
-os.environ['TRANSFORMERS_OFFLINE'] = '0'
-os.environ['HF_HUB_DISABLE_SSL_VERIFY'] = '1'
-
-# Monkey patch requests to disable SSL verification
-old_request = requests.Session.request
-def new_request(self, method, url, **kwargs):
-    kwargs['verify'] = False
-    return old_request(self, method, url, **kwargs)
-requests.Session.request = new_request
-
-# Import after SSL settings
 import json
 import torch
-
-# Additional monkey patch for huggingface_hub
-try:
-    import huggingface_hub
-    import huggingface_hub.constants
-
-    # Set hub to not verify SSL
-    huggingface_hub.constants.HF_HUB_DISABLE_SSL_VERIFY = True
-    os.environ["HF_HUB_DISABLE_SSL_VERIFY"] = "1"
-except:
-    pass
 
 def get_model_choice():
     """Prompt user to select which model to download"""
@@ -310,7 +274,6 @@ def download_llama():
 def main():
     print("🚀 Unified Model Download Script")
     print("=" * 60)
-    print("⚠️  SSL verification disabled for corporate firewall")
     print("=" * 60)
 
     # Get user choice

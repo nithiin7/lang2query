@@ -5,8 +5,6 @@ This module provides an interface to the LangGraph-based agent workflow.
 """
 
 import json
-import os
-import urllib3
 import logging
 import time
 
@@ -15,12 +13,6 @@ from workflow import Text2QueryWorkflow
 from utils import setup_colored_logging, log_section_header, Colors
 from pathlib import Path
 import config as app_config
-
-# Disable SSL verification
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-os.environ["HF_HUB_DISABLE_SSL_VERIFY"] = "1"
-os.environ['CURL_CA_BUNDLE'] = ''
-os.environ['REQUESTS_CA_BUNDLE'] = ''
 
 # Provider/model configuration
 PROVIDER = getattr(app_config, "PROVIDER", "ollama")
@@ -199,7 +191,7 @@ def display_welcome_message():
         "Show me all tables in the system",
         "What columns are in the users table?",
         "Describe the database schema",
-        "Show available tables in kyc_db",
+        "Show available tables in accounts_db",
         "What are the column names in transactions table?"
     ]
     for query in metadata_queries:
@@ -207,12 +199,12 @@ def display_welcome_message():
 
     print("\n🔍 DATA QUERIES:")
     data_queries = [
-        "Find all customers with pending KYC verification",
+        "Find all customers with pending verification",
         "Show me payment transactions for the last 30 days",
         "Get user profiles who haven't logged in for 90 days",
         "List all orders with their current status",
         "Find users who made payments above 1000 Rs",
-        "Get customer details with their KYC status",
+        "Get customer details with their verification status",
         "Show wallet transactions with customer names and amounts"
     ]
     for query in data_queries:

@@ -7,7 +7,13 @@ import { ResultsDisplay } from "@/components/ResultsDisplay";
 import { SelectionReviewCard } from "@/components/SelectionReviewCard";
 import { handleApiError, queryApi } from "@/lib/api";
 import { getWebSocketService, resetWebSocketService } from "@/lib/websocket";
-import { HitlRequest, QueryRequest, QueryResponse, WorkflowState, WorkflowStep } from "@/types";
+import {
+  HitlRequest,
+  QueryRequest,
+  QueryResponse,
+  WorkflowState,
+  WorkflowStep,
+} from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
@@ -206,7 +212,7 @@ export function QueryInterface() {
             <div>
               <h4 className="font-semibold text-gray-800 mb-2">Data Queries:</h4>
               <ul className="list-disc list-inside text-gray-600 space-y-1">
-                <li>Find all customers with pending KYC verification</li>
+                <li>Find all customers with pending verification</li>
                 <li>Show me payment transactions for the last 30 days</li>
                 <li>Get user profiles who haven&apos;t logged in for 90 days</li>
                 <li>List all orders with their current status</li>

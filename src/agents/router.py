@@ -81,7 +81,7 @@ class RouterAgent(BaseAgent):
 **DATA queries** ask for actual records/values:
 - Record retrieval: "find customers", "show transactions", "get users where..."
 - Aggregations: "count of orders", "sum of sales", "average age"
-- Filtering: "transactions from last month", "users with pending KYC"
+- Filtering: "transactions from last month", "users with pending verification"
 - Analysis: "top 10 products", "monthly revenue trends"
 - Updates/Inserts: "update customer", "add new record"
 
