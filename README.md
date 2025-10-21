@@ -99,12 +99,37 @@ Enter natural language queries like:
 
 Edit `src/config.py` to change:
 
-- `PROVIDER`: "ollama", "nvidia", or "local"
+- `PROVIDER`: "ollama", "nvidia", "chatgpt", or "local"
 - `OLLAMA_MODEL`: Model name for Ollama
 - `NVIDIA_MODEL`: Model for NVIDIA API
+- `OPENAI_API_KEY`: Your OpenAI API key (for ChatGPT provider)
+- `OPENAI_MODEL`: OpenAI model (gpt-4o, gpt-4o-mini, gpt-4, gpt-3.5-turbo)
+
+## Setup
+
+### ChatGPT Provider
+
+To use ChatGPT as your LLM provider:
+
+1. Get an OpenAI API key from [OpenAI](https://platform.openai.com/api-keys)
+2. Set your API key:
+   ```bash
+   export OPENAI_API_KEY="your-api-key-here"
+   ```
+3. Update `src/config.py`:
+   ```python
+   PROVIDER = "chatgpt"
+   OPENAI_MODEL = "gpt-4o"  # or gpt-4o-mini for cheaper usage
+   ```
+
+### Other Providers
+
+- **Ollama**: Install and run Ollama locally
+- **NVIDIA**: Configure NVIDIA API endpoints
+- **Local**: Download models via `make download`
 
 ## Requirements
 
 - Python 3.8+
 - Dependencies: See `requirements.txt`
-- Models: Auto-downloaded via `make download`
+- Models: Auto-downloaded via `make download` (for local provider)

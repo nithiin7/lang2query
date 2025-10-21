@@ -28,6 +28,9 @@ OLLAMA_MODEL = getattr(app_config, "OLLAMA_MODEL", "gpt-oss:20b")
 OLLAMA_BASE_URL = getattr(app_config, "OLLAMA_BASE_URL", "http://localhost:11434")
 NVIDIA_BASE_URL = getattr(app_config, "NVIDIA_BASE_URL", None)
 NVIDIA_MODEL = getattr(app_config, "NVIDIA_MODEL", None)
+OPENAI_API_KEY = getattr(app_config, "OPENAI_API_KEY", None)
+OPENAI_MODEL = getattr(app_config, "OPENAI_MODEL", "gpt-4o")
+OPENAI_BASE_URL = getattr(app_config, "OPENAI_BASE_URL", None)
 
 # Knowledge Base configuration
 MD_DIRECTORY = getattr(app_config, "MD_DIRECTORY", "input")
@@ -49,6 +52,8 @@ def create_model_wrapper() -> ModelWrapper:
         return ModelWrapper(model=NVIDIA_MODEL)
     elif provider == "ollama":
         return ModelWrapper(model=OLLAMA_MODEL)
+    elif provider == "chatgpt":
+        return ModelWrapper(model=OPENAI_MODEL)
     else:
         # For local models, use default quantization
         return ModelWrapper(use_quantization=True)
@@ -62,6 +67,9 @@ def display_model_info(model_wrapper: ModelWrapper, provider: str):
         main_logger.info(f"📊 Connected to NVIDIA model: {model_info['model']}")
     elif provider.lower() == "ollama":
         main_logger.info(f"📊 Connected to Ollama: {model_info.get('model', 'unknown')}")
+    elif provider.lower() == "chatgpt":
+        main_logger.info(f"📊 Connected to ChatGPT: {model_info.get('model', 'unknown')}")
+        main_logger.info(f"🔗 Provider: {model_info.get('provider', 'openai')}")
     else:
         main_logger.info(f"📊 Using local model: {model_info['model_type']} from {model_info['model_path']}")
         main_logger.info(f"🔧 Device: {model_info['device']}, Quantization: {model_info['quantization']}")

@@ -21,6 +21,7 @@ from transformers import (
 
 from .langchain import LangChainOllamaWrapper
 from .nvidia import NvidiaWrapper
+from .chatgpt import LangChainChatGPTWrapper
 import config as app_config
 
 # Configure logging
@@ -61,6 +62,7 @@ class ModelWrapper:
     
         self.langchain_wrapper = None
         self.nvidia_wrapper = None
+        self.chatgpt_wrapper = None
 
         self.provider = getattr(app_config, "PROVIDER", None)
         if self.provider:
@@ -85,6 +87,8 @@ class ModelWrapper:
             self._initialize_nvidia_wrapper()
         elif self.provider == "ollama":
             self._initialize_langchain_ollama()
+        elif self.provider == "chatgpt":
+            self._initialize_chatgpt_wrapper()
         else:
             logger.info(f"Initializing Local Model Wrapper on device: {self.device}")
             if self.use_quantization:
@@ -126,6 +130,28 @@ class ModelWrapper:
 
         except Exception as e:
             logger.error(f"Failed to initialize NVIDIA wrapper: {e}")
+            raise
+
+    def _initialize_chatgpt_wrapper(self):
+        """Initialize ChatGPT wrapper."""
+        try:
+            chatgpt_api_key = getattr(app_config, "OPENAI_API_KEY", None)
+            chatgpt_model = getattr(app_config, "OPENAI_MODEL", "gpt-4o")
+            chatgpt_base_url = getattr(app_config, "OPENAI_BASE_URL", None)
+
+            if not chatgpt_api_key:
+                raise ValueError("OPENAI_API_KEY is required for ChatGPT provider")
+
+            self.chatgpt_wrapper = LangChainChatGPTWrapper(
+                api_key=chatgpt_api_key,
+                model=chatgpt_model,
+                base_url=chatgpt_base_url,
+                timeout=self.timeout
+            )
+            logger.info("ChatGPT wrapper initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize ChatGPT wrapper: {e}")
             raise
     
     def _auto_detect_and_load(self):
@@ -284,6 +310,15 @@ class ModelWrapper:
                 **kwargs
             )
 
+        elif self.provider == "chatgpt" and self.chatgpt_wrapper:
+            return self.chatgpt_wrapper.generate(
+                schema_class=schema_class,
+                tools=tools,
+                system_message=system_message,
+                human_message=human_message,
+                **kwargs
+            )
+
 
         raise NotImplementedError("Structured output is not supported for local models. Use 'ollama' or 'nvidia' provider instead.")
 
@@ -316,6 +351,11 @@ class ModelWrapper:
                 # NVIDIA wrapper cleanup (if needed)
                 self.nvidia_wrapper = None
                 logger.info("✅ NVIDIA wrapper cleaned up")
+
+            if hasattr(self, 'chatgpt_wrapper') and self.chatgpt_wrapper:
+                # ChatGPT wrapper cleanup (if needed)
+                self.chatgpt_wrapper = None
+                logger.info("✅ ChatGPT wrapper cleaned up")
 
         except Exception as e:
             logger.error(f"⚠️ Warning during model cleanup: {e}")
@@ -350,6 +390,9 @@ class ModelWrapper:
                 "model": self.model,
                 "chat_format": "ollama"
             }
+
+        elif self.provider == "chatgpt" and self.chatgpt_wrapper:
+            return self.chatgpt_wrapper.get_model_info()
 
         else:
             return {
