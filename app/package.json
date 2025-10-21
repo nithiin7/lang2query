@@ -1,0 +1,46 @@
+{
+    "name": "text2query-frontend",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint",
+      "lint:fix": "next lint --fix",
+      "format": "prettier --write .",
+      "format:check": "prettier --check .",
+      "type-check": "tsc --noEmit"
+    },
+    "dependencies": {
+      "@types/node": "^22.10.1",
+      "@types/react": "^19.0.0",
+      "@types/react-dom": "^19.0.0",
+      "autoprefixer": "^10.4.20",
+      "axios": "^1.7.9",
+      "lucide-react": "^0.468.0",
+      "next": "15.5.4",
+      "postcss": "^8.5.0",
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0",
+      "react-markdown": "^10.1.0",
+      "rehype-highlight": "^7.0.2",
+      "remark-gfm": "^4.0.1",
+      "socket.io-client": "^4.8.1",
+      "sonner": "^2.0.7",
+      "tailwindcss": "^3.4.17",
+      "typescript": "^5.7.2"
+    },
+    "devDependencies": {
+      "@typescript-eslint/eslint-plugin": "^8.18.1",
+      "@typescript-eslint/parser": "^8.18.1",
+      "eslint": "^9.17.0",
+      "eslint-config-next": "15.5.4",
+      "eslint-config-prettier": "^9.1.0",
+      "eslint-plugin-prettier": "^5.2.1",
+      "eslint-plugin-react": "^7.37.2",
+      "eslint-plugin-react-hooks": "^5.0.0",
+      "prettier": "^3.3.3"
+    }
+  }
+  

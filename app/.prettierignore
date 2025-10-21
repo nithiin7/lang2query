@@ -1,0 +1,20 @@
+node_modules
+.next
+out
+build
+dist
+coverage
+*.log
+**/.turbo
+**/.cache
+**/.next
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
+**/.venv
+**/venv
+**/.vscode
+**/.idea
+
+# generated
+app/.next
