@@ -115,8 +115,8 @@ PRODUCTION_WS_URL=wss://your-api-domain.com/ws
 The following directories are mounted as volumes:
 
 - `./src/kb` → `/app/src/kb` (Knowledge base)
-- `./src/retreiver/input` → `/app/src/retreiver/input` (Input docs)
-- `./src/retreiver/output` → `/app/src/retreiver/output` (Generated chunks)
+- `./src/retriever/input` → `/app/src/retriever/input` (Input docs)
+- `./src/retriever/output` → `/app/src/retriever/output` (Generated chunks)
 
 ## 🛠️ Docker Commands
 

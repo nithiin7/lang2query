@@ -310,7 +310,7 @@ Thumbs.db
 # Lang2Query specific
 # Knowledge base files
 src/kb/
-src/retreiver/output/
+src/retriever/output/
 *.db
 *.sqlite
 *.sqlite3

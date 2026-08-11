@@ -19,8 +19,8 @@ services:
       - API_PORT=8000
     volumes:
       - ./src/kb:/app/src/kb
-      - ./src/retreiver/input:/app/src/retreiver/input
-      - ./src/retreiver/output:/app/src/retreiver/output
+      - ./src/retriever/input:/app/src/retriever/input
+      - ./src/retriever/output:/app/src/retriever/output
     networks:
       - lang2query-network
     restart: unless-stopped

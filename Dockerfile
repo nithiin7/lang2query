@@ -29,7 +29,7 @@ COPY src/ ./src/
 COPY Makefile ./
 
 # Create necessary directories
-RUN mkdir -p src/kb src/retreiver/output src/retreiver/input
+RUN mkdir -p src/kb src/retriever/output src/retriever/input
 
 # Download models (optional - can be done at runtime)
 # RUN python download.py

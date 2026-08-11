@@ -277,7 +277,7 @@ Brief description of changes
 src/
 ├── agents/           # LangGraph agents
 ├── api/             # FastAPI application
-├── retreiver/       # Knowledge base system
+├── retriever/       # Knowledge base system
 ├── tools/           # LangChain tools
 ├── lib/             # Core libraries
 ├── utils/           # Utilities

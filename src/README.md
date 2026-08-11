@@ -13,7 +13,7 @@
 
 - **FastAPI Application** (`api/`): High-performance async API with WebSocket support
 - **LangGraph Agents** (`agents/`): Multi-agent workflow for intelligent query processing
-- **Knowledge Base** (`retreiver/`): Vector search system with ChromaDB and BGE-M3 embeddings
+- **Knowledge Base** (`retriever/`): Vector search system with ChromaDB and BGE-M3 embeddings
 - **LangChain Tools** (`tools/`): Specialized tools for database operations
 - **Workflow Engine** (`workflow.py`): Orchestrates the complete query processing pipeline
 
@@ -94,7 +94,7 @@ src/
 │       ├── __init__.py
 │       ├── query.py         # Query endpoints
 │       └── system.py        # System endpoints
-├── retreiver/               # Knowledge base system
+├── retriever/               # Knowledge base system
 │   ├── __init__.py
 │   ├── create_sql_kb_embeddings.py  # Embedding creation
 │   ├── retrieve_sql_kb.py           # Knowledge retrieval
@@ -171,7 +171,7 @@ API_PORT = 8000
 
 ### Adding Database Documentation
 
-1. **Create markdown files** in `retreiver/input/` following this format:
+1. **Create markdown files** in `retriever/input/` following this format:
 
 ```markdown
 # Workbook: YourDatabase.xlsx
@@ -203,7 +203,7 @@ API_PORT = 8000
 
 2. **Generate embeddings:**
    ```bash
-   python -m retreiver.create_sql_kb_embeddings --md-dir retreiver/input
+   python -m retriever.create_sql_kb_embeddings --md-dir retriever/input
    ```
 
 ### Knowledge Base Tools
@@ -258,7 +258,7 @@ python -m pytest --cov=src tests/
 tests/
 ├── test_agents/          # Agent tests
 ├── test_api/            # API endpoint tests
-├── test_retreiver/      # Knowledge base tests
+├── test_retriever/      # Knowledge base tests
 ├── test_tools/          # Tool tests
 └── conftest.py          # Test configuration
 ```

@@ -228,10 +228,10 @@ PROVIDER = "local"
 
 ### 🗄️ Knowledge Base Setup
 
-1. **Add your database documentation** to `src/retreiver/input/` as markdown files
+1. **Add your database documentation** to `src/retriever/input/` as markdown files
 2. **Create embeddings:**
    ```bash
-   python -m src.retreiver.create_sql_kb_embeddings --md-dir src/retreiver/input
+   python -m src.retriever.create_sql_kb_embeddings --md-dir src/retriever/input
    ```
 
 ## 🏗️ Architecture
@@ -273,7 +273,7 @@ lang2query/
 ├── src/                          # Python backend
 │   ├── agents/                   # LangGraph agents
 │   ├── api/                      # FastAPI application
-│   ├── retreiver/                # Knowledge base system
+│   ├── retriever/                # Knowledge base system
 │   ├── tools/                    # LangChain tools
 │   └── workflow.py               # Main workflow
 ├── docker-compose.yml            # Production Docker setup
