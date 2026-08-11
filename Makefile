@@ -22,7 +22,7 @@ embeddings:
 	cd backend/app && python3 workers/document_ingestion.py \
 		--md-dir "ai/input" \
 		--chroma-dir "ai/kb" \
-		--collection-name "sql_generation_kb" \
+		--collection-name "knowledge_base" \
 		--batch-size 1 \
 		--output-dir "ai/output" \
 		--chunked-json-dir "ai/output"

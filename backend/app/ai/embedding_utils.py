@@ -1,6 +1,6 @@
 """
 Shared embedding function used by both the ingestion pipeline
-(document_ingestion.py) and the retriever (retrieve_sql_kb.py), so
+(document_ingestion.py) and the retriever (kb_retriever.py), so
 they always encode with the exact same model wrapper ChromaDB stores
 alongside a collection.
 """

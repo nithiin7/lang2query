@@ -14,7 +14,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=gpt-4o
       - KB_DIRECTORY=/srv/app/ai/kb
-      - COLLECTION_NAME=sql_generation_kb
+      - COLLECTION_NAME=knowledge_base
       - API_HOST=0.0.0.0
       - API_PORT=8000
     volumes:

@@ -1,5 +1,5 @@
 """
-SQL Generation Knowledge Base Chunker
+Knowledge Base Chunker
 Streamlined version with minimal redundancy and focused content
 """
 
@@ -78,9 +78,9 @@ class ColumnChunk:
         }
 
 
-class SQLKnowledgeBaseChunker:
+class KnowledgeBaseChunker:
     """
-    Streamlined chunker for SQL database documentation.
+    Streamlined chunker for database documentation.
     Creates three types of chunks with minimal redundancy:
     1. Database Chunks - Basic database information
     2. Table Chunks - Table name and purpose only
@@ -507,7 +507,7 @@ def print_all_chunks(chunks: List[Union["DatabaseChunk", "TableChunk", "ColumnCh
 def main():
     """Main function to process markdown files or a directory of files"""
     parser = argparse.ArgumentParser(
-        description="SQL KB Chunker - Parse markdown DB docs into structured chunks."
+        description="KB Chunker - Parse markdown docs into structured chunks."
     )
     parser.add_argument(
         "input_path", help="Path to a markdown file OR a folder containing .md files"
@@ -534,7 +534,7 @@ def main():
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
-    chunker = SQLKnowledgeBaseChunker()
+    chunker = KnowledgeBaseChunker()
 
     # If directory: process all .md files (non-recursive)
     if os.path.isdir(input_path):

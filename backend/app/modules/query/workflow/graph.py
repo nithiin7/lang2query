@@ -28,7 +28,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from ai.llm import ModelWrapper
-from ai.retrieve_sql_kb import SQLKnowledgeBaseRetriever
+from ai.kb_retriever import KnowledgeBaseRetriever
 from core.config import COLLECTION_NAME, EMBEDDING_MODEL_PATH, KB_DIRECTORY
 from core.logging import Colors, log_section_header, log_workflow_step
 from modules.query.agents import (
@@ -143,7 +143,7 @@ class Text2QueryWorkflow:
         # Initialize shared retriever instance
         self.retriever = None
         try:
-            self.retriever = SQLKnowledgeBaseRetriever(
+            self.retriever = KnowledgeBaseRetriever(
                 model_path=EMBEDDING_MODEL_PATH,
                 chroma_persist_dir=str(KB_DIRECTORY),
                 collection_name=COLLECTION_NAME,

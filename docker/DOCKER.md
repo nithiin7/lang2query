@@ -99,7 +99,7 @@ OPENAI_MODEL=gpt-4o
 # Backend Configuration
 PROVIDER=chatgpt
 KB_DIRECTORY=/srv/app/ai/kb
-COLLECTION_NAME=sql_generation_kb
+COLLECTION_NAME=knowledge_base
 
 # Frontend Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000

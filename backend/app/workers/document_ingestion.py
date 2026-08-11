@@ -14,17 +14,17 @@ from tqdm import tqdm
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai.embedding_utils import BGE_M3_EmbeddingFunction
-from ai.sql_kb_chunker import SQLKnowledgeBaseChunker
+from ai.kb_chunker import KnowledgeBaseChunker
 
 
 class DocumentIngestionPipeline:
-    """Creates embeddings for SQL Knowledge Base using BGE-M3 and ChromaDB"""
+    """Creates embeddings for a Knowledge Base using BGE-M3 and ChromaDB"""
 
     def __init__(
         self,
         model_path: str = None,
         chroma_persist_dir: str = "./ai/kb",
-        collection_name: str = "sql_generation_kb",
+        collection_name: str = "knowledge_base",
     ):
         """
         Initialize the embedder with BGE-M3 and ChromaDB
@@ -68,7 +68,7 @@ class DocumentIngestionPipeline:
         print(f"ChromaDB initialized at: {chroma_persist_dir}")
 
         self.collection_name = collection_name
-        self.chunker = SQLKnowledgeBaseChunker()
+        self.chunker = KnowledgeBaseChunker()
 
     def create_or_get_collection(self, reset: bool = False):
         embedding_function = BGE_M3_EmbeddingFunction(self.model)
@@ -95,7 +95,7 @@ class DocumentIngestionPipeline:
                 name=self.collection_name,
                 embedding_function=embedding_function,
                 metadata={
-                    "description": "SQL Generation Knowledge Base with BGE-M3 embeddings",
+                    "description": "Knowledge Base with BGE-M3 embeddings",
                     "created_at": datetime.now().isoformat(),
                     "embedding_model": "BAAI/bge-m3",
                     "chunk_strategy": "contextual_v2",
@@ -256,7 +256,7 @@ class DocumentIngestionPipeline:
     def save_metadata(
         self,
         stats: Dict[str, Any],
-        output_file: str = "ai/output/sql_kb_metadata.json",
+        output_file: str = "ai/output/kb_metadata.json",
     ):
         """Save metadata about the knowledge base using pre-aggregated stats"""
         metadata = {
@@ -378,7 +378,7 @@ class DocumentIngestionPipeline:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create SQL Knowledge Base embeddings")
+    parser = argparse.ArgumentParser(description="Create Knowledge Base embeddings")
     parser.add_argument(
         "--md-dir",
         type=str,
@@ -400,7 +400,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--collection-name",
         type=str,
-        default="sql_generation_kb",
+        default="knowledge_base",
         help="Name of ChromaDB collection",
     )
     parser.add_argument(
@@ -447,10 +447,10 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main():
-    """Main function to create SQL KB embeddings"""
+    """Main function to create Knowledge Base embeddings"""
     args = _parse_args()
 
-    print("SQL Knowledge Base Embedding Creation")
+    print("Knowledge Base Embedding Creation")
     print("=" * 60)
     print(f"Markdown directory: {args.md_dir}")
     print(f"ChromaDB directory: {args.chroma_dir}")
@@ -485,7 +485,7 @@ def main():
     pipeline.save_metadata(stats)
     pipeline.verify_embeddings(collection)
 
-    print("\nSQL Knowledge Base embedding creation completed!")
+    print("\nKnowledge Base embedding creation completed!")
     print(f"Total documents in collection: {collection.count()}")
 
 

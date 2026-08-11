@@ -9,7 +9,7 @@ formatted schema context that can be used by other agents.
 import logging
 from typing import Any, Dict, List, Optional
 
-from ai.retrieve_sql_kb import SQLKnowledgeBaseRetriever
+from ai.kb_retriever import KnowledgeBaseRetriever
 from models.models import AgentResult, AgentState, AgentType
 
 from .agent_utils import AgentUtils
@@ -22,7 +22,7 @@ class SchemaBuilderAgent(BaseAgent):
     """Agent responsible for building comprehensive schema context using new chunk format."""
 
     def __init__(
-        self, model_wrapper, retriever: Optional[SQLKnowledgeBaseRetriever] = None
+        self, model_wrapper, retriever: Optional[KnowledgeBaseRetriever] = None
     ):
         super().__init__(AgentType.SCHEMA_BUILDER, model_wrapper)
         self._retriever = retriever

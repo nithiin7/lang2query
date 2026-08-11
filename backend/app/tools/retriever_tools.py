@@ -1,7 +1,7 @@
 """
 Retriever tools for the Text2Query system.
 
-This module provides LangChain tools that wrap the SQL Knowledge Base retriever
+This module provides LangChain tools that wrap the Knowledge Base retriever
 functionality, allowing the LLM to intelligently retrieve schema information.
 
 Tools are produced by make_retriever_tools(retriever) rather than defined at
@@ -11,7 +11,7 @@ be added as a normal parameter without asking the LLM to supply it. Binding
 the tool closures to an already-constructed retriever at factory-call time is
 how a single shared retriever (one BGE-M3 model load, one ChromaDB
 connection) gets reused across every tool call instead of a new
-SQLKnowledgeBaseRetriever being constructed inside every tool invocation.
+KnowledgeBaseRetriever being constructed inside every tool invocation.
 """
 
 import json
@@ -26,10 +26,10 @@ logger = logging.getLogger(__name__)
 def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
     """
     Build the retriever-backed LangChain tools, bound to a single shared
-    SQLKnowledgeBaseRetriever instance.
+    KnowledgeBaseRetriever instance.
 
     Args:
-        retriever: An already-constructed SQLKnowledgeBaseRetriever (e.g.
+        retriever: An already-constructed KnowledgeBaseRetriever (e.g.
             Text2QueryWorkflow.retriever). Every tool returned here calls
             methods on this exact instance - no tool constructs its own.
 

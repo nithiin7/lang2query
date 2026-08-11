@@ -1,5 +1,5 @@
 """
-Read-only retriever over the SQL Knowledge Base ChromaDB collection written
+Read-only retriever over the Knowledge Base ChromaDB collection written
 by document_ingestion.py. Exposes the query methods that
 tools/retriever_tools.py's LangChain @tool functions call into.
 """
@@ -16,7 +16,7 @@ from sentence_transformers import SentenceTransformer
 from ai.embedding_utils import BGE_M3_EmbeddingFunction
 
 # Matches a column content line built by
-# SQLKnowledgeBaseChunker._create_table_columns_chunk, e.g.:
+# KnowledgeBaseChunker._create_table_columns_chunk, e.g.:
 #   "email VARCHAR(100) uni no User's email address Contact"
 # name and data_type are always present and space-free; key/nullable are
 # optional and drawn from a fixed vocabulary so they're safely matched by
@@ -34,14 +34,14 @@ _COLUMN_LINE_RE = re.compile(
 )
 
 
-class SQLKnowledgeBaseRetriever:
-    """Read-only query interface over an existing SQL Knowledge Base collection"""
+class KnowledgeBaseRetriever:
+    """Read-only query interface over an existing Knowledge Base collection"""
 
     def __init__(
         self,
         model_path: str = None,
         chroma_persist_dir: str = "./ai/kb",
-        collection_name: str = "sql_generation_kb",
+        collection_name: str = "knowledge_base",
     ):
         """
         Connect to the BGE-M3 model and the ChromaDB collection previously

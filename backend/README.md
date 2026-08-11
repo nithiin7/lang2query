@@ -68,7 +68,7 @@ export OPENAI_API_KEY="..."
 export OPENAI_MODEL="gpt-4o"          # or gpt-4o-mini
 export OLLAMA_MODEL="llama3.1"        # if PROVIDER=ollama
 export KB_DIRECTORY="./app/ai/kb"
-export COLLECTION_NAME="sql_generation_kb"
+export COLLECTION_NAME="knowledge_base"
 ```
 
 ## Knowledge Base

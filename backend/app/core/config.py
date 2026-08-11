@@ -10,7 +10,7 @@ APP_DIR = Path(__file__).resolve().parent.parent
 # Knowledge Base paths
 MD_DIRECTORY = APP_DIR / "ai" / "input"
 KB_DIRECTORY = APP_DIR / "ai" / "kb"
-COLLECTION_NAME = "sql_generation_kb"
+COLLECTION_NAME = "knowledge_base"
 
 # Embedding model path (None = auto-detect from models/bge-m3)
 EMBEDDING_MODEL_PATH = None

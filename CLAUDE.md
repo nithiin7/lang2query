@@ -38,7 +38,7 @@ Key mechanisms — know these cold before touching the `modules/query/workflow/`
 - **Human-in-the-loop is a real graph node**, not a UI-only concept — it's a checkpoint enforced by LangGraph's `MemorySaver` checkpointer, which is also what makes WebSocket pause/resume possible (see `backend/app/api/routes/query.py`).
 - **Structured outputs**: agents never parse free-text JSON out of an LLM response. They pass a Pydantic `schema_class` (e.g. `RoutingInfo`, `QueryValidation`) into `BaseAgent.generate_with_llm()`, which constrains the LLM's output to that schema. If you add a new agent, define its output schema in `models/models.py` first, with `field_validator`s for anything with a constrained value set (see `QueryValidation.verdict`).
 - **RAG retrieval is agentic, not naive**: `backend/app/tools/retriever_tools.py` exposes retrieval as LangChain `@tool`-decorated functions (`semantic_search`, `search_by_database`, `search_by_table`, `complex_filter_search`, etc.) that the LLM itself chooses to call. Don't collapse this back into "always inject top-k chunks into every prompt" — the agentic pattern is intentional and better suited to progressively narrowing a large schema.
-- **Ingestion is a separate, idempotent pipeline** (`backend/app/workers/document_ingestion.py` + `backend/app/ai/sql_kb_chunker.py`): markdown schema docs → hierarchical chunks (database/table/column, not fixed-size text splitting) → BGE-M3 embeddings → ChromaDB, skipping chunk IDs that already exist so re-ingestion after adding one doc doesn't re-embed everything.
+- **Ingestion is a separate, idempotent pipeline** (`backend/app/workers/document_ingestion.py` + `backend/app/ai/kb_chunker.py`): markdown schema docs → hierarchical chunks (database/table/column, not fixed-size text splitting) → BGE-M3 embeddings → ChromaDB, skipping chunk IDs that already exist so re-ingestion after adding one doc doesn't re-embed everything.
 
 ## 4. Repository structure and what belongs where
 
@@ -54,8 +54,8 @@ backend/                        # Python, FastAPI
 │   ├── ai/            # LLM provider abstraction + the RAG retrieval stack.
 │   │   ├── llm/            # ModelWrapper (agent.py) + provider-specific implementations: ollama.py, chatgpt.py. New provider = new file here, same interface.
 │   │   ├── embedding_utils.py  # BGE-M3 embedding function for ChromaDB.
-│   │   ├── sql_kb_chunker.py   # Hierarchical (database/table/column) markdown chunker used by ingestion.
-│   │   ├── retrieve_sql_kb.py  # Query-side retriever (SQLKnowledgeBaseRetriever) used by schema_builder and the retriever tools.
+│   │   ├── kb_chunker.py   # Hierarchical (database/table/column) markdown chunker used by ingestion.
+│   │   ├── kb_retriever.py  # Query-side retriever (KnowledgeBaseRetriever) used by schema_builder and the retriever tools.
 │   │   ├── input/          # Hand-written markdown schema docs (tracked in git) — source of truth for the KB.
 │   │   ├── output/         # Generated per-database chunk JSON (mostly gitignored cache).
 │   │   └── kb/              # ChromaDB persistence directory (gitignored).
