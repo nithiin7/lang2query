@@ -57,7 +57,7 @@ Each identification step is backed by agentic RAG: the LLM itself chooses which 
 git clone git@github.com:nithiin7/lang2query.git
 cd lang2query
 cp env.example .env        # add your OPENAI_API_KEY
-docker-compose up -d
+docker-compose -f docker/docker-compose.yml --project-directory . up -d
 ```
 
 Web UI → `http://localhost:3000` · API docs → `http://localhost:8000/docs`
@@ -96,8 +96,7 @@ lang2query/
 │   ├── retriever/        # Ingestion pipeline + query-side retriever
 │   ├── tools/             # LangChain @tool retrieval functions
 │   └── workflow/          # Graph wiring, routing, retries, resume
-├── docker-compose.yml   # Production Docker setup
-├── docker-compose.dev.yml
+├── docker/              # Dockerfile + docker-compose (prod & dev)
 ├── pyproject.toml       # Python dependencies
 └── Makefile             # Build automation
 ```

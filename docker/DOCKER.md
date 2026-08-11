@@ -26,7 +26,7 @@
 
 3. **Start all services:**
    ```bash
-   docker-compose up -d
+   docker-compose -f docker/docker-compose.yml --project-directory . up -d
    ```
 
 4. **Access the application:**
@@ -40,12 +40,12 @@
 For development with hot reload:
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
+docker-compose -f docker/docker-compose.dev.yml --project-directory . up -d
 ```
 
 ## Docker Files
 
-### Backend Dockerfile (`Dockerfile`)
+### Backend Dockerfile (`docker/Dockerfile`)
 
 - **Base**: Python 3.11-slim
 - **Features**: Multi-stage build, non-root user, health checks
@@ -67,7 +67,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 ## Docker Compose Services
 
-### Production (`docker-compose.yml`)
+### Production (`docker/docker-compose.yml`)
 
 | Service | Description | Port | Image |
 |---------|-------------|------|-------|
@@ -76,7 +76,7 @@ docker-compose -f docker-compose.dev.yml up -d
 | `redis` | Redis Cache | 6379 | redis:7-alpine |
 | `chromadb` | Vector Database | 8001 | chromadb/chroma |
 
-### Development (`docker-compose.dev.yml`)
+### Development (`docker/docker-compose.dev.yml`)
 
 | Service | Description | Port | Features |
 |---------|-------------|------|----------|
@@ -124,35 +124,35 @@ The following directories are mounted as volumes:
 
 ```bash
 # Start all services
-docker-compose up -d
+docker-compose -f docker/docker-compose.yml --project-directory . up -d
 
 # Start specific service
-docker-compose up -d backend
+docker-compose -f docker/docker-compose.yml --project-directory . up -d backend
 
 # View logs
-docker-compose logs -f backend
+docker-compose -f docker/docker-compose.yml --project-directory . logs -f backend
 
 # Stop all services
-docker-compose down
+docker-compose -f docker/docker-compose.yml --project-directory . down
 
 # Stop and remove volumes
-docker-compose down -v
+docker-compose -f docker/docker-compose.yml --project-directory . down -v
 ```
 
 ### Development Commands
 
 ```bash
 # Start development environment
-docker-compose -f docker-compose.dev.yml up -d
+docker-compose -f docker/docker-compose.dev.yml --project-directory . up -d
 
 # View development logs
-docker-compose -f docker-compose.dev.yml logs -f
+docker-compose -f docker/docker-compose.dev.yml --project-directory . logs -f
 
 # Rebuild services
-docker-compose build --no-cache
+docker-compose -f docker/docker-compose.yml --project-directory . build --no-cache
 
 # Execute commands in running container
-docker-compose exec frontend npm run build
+docker-compose -f docker/docker-compose.yml --project-directory . exec frontend npm run build
 ```
 
 ### Maintenance Commands
@@ -168,8 +168,8 @@ docker volume prune
 docker stats
 
 # Access container shell
-docker-compose exec backend bash
-docker-compose exec frontend sh
+docker-compose -f docker/docker-compose.yml --project-directory . exec backend bash
+docker-compose -f docker/docker-compose.yml --project-directory . exec frontend sh
 ```
 
 ## Customization
@@ -179,7 +179,7 @@ docker-compose exec frontend sh
 To add a new service (e.g., PostgreSQL):
 
 ```yaml
-# Add to docker-compose.yml
+# Add to docker/docker-compose.yml
 postgres:
   image: postgres:15-alpine
   container_name: lang2query-postgres
@@ -198,11 +198,11 @@ postgres:
 ### Custom Build Arguments
 
 ```yaml
-# In docker-compose.yml
+# In docker/docker-compose.yml
 backend:
   build:
     context: .
-    dockerfile: Dockerfile
+    dockerfile: docker/Dockerfile
     args:
       - PYTHON_VERSION=3.11
       - NODE_VERSION=20
@@ -234,7 +234,7 @@ healthcheck:
 
 2. **Build and deploy:**
    ```bash
-   docker-compose -f docker-compose.yml up -d --build
+   docker-compose -f docker/docker-compose.yml --project-directory . up -d --build
    ```
 
 3. **Set up reverse proxy** (nginx example):
@@ -305,7 +305,7 @@ steps:
    ```bash
    # Check what's using the port
    lsof -i :8000
-   # Change ports in docker-compose.yml
+   # Change ports in docker/docker-compose.yml
    ```
 
 2. **Permission issues:**
@@ -323,7 +323,7 @@ steps:
 4. **Build failures:**
    ```bash
    # Clean build cache
-   docker-compose build --no-cache
+   docker-compose -f docker/docker-compose.yml --project-directory . build --no-cache
    docker system prune -a
    ```
 
@@ -331,10 +331,10 @@ steps:
 
 ```bash
 # View detailed logs
-docker-compose logs --tail=100 -f
+docker-compose -f docker/docker-compose.yml --project-directory . logs --tail=100 -f
 
 # Check container status
-docker-compose ps
+docker-compose -f docker/docker-compose.yml --project-directory . ps
 
 # Inspect container
 docker inspect lang2query-backend
@@ -357,14 +357,14 @@ All services include health checks accessible at:
 
 ```bash
 # View all logs
-docker-compose logs
+docker-compose -f docker/docker-compose.yml --project-directory . logs
 
 # View specific service logs
-docker-compose logs backend
-docker-compose logs frontend
+docker-compose -f docker/docker-compose.yml --project-directory . logs backend
+docker-compose -f docker/docker-compose.yml --project-directory . logs frontend
 
 # Follow logs in real-time
-docker-compose logs -f --tail=100
+docker-compose -f docker/docker-compose.yml --project-directory . logs -f --tail=100
 ```
 
 ## Security
@@ -385,7 +385,7 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
   aquasec/trivy image lang2query-backend:latest
 
 # Scan all images
-docker-compose config --services | xargs -I {} docker run --rm \
+docker-compose -f docker/docker-compose.yml --project-directory . config --services | xargs -I {} docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   aquasec/trivy image lang2query-{}:latest
 ```
