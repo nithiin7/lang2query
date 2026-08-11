@@ -12,11 +12,11 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
 
-from src.retriever.sql_kb_chunker import SQLKnowledgeBaseChunker
-from src.retriever.embedding_utils import BGE_M3_EmbeddingFunction
-
 # Add the parent directory to Python path to allow absolute imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from src.retriever.sql_kb_chunker import SQLKnowledgeBaseChunker
+from src.retriever.embedding_utils import BGE_M3_EmbeddingFunction
 
 
 class SQLKnowledgeBaseEmbedder:
