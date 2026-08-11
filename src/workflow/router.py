@@ -61,94 +61,113 @@ class WorkflowRouter:
             return "database_identifier"
 
     @staticmethod
-    def route_after_database_identifier(state: AgentState) -> str:
-        """Route after database identifier based on interaction mode and retry status."""
+    def _route_after_identifier_step(
+        state: AgentState,
+        step_context: str,
+        step_name: str,
+        review_node: str,
+        next_node: str,
+    ) -> str:
+        """Shared routing after an identifier step (database/table): checks for
+        permanent failure or a pending retry, then routes based on interaction mode.
+        """
         # Check if step failed permanently
-        failure_result = WorkflowRouter.check_permanent_failure(state, "Database identifier")
+        failure_result = WorkflowRouter.check_permanent_failure(state, step_context)
         if failure_result:
             return failure_result
 
         # Check if this step needs to be retried (only for actual step failures, not resumes)
         if getattr(state, 'last_error_type', None) == "step_retry" and not getattr(state, 'is_resuming', False):
-            logger.info("Retrying database identifier step")
-            return "database_identifier"
+            logger.info(f"Retrying {step_context.lower()} step")
+            return step_name
 
         # Normal routing based on interaction mode
         mode = getattr(state, "interaction_mode", "ask")
         if mode == "interactive":
-            logger.info("Interactive mode: Routing to database human review")
-            return "database_human_review"
+            logger.info(f"Interactive mode: Routing to {review_node.replace('_', ' ')}")
+            return review_node
         else:
-            logger.info("Ask mode: Skipping human review, proceeding to table identifier")
-            return "table_identifier"
+            logger.info(f"Ask mode: Skipping human review, proceeding to {next_node.replace('_', ' ')}")
+            return next_node
 
     @staticmethod
-    def route_after_database_human_feedback(state: AgentState) -> str:
-        """Route after database human feedback based on approval status and modification type."""
-        approvals = getattr(state, 'human_approvals', {}) or {}
-        approved = approvals.get('databases', False)
-
-        if approved:
-            logger.info("User approved databases, proceeding to table identifier")
-            return "table_identifier"
-
-        # Check if we need to show updated list (modifications made) or re-identify
-        modification_type = getattr(state, 'last_modification_type', None)
-        feedback_processed = getattr(state, 'feedback_processed', False)
-
-        if feedback_processed and modification_type in ['add', 'remove', 'modify']:
-            logger.info("Modifications applied, showing updated database list to user")
-            # Clear the flag so next iteration doesn't loop
-            state.feedback_processed = False
-            return "database_human_review"
-        else:
-            logger.info("User rejected databases, re-running database identification")
-            return "database_identifier"
+    def route_after_database_identifier(state: AgentState) -> str:
+        """Route after database identifier based on interaction mode and retry status."""
+        return WorkflowRouter._route_after_identifier_step(
+            state,
+            step_context="Database identifier",
+            step_name="database_identifier",
+            review_node="database_human_review",
+            next_node="table_identifier",
+        )
 
     @staticmethod
     def route_after_table_identifier(state: AgentState) -> str:
         """Route after table identifier based on interaction mode and retry status."""
-        # Check if step failed permanently
-        failure_result = WorkflowRouter.check_permanent_failure(state, "Table identifier")
-        if failure_result:
-            return failure_result
-
-        # Check if this step needs to be retried (only for actual step failures, not resumes)
-        if getattr(state, 'last_error_type', None) == "step_retry" and not getattr(state, 'is_resuming', False):
-            logger.info("Retrying table identifier step")
-            return "table_identifier"
-
-        # Normal routing based on interaction mode
-        mode = getattr(state, "interaction_mode", "ask")
-        if mode == "interactive":
-            logger.info("Interactive mode: Routing to table human review")
-            return "table_human_review"
-        else:
-            logger.info("Ask mode: Skipping human review, proceeding to column identifier")
-            return "column_identifier"
+        return WorkflowRouter._route_after_identifier_step(
+            state,
+            step_context="Table identifier",
+            step_name="table_identifier",
+            review_node="table_human_review",
+            next_node="column_identifier",
+        )
 
     @staticmethod
-    def route_after_table_human_feedback(state: AgentState) -> str:
-        """Route after table human feedback based on approval status and modification type."""
+    def _route_after_identifier_feedback(
+        state: AgentState,
+        approval_key: str,
+        singular_label: str,
+        review_node: str,
+        next_node: str,
+        identifier_node: str,
+    ) -> str:
+        """Shared routing after human feedback on an identifier step (database/table):
+        proceeds if approved, re-shows the review after a modification, or re-runs
+        identification on rejection.
+        """
         approvals = getattr(state, 'human_approvals', {}) or {}
-        approved = approvals.get('tables', False)
+        approved = approvals.get(approval_key, False)
 
         if approved:
-            logger.info("User approved tables, proceeding to column identifier")
-            return "column_identifier"
+            logger.info(f"User approved {approval_key}, proceeding to {next_node.replace('_', ' ')}")
+            return next_node
 
         # Check if we need to show updated list (modifications made) or re-identify
         modification_type = getattr(state, 'last_modification_type', None)
         feedback_processed = getattr(state, 'feedback_processed', False)
 
         if feedback_processed and modification_type in ['add', 'remove', 'modify']:
-            logger.info("Modifications applied, showing updated table list to user")
+            logger.info(f"Modifications applied, showing updated {singular_label} list to user")
             # Clear the flag so next iteration doesn't loop
             state.feedback_processed = False
-            return "table_human_review"
+            return review_node
         else:
-            logger.info("User rejected tables, re-running table identification")
-            return "table_identifier"
+            logger.info(f"User rejected {approval_key}, re-running {singular_label} identification")
+            return identifier_node
+
+    @staticmethod
+    def route_after_database_human_feedback(state: AgentState) -> str:
+        """Route after database human feedback based on approval status and modification type."""
+        return WorkflowRouter._route_after_identifier_feedback(
+            state,
+            approval_key="databases",
+            singular_label="database",
+            review_node="database_human_review",
+            next_node="table_identifier",
+            identifier_node="database_identifier",
+        )
+
+    @staticmethod
+    def route_after_table_human_feedback(state: AgentState) -> str:
+        """Route after table human feedback based on approval status and modification type."""
+        return WorkflowRouter._route_after_identifier_feedback(
+            state,
+            approval_key="tables",
+            singular_label="table",
+            review_node="table_human_review",
+            next_node="column_identifier",
+            identifier_node="table_identifier",
+        )
 
     @staticmethod
     def route_after_pipeline_step(state: AgentState) -> str:

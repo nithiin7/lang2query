@@ -1,12 +1,13 @@
 """
-LangChain Ollama Integration
+Shared LangChain Chat Wrapper Base
 
-A wrapper that uses LangChain's Ollama integration with custom JSON parsing for structured outputs
-and tool calling support
+Holds the prompting, tool-calling, and structured-output JSON-parsing logic
+shared by every LangChain chat-model wrapper (ChatGPT, Ollama, ...). Each
+provider wrapper subclasses this and only supplies `_build_llm`, which
+constructs its provider-specific chat model instance.
 """
 
 from typing import Optional, List
-from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
@@ -19,53 +20,48 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class LangChainOllamaWrapper:
+class LangChainChatWrapperBase:
     """
-    LangChain-based Ollama wrapper that provides a clean interface
-    while leveraging LangChain's Ollama integration.
+    Base class for LangChain-based chat model wrappers.
+
+    Subclasses must implement `_build_llm` to construct their provider-specific
+    chat model (e.g. ChatOpenAI, ChatOllama). Everything else - message building,
+    tool-calling loop, structured JSON parsing, and the unified `generate` entry
+    point - is shared here.
     """
-    
+
     def __init__(
         self,
-        model: str = "gpt-oss:20b",
-        base_url: str = "http://localhost:11434",
+        model: str,
+        base_url: Optional[str] = None,
         temperature: float = 0.6,
         top_p: float = 0.95,
         timeout: int = 300,
         **kwargs
     ):
-        """
-        Initialize the LangChain Ollama wrapper.
-        
-        Args:
-            model: Ollama model name
-            base_url: Ollama API base URL
-            temperature: Sampling temperature
-            top_p: Top-p sampling parameter
-            timeout: Request timeout in seconds
-            **kwargs: Additional ChatOllama parameters
-        """
         self.model_name = model
         self.base_url = base_url
         self.temperature = temperature
         self.top_p = top_p
         self.timeout = timeout
-        
-        # Initialize ChatOllama with LangChain
-        self.llm = ChatOllama(
-            model=model,
-            base_url=base_url,
-            temperature=temperature,
-            top_p=top_p,
-            timeout=timeout,
-            **kwargs
-        )
-        
+
+        self.llm = self._build_llm(temperature=temperature, top_p=top_p, **kwargs)
+
         # Create output parser
         self.output_parser = StrOutputParser()
-        
+
         # Create chains for different use cases
         self._setup_chains()
+
+    def _build_llm(
+        self,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        filter_keys: Optional[set] = None,
+        **kwargs
+    ):
+        """Construct the provider-specific chat model instance. Implemented by subclasses."""
+        raise NotImplementedError
 
     def _create_llm(
         self,
@@ -73,19 +69,13 @@ class LangChainOllamaWrapper:
         top_p: Optional[float] = None,
         filter_keys: Optional[set] = None,
         **kwargs
-    ) -> ChatOllama:
-        """Create a ChatOllama with consistent defaults and optional kwargs filtering."""
-        filtered_kwargs = kwargs
-        if filter_keys:
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k not in filter_keys}
-
-        return ChatOllama(
-            model=self.model_name,
-            base_url=self.base_url,
+    ):
+        """Create a chat model with consistent defaults and optional kwargs filtering."""
+        return self._build_llm(
             temperature=temperature if temperature is not None else self.temperature,
             top_p=top_p if top_p is not None else self.top_p,
-            timeout=self.timeout,
-            **filtered_kwargs
+            filter_keys=filter_keys,
+            **kwargs
         )
 
     def _build_messages(
@@ -240,10 +230,10 @@ Schema:
         """Setup LangChain runnable chains for different use cases."""
         # Basic generation chain
         self.generation_chain = self.llm | self.output_parser
-        
+
         # Chat chain with system prompt support
         self.chat_chain = self._create_chat_chain()
-    
+
     def _create_chat_chain(self):
         """Create a chat chain that handles system prompts."""
         def format_messages(data):
@@ -252,9 +242,9 @@ Schema:
                 messages.append(SystemMessage(content=data["system_prompt"]))
             messages.append(HumanMessage(content=data["message"]))
             return messages
-        
+
         return RunnableLambda(format_messages) | self.llm | self.output_parser
-    
+
     def generate(
         self,
         prompt: Optional[str] = None,
@@ -311,7 +301,7 @@ Schema:
                     **kwargs
                 )
             elif schema_class is not None:
-                # Structured output generation using Ollama's format parameter
+                # Structured output generation using custom JSON parsing
                 return self._generate_structured(
                     schema_class=schema_class,
                     system_message=system_message,
@@ -384,8 +374,8 @@ Schema:
         **kwargs
     ):
         """
-        Tool-enabled generation using Ollama's tools parameter.
-        Uses LangChain's bind_tools which internally uses Ollama's tools parameter.
+        Tool-enabled generation using the provider's function/tool calling.
+        Uses LangChain's bind_tools, which internally uses the provider's native tool-calling support.
         """
         try:
             llm = self._create_llm(temperature=temperature, top_p=top_p, **kwargs)
@@ -394,7 +384,7 @@ Schema:
 
             messages = self._build_messages(system_message, human_message)
 
-            logger.info(f"Generating with tool support using Ollama tools parameter. Tools: {len(tools) if tools else 0}")
+            logger.info(f"Generating with tool support. Tools: {len(tools) if tools else 0}")
 
             max_iterations = kwargs.get('max_tool_iterations', 5)
 
@@ -426,7 +416,7 @@ Schema:
     ):
         """
         Combined tool calling with structured final output.
-        Uses tools during reasoning, then uses Ollama's structured output for the final response.
+        Uses tools during reasoning, then uses custom JSON parsing for the final response.
         """
         try:
             effective_temperature = temperature if temperature is not None else 0.0

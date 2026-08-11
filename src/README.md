@@ -109,7 +109,8 @@ src/
 │   ├── __init__.py
 │   ├── agent.py            # Agent utilities
 │   ├── chatgpt.py          # OpenAI integration
-│   └── langchain.py        # LangChain utilities
+│   ├── ollama.py           # Ollama integration
+│   └── chat_wrapper_base.py # Shared LangChain chat-wrapper base
 ├── utils/                   # Utilities
 │   ├── __init__.py
 │   ├── chunk_parsers.py    # Chunk parsing

@@ -19,7 +19,7 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-from .langchain import LangChainOllamaWrapper
+from .ollama import LangChainOllamaWrapper
 from .chatgpt import LangChainChatGPTWrapper
 import config as app_config
 

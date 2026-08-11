@@ -84,7 +84,7 @@ GENERATED QUERY:
     def _build_validation_system_prompt(self, state: AgentState) -> str:
         """Create a structured validation system prompt with schema context."""
 
-        schema_section = self._get_schema_section(state)
+        schema_section = AgentUtils.get_schema_section(state, header="AVAILABLE SCHEMA CONTEXT")
 
         return f"""You are an expert SQL query validator. Evaluate if the GENERATED QUERY adequately answers the USER REQUEST. Be LENIENT - accept queries that are "close enough" and can be improved through the feedback loop. Only reject queries with major flaws.
 
@@ -204,14 +204,3 @@ REJECT THESE ("NO" - now stricter on these issues):
 
         return feedback
     
-    def _get_schema_section(self, state: AgentState) -> str:
-        """Get schema information section for the prompt."""
-        if state.schema_context and state.schema_context.get("formatted_schema"):
-            return f"""**AVAILABLE SCHEMA CONTEXT:**
-        {state.schema_context["formatted_schema"]}"""
-        else:
-            # Fallback to basic information
-            return f"""**BASIC SCHEMA INFORMATION:**
-        **Databases:** {', '.join(state.relevant_databases) if state.relevant_databases else 'None'}
-        **Tables:** {', '.join(state.relevant_tables) if state.relevant_tables else 'None'}
-        **Columns:** {', '.join(state.relevant_columns) if state.relevant_columns else 'None'}"""

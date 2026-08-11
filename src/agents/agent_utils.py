@@ -50,6 +50,24 @@ class AgentUtils:
         return None
 
     @staticmethod
+    def get_schema_section(state: AgentState, header: str = "SCHEMA CONTEXT") -> str:
+        """Get standardized schema information section for prompts.
+
+        Args:
+            state: Current agent state
+            header: Label for the schema-context block when a formatted schema is available
+        """
+        if state.schema_context and state.schema_context.get("formatted_schema"):
+            return f"""**{header}:**
+        {state.schema_context["formatted_schema"]}"""
+
+        # Fallback to basic information
+        return f"""**BASIC SCHEMA INFORMATION:**
+        **Databases Available:** {', '.join(state.relevant_databases) if state.relevant_databases else 'None selected'}
+        **Tables Available:** {', '.join(state.relevant_tables) if state.relevant_tables else 'None selected'}
+        **Columns Available:** {', '.join(state.relevant_columns) if state.relevant_columns else 'None selected'}"""
+
+    @staticmethod
     def get_validation_feedback_section(state: AgentState) -> str:
         """Get standardized validation feedback section for prompts."""
         feedback = getattr(state, 'query_validation_feedback', None) or {}

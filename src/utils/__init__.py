@@ -7,7 +7,6 @@ from .logging import (
     log_section_header,
     log_workflow_step,
     log_ai_response,
-    log_query,
     Colors
 )
 from .chunk_parsers import ChunkParsers
@@ -17,7 +16,6 @@ __all__ = [
     "log_section_header",
     "log_workflow_step",
     "log_ai_response",
-    "log_query",
     "Colors",
     "ChunkParsers"
 ]

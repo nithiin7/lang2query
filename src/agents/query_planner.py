@@ -79,7 +79,7 @@ class QueryPlannerAgent(BaseAgent):
 
         feedback_section = AgentUtils.get_validation_feedback_section(state)
 
-        schema_section = self._get_schema_section(state)
+        schema_section = AgentUtils.get_schema_section(state, header="SCHEMA CONTEXT")
 
         return f"""
         You are a Senior Principal Data Architect specializing in complex query planning and optimization. Your task is to create a comprehensive, executable query plan that systematically breaks down the user's question into precise database operations.
@@ -218,14 +218,3 @@ class QueryPlannerAgent(BaseAgent):
 
         """
     
-    def _get_schema_section(self, state: AgentState) -> str:
-        """Get schema information section for the prompt."""
-        if state.schema_context and state.schema_context.get("formatted_schema"):
-            return f"""**SCHEMA CONTEXT:**
-        {state.schema_context["formatted_schema"]}"""
-        else:
-            # Fallback to basic information
-            return f"""**BASIC SCHEMA INFORMATION:**
-        **Databases Available:** {', '.join(state.relevant_databases) if state.relevant_databases else 'None selected'}
-        **Tables Available:** {', '.join(state.relevant_tables) if state.relevant_tables else 'None selected'}
-        **Columns Available:** {', '.join(state.relevant_columns) if state.relevant_columns else 'None selected'}"""
