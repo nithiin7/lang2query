@@ -2,13 +2,13 @@
 
 import { WorkflowState } from "@/types";
 import {
-    Activity,
-    CheckCircle,
-    ChevronDown,
-    ChevronUp,
-    Columns,
-    Database,
-    Table,
+  Activity,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Columns,
+  Database,
+  Table,
 } from "lucide-react";
 
 interface StatusPanelProps {

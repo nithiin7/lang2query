@@ -124,7 +124,7 @@ export function ChatContainer({
           onConnect: () => {
             console.log("WebSocket connected, starting query processing...");
           },
-          onStateUpdate: (state, nodeName) => {
+          onStateUpdate: (state, _nodeName) => {
             setWorkflowState(state);
             setCurrentStep(state.current_step);
           },
@@ -141,7 +141,7 @@ export function ChatContainer({
             };
             setMessages((prev) => [...prev, assistantMessage]);
           },
-          onCancelled: (message) => {
+          onCancelled: (_message) => {
             setIsProcessing(false);
             setCurrentStep("Workflow stopped by user");
             setPendingHitl(null);

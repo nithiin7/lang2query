@@ -6,4 +6,3 @@ export { QueryInput } from "./QueryInput";
 export { ResultsDisplay } from "./ResultsDisplay";
 export { Sidebar } from "./Sidebar";
 export { StatusPanel } from "./StatusPanel";
-
