@@ -8,10 +8,11 @@ by the previous database_identifier agent.
 import logging
 from typing import List
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
+from models.models import AgentResult, AgentState, AgentType, TableSelection
 from utils import ChunkParsers
-from models.models import AgentState, AgentResult, AgentType, TableSelection
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +23,16 @@ class TableIdentifier(BaseAgent):
     def __init__(self, model_wrapper, retriever=None):
         super().__init__(AgentType.TABLE_SCHEMA_RETRIEVER, model_wrapper)
         self._retriever = retriever
-    
+
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant tables from the selected databases."""
         logger.info(f"{self.name}: Identifying relevant tables from databases")
 
         try:
             # Validate prerequisites and get available tables
-            validation_error = AgentUtils.validate_state_prerequisites(state, ["relevant_databases"])
+            validation_error = AgentUtils.validate_state_prerequisites(
+                state, ["relevant_databases"]
+            )
             if validation_error:
                 return validation_error
 
@@ -44,7 +47,7 @@ class TableIdentifier(BaseAgent):
                 schema_class=TableSelection,
                 system_message=system_message,
                 human_message=human_message,
-                temperature=0
+                temperature=0,
             )
 
             # Extract table names from the structured response
@@ -57,33 +60,38 @@ class TableIdentifier(BaseAgent):
             logger.error(f"Table identification failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-
     def _create_success_result(self, table_names: List[str]) -> AgentResult:
         """Create success result with identified tables."""
 
         state_updates = {
             "relevant_tables": table_names,
-            "current_step": "tables_identified"
+            "current_step": "tables_identified",
         }
 
         return AgentResult(
             success=True,
             message="Tables identified successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
-    
+
     def _create_table_identification_system_prompt(self, state: AgentState) -> str:
         """Create system prompt for table identification."""
         feedback_section = AgentUtils.get_validation_feedback_section(state)
-        human_feedback_section = AgentUtils.build_human_feedback_section(state, "tables")
+        human_feedback_section = AgentUtils.build_human_feedback_section(
+            state, "tables"
+        )
 
         # Try to retrieve and format relevant table chunks
-        tables_section = self._retrieve_table_chunks(state.natural_language_query, n_results=15)
+        tables_section = self._retrieve_table_chunks(
+            state.natural_language_query, n_results=15
+        )
         logger.info(f"Tables section: {tables_section}")
 
         # Use fallback if no chunks found
         if not tables_section:
-            tables_section = "**Available Tables:**\n(None found - retriever unavailable)"
+            tables_section = (
+                "**Available Tables:**\n(None found - retriever unavailable)"
+            )
 
         prompt_parts = [
             "You are an expert table selector agent. Your task is to identify ALL relevant tables needed to answer the user's question from the available database tables."
@@ -144,26 +152,40 @@ class TableIdentifier(BaseAgent):
 - The response must be parseable JSON that directly matches the required fields""")
 
         return "\n\n".join(prompt_parts)
-    
 
     def _retrieve_table_chunks(self, query: str, n_results: int = 25) -> str:
         """Retrieve relevant table chunks and format them for the prompt."""
         if not self._retriever:
             return ""
 
-        selected_databases = getattr(self, '_selected_databases', [])
+        selected_databases = getattr(self, "_selected_databases", [])
         if not selected_databases:
             logger.warning("No selected databases available")
             return ""
 
         try:
-            results = self._retriever.search_tables_in_databases(query, selected_databases, n_results=max(n_results, 25))
-            chunk_count = len(results.get('documents', [[]])[0]) if results.get('documents') else 0
-            logger.info(f"Found {chunk_count} table chunks in databases {selected_databases}")
+            results = self._retriever.search_tables_in_databases(
+                query, selected_databases, n_results=max(n_results, 25)
+            )
+            chunk_count = (
+                len(results.get("documents", [[]])[0])
+                if results.get("documents")
+                else 0
+            )
+            logger.info(
+                f"Found {chunk_count} table chunks in databases {selected_databases}"
+            )
 
-            formatted_content = ChunkParsers.format_table_chunks_filtered_by_databases(results, selected_databases)
-            if formatted_content and formatted_content != "**Available Tables:**\n(None found)":
-                logger.info(f"Formatted table chunks: {len(formatted_content)} characters")
+            formatted_content = ChunkParsers.format_table_chunks_filtered_by_databases(
+                results, selected_databases
+            )
+            if (
+                formatted_content
+                and formatted_content != "**Available Tables:**\n(None found)"
+            ):
+                logger.info(
+                    f"Formatted table chunks: {len(formatted_content)} characters"
+                )
                 return formatted_content
             else:
                 return ""

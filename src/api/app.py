@@ -1,10 +1,11 @@
 import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from utils import setup_colored_logging
 from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from utils import setup_colored_logging
 
 
 @asynccontextmanager
@@ -24,7 +25,7 @@ def create_app() -> FastAPI:
         title="Text2Query API",
         description="API for converting natural language to SQL queries",
         version="1.0.0",
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
 
 def main() -> None:
     import uvicorn
+
     app = create_app()
     host = os.getenv("API_HOST", "0.0.0.0")
     port = int(os.getenv("API_PORT", "8000"))

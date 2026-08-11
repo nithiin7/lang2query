@@ -8,32 +8,28 @@ Contains all specialized agents for the new hybrid architecture:
 - Table Identifier Agent
 - Column Identifier Agent
 - Schema Retrieval Agent
-- Query Planner Agent  
+- Query Planner Agent
 - Query Generator Agent
 - Query Validator Agent
 
 All agents use a generic model wrapper that can work with any transformer model.
 """
 
-from .base_agent import BaseAgent
+from models.models import AgentResult, AgentState, AgentType, Query
+
 from .agent_utils import AgentUtils
-from .router import RouterAgent
-from .metadata_agent import MetadataAgent
-from .database_identifier import DatabaseIdentifierAgent
-from .table_identifier import TableIdentifier
+from .base_agent import BaseAgent
 from .column_identifier import ColumnIdentifier
-from .schema_builder import SchemaBuilderAgent
-from .query_planner import QueryPlannerAgent
-from .query_generator import QueryGeneratorAgent
-from .sql_safety_guard import SQLSafetyGuardAgent
-from .query_validator import QueryValidatorAgent
+from .database_identifier import DatabaseIdentifierAgent
 from .human_in_the_loop import HumanInTheLoopAgent
-from models.models import (
-    AgentState, 
-    AgentResult, 
-    AgentType, 
-    Query
-)
+from .metadata_agent import MetadataAgent
+from .query_generator import QueryGeneratorAgent
+from .query_planner import QueryPlannerAgent
+from .query_validator import QueryValidatorAgent
+from .router import RouterAgent
+from .schema_builder import SchemaBuilderAgent
+from .sql_safety_guard import SQLSafetyGuardAgent
+from .table_identifier import TableIdentifier
 
 __all__ = [
     "BaseAgent",
@@ -52,5 +48,5 @@ __all__ = [
     "AgentResult",
     "AgentType",
     "Query",
-    "HumanInTheLoopAgent"
-] 
+    "HumanInTheLoopAgent",
+]

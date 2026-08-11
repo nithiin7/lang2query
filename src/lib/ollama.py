@@ -5,9 +5,10 @@ A wrapper that uses LangChain's Ollama integration with custom JSON parsing for 
 and tool calling support
 """
 
-from typing import Optional
-from langchain_ollama import ChatOllama
 import logging
+from typing import Optional
+
+from langchain_ollama import ChatOllama
 
 from .chat_wrapper_base import LangChainChatWrapperBase
 
@@ -28,7 +29,7 @@ class LangChainOllamaWrapper(LangChainChatWrapperBase):
         temperature: float = 0.6,
         top_p: float = 0.95,
         timeout: int = 300,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the LangChain Ollama wrapper.
@@ -47,7 +48,7 @@ class LangChainOllamaWrapper(LangChainChatWrapperBase):
             temperature=temperature,
             top_p=top_p,
             timeout=timeout,
-            **kwargs
+            **kwargs,
         )
 
     def _build_llm(
@@ -55,7 +56,7 @@ class LangChainOllamaWrapper(LangChainChatWrapperBase):
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         filter_keys: Optional[set] = None,
-        **kwargs
+        **kwargs,
     ) -> ChatOllama:
         """Create a ChatOllama with consistent defaults and optional kwargs filtering."""
         filtered_kwargs = kwargs
@@ -68,5 +69,5 @@ class LangChainOllamaWrapper(LangChainChatWrapperBase):
             temperature=temperature,
             top_p=top_p,
             timeout=self.timeout,
-            **filtered_kwargs
+            **filtered_kwargs,
         )

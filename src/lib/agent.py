@@ -8,32 +8,29 @@ from the models folder. Supports various transformer models including:
 - Automatic device detection and optimization
 """
 
+import json
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any, Union
-import json
-import torch
-from transformers import (
-    AutoTokenizer, 
-    AutoModelForCausalLM, 
-    BitsAndBytesConfig,
-)
+from typing import Any, Dict, Optional, Union
 
-from .ollama import LangChainOllamaWrapper
-from .chatgpt import LangChainChatGPTWrapper
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
 import config as app_config
+
+from .chatgpt import LangChainChatGPTWrapper
+from .ollama import LangChainOllamaWrapper
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class ModelWrapper:
     """Generic wrapper for local models, Ollama, or external providers"""
-    
+
     def __init__(
         self,
         model_path: Union[str, Path] = "models",
@@ -52,13 +49,15 @@ class ModelWrapper:
             model: Model name to use with API
             timeout: Timeout in seconds for API requests (default: 300)
         """
-        self.model_path = Path(model_path) if isinstance(model_path, str) else model_path
+        self.model_path = (
+            Path(model_path) if isinstance(model_path, str) else model_path
+        )
         self.tokenizer = None
         self.model = None
         self.base_url = base_url or "http://localhost:11434"
         self.model = model
         self.timeout = timeout
-    
+
         self.langchain_wrapper = None
         self.chatgpt_wrapper = None
 
@@ -91,14 +90,12 @@ class ModelWrapper:
                 logger.info("Using 4-bit quantization for faster inference")
             # Auto-detect and load the model
             self._auto_detect_and_load()
-    
+
     def _initialize_langchain_ollama(self):
         """Initialize LangChain Ollama wrapper."""
         try:
             self.langchain_wrapper = LangChainOllamaWrapper(
-                model=self.model,
-                base_url=self.base_url,
-                timeout=self.timeout
+                model=self.model, base_url=self.base_url, timeout=self.timeout
             )
             logger.info("LangChain Ollama wrapper initialized successfully")
 
@@ -120,14 +117,14 @@ class ModelWrapper:
                 api_key=chatgpt_api_key,
                 model=chatgpt_model,
                 base_url=chatgpt_base_url,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
             logger.info("ChatGPT wrapper initialized successfully")
 
         except Exception as e:
             logger.error(f"Failed to initialize ChatGPT wrapper: {e}")
             raise
-    
+
     def _auto_detect_and_load(self):
         """Automatically detect and load model from the models directory."""
         try:
@@ -143,76 +140,79 @@ class ModelWrapper:
                     raise FileNotFoundError("No valid models found in models directory")
             else:
                 raise FileNotFoundError("Models directory not found")
-                    
+
         except Exception as e:
             logger.error(f"Failed to auto-detect and load model: {e}")
             raise
-    
+
     def _is_model_folder(self, path: Path) -> bool:
         """Check if a directory contains a valid model."""
         required_files = ["config.json", "tokenizer.json"]
-        optional_files = ["model.safetensors", "pytorch_model.bin", "model-*.safetensors"]
-        
+        optional_files = [
+            "model.safetensors",
+            "pytorch_model.bin",
+            "model-*.safetensors",
+        ]
+
         # Check for required files
         has_required = all((path / file).exists() for file in required_files)
-        
+
         # Check for at least one model file
-        has_model = any(
-            any(path.glob(pattern)) for pattern in optional_files
-        )
-        
+        has_model = any(any(path.glob(pattern)) for pattern in optional_files)
+
         return has_required and has_model
-    
+
     def _discover_models(self, models_dir: Path) -> list[Path]:
         """Discover available models in the models directory."""
         models = []
-        
+
         for item in models_dir.iterdir():
             if item.is_dir() and self._is_model_folder(item):
                 models.append(item)
                 logger.info(f"Found model: {item.name}")
-        
+
         # Sort by name for consistent selection
         models.sort(key=lambda x: x.name)
         return models
-    
+
     def _load_specific_model(self, model_path: Path):
         """Load a specific model from the given path."""
         try:
             # Load model configuration
             config_path = model_path / "config.json"
             if config_path.exists():
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     config = json.load(f)
                 self.model_info = config
                 logger.info(f"Model type: {config.get('model_type', 'unknown')}")
-                logger.info(f"Model architecture: {config.get('architectures', ['unknown'])[0] if config.get('architectures') else 'unknown'}")
-            
+                logger.info(
+                    f"Model architecture: {config.get('architectures', ['unknown'])[0] if config.get('architectures') else 'unknown'}"
+                )
+
             # Load tokenizer
             logger.info("Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                model_path,
-                trust_remote_code=True
+                model_path, trust_remote_code=True
             )
-            
+
             # Set pad token if not present
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
-            
+
             # Load model
             logger.info("Loading model...")
-            
+
             if self.use_quantization:
                 self._load_quantized_model(model_path)
             else:
                 self._load_standard_model(model_path)
-            
+
             logger.info("Model loaded successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to load model from {model_path}: {e}")
             raise
-    
+
     def _load_quantized_model(self, model_path: Path):
         """Load model with 4-bit quantization."""
         try:
@@ -222,7 +222,7 @@ class ModelWrapper:
                 bnb_4bit_quant_type="nf4",
                 bnb_4bit_use_double_quant=True,
             )
-            
+
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 quantization_config=quantization_config,
@@ -233,7 +233,7 @@ class ModelWrapper:
         except Exception as e:
             logger.warning(f"Quantized loading failed, falling back to standard: {e}")
             self._load_standard_model(model_path)
-    
+
     def _load_standard_model(self, model_path: Path):
         """Load model without quantization."""
         # Remove dtype parameter as it's not supported by all model classes
@@ -243,16 +243,27 @@ class ModelWrapper:
             trust_remote_code=True,
             low_cpu_mem_usage=True,
         )
-        
+
         if self.device in ("cpu", "mps"):
             # Keep float16 on MPS for lower memory usage and better performance on Apple Silicon
             dtype = torch.float16 if self.device == "mps" else None
-            self.model = self.model.to(self.device, dtype=dtype) if dtype else self.model.to(self.device)
-        
+            self.model = (
+                self.model.to(self.device, dtype=dtype)
+                if dtype
+                else self.model.to(self.device)
+            )
+
         # Ensure eval mode for faster inference
         self.model.eval()
 
-    def generate(self, schema_class, tools: Optional[list] = None, system_message: Optional[str] = None, human_message: str = "", **kwargs):
+    def generate(
+        self,
+        schema_class,
+        tools: Optional[list] = None,
+        system_message: Optional[str] = None,
+        human_message: str = "",
+        **kwargs,
+    ):
         """
         Generate structured output based on a Pydantic schema.
 
@@ -272,7 +283,7 @@ class ModelWrapper:
                 tools=tools,
                 system_message=system_message,
                 human_message=human_message,
-                **kwargs
+                **kwargs,
             )
 
         elif self.provider == "chatgpt" and self.chatgpt_wrapper:
@@ -281,20 +292,22 @@ class ModelWrapper:
                 tools=tools,
                 system_message=system_message,
                 human_message=human_message,
-                **kwargs
+                **kwargs,
             )
 
-
-        raise NotImplementedError("Structured output is not supported for local models. Use 'ollama' or 'chatgpt' provider instead.")
+        raise NotImplementedError(
+            "Structured output is not supported for local models. Use 'ollama' or 'chatgpt' provider instead."
+        )
 
     def cleanup(self):
         """Clean up resources, especially GPU memory used by local models."""
         try:
-            if hasattr(self, 'model') and self.model is not None:
+            if hasattr(self, "model") and self.model is not None:
                 logger.info("🧹 Cleaning up local model...")
                 # Clear CUDA cache if model was using GPU
-                if hasattr(self.model, 'device') and 'cuda' in str(self.model.device):
+                if hasattr(self.model, "device") and "cuda" in str(self.model.device):
                     import torch
+
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
                         logger.info("✅ CUDA cache cleared")
@@ -302,17 +315,17 @@ class ModelWrapper:
                 # Delete the model and tokenizer to free memory
                 del self.model
                 self.model = None
-                if hasattr(self, 'tokenizer') and self.tokenizer:
+                if hasattr(self, "tokenizer") and self.tokenizer:
                     del self.tokenizer
                     self.tokenizer = None
                 logger.info("✅ Local model resources cleaned up")
 
-            if hasattr(self, 'langchain_wrapper') and self.langchain_wrapper:
+            if hasattr(self, "langchain_wrapper") and self.langchain_wrapper:
                 # LangChain wrapper cleanup (if needed)
                 self.langchain_wrapper = None
                 logger.info("✅ LangChain wrapper cleaned up")
 
-            if hasattr(self, 'chatgpt_wrapper') and self.chatgpt_wrapper:
+            if hasattr(self, "chatgpt_wrapper") and self.chatgpt_wrapper:
                 # ChatGPT wrapper cleanup (if needed)
                 self.chatgpt_wrapper = None
                 logger.info("✅ ChatGPT wrapper cleaned up")
@@ -323,21 +336,25 @@ class ModelWrapper:
     def __del__(self):
         """Destructor to ensure cleanup happens."""
         self.cleanup()
-    
+
     def _detect_chat_format(self) -> str:
         """Detect the chat format based on model configuration."""
-        model_type = self.model_info.get('model_type', '').lower()
-        architectures = [arch.lower() for arch in self.model_info.get('architectures', [])]
-        
-        if 'qwen' in model_type or any('qwen' in arch for arch in architectures):
-            return 'qwen'
-        elif 'llama' in model_type or any('llama' in arch for arch in architectures):
-            return 'llama'
-        elif 'mistral' in model_type or any('mistral' in arch for arch in architectures):
-            return 'mistral'
+        model_type = self.model_info.get("model_type", "").lower()
+        architectures = [
+            arch.lower() for arch in self.model_info.get("architectures", [])
+        ]
+
+        if "qwen" in model_type or any("qwen" in arch for arch in architectures):
+            return "qwen"
+        elif "llama" in model_type or any("llama" in arch for arch in architectures):
+            return "llama"
+        elif "mistral" in model_type or any(
+            "mistral" in arch for arch in architectures
+        ):
+            return "mistral"
         else:
-            return 'generic'
-    
+            return "generic"
+
     def get_model_info(self) -> Dict[str, Any]:
         """Get information about the loaded model."""
         if self.provider == "ollama" and self.langchain_wrapper:
@@ -345,7 +362,7 @@ class ModelWrapper:
                 "model_type": "ollama",
                 "base_url": self.base_url,
                 "model": self.model,
-                "chat_format": "ollama"
+                "chat_format": "ollama",
             }
 
         elif self.provider == "chatgpt" and self.chatgpt_wrapper:
@@ -354,9 +371,9 @@ class ModelWrapper:
         else:
             return {
                 "model_path": str(self.model_path),
-                "model_type": self.model_info.get('model_type', 'unknown'),
-                "architectures": self.model_info.get('architectures', []),
+                "model_type": self.model_info.get("model_type", "unknown"),
+                "architectures": self.model_info.get("architectures", []),
                 "device": self.device,
                 "quantization": self.use_quantization,
-                "chat_format": self._detect_chat_format()
+                "chat_format": self._detect_chat_format(),
             }

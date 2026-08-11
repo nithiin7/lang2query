@@ -7,4 +7,4 @@ resume-point, presentation, and state-update logic that supports it.
 
 from .graph import Text2QueryWorkflow
 
-__all__ = ['Text2QueryWorkflow']
+__all__ = ["Text2QueryWorkflow"]

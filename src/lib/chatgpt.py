@@ -5,9 +5,10 @@ A wrapper that uses LangChain's OpenAI integration with custom JSON parsing for 
 and tool calling support
 """
 
-from typing import Optional
-from langchain_openai import ChatOpenAI
 import logging
+from typing import Optional
+
+from langchain_openai import ChatOpenAI
 
 from .chat_wrapper_base import LangChainChatWrapperBase
 
@@ -29,7 +30,7 @@ class LangChainChatGPTWrapper(LangChainChatWrapperBase):
         temperature: float = 0.6,
         top_p: float = 0.95,
         timeout: int = 300,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the LangChain ChatGPT wrapper.
@@ -50,7 +51,7 @@ class LangChainChatGPTWrapper(LangChainChatWrapperBase):
             temperature=temperature,
             top_p=top_p,
             timeout=timeout,
-            **kwargs
+            **kwargs,
         )
 
     def _build_llm(
@@ -58,7 +59,7 @@ class LangChainChatGPTWrapper(LangChainChatWrapperBase):
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         filter_keys: Optional[set] = None,
-        **kwargs
+        **kwargs,
     ) -> ChatOpenAI:
         """Create a ChatOpenAI with consistent defaults and optional kwargs filtering."""
         filtered_kwargs = kwargs
@@ -72,7 +73,7 @@ class LangChainChatGPTWrapper(LangChainChatWrapperBase):
             temperature=temperature,
             top_p=top_p,
             timeout=self.timeout,
-            **filtered_kwargs
+            **filtered_kwargs,
         )
 
     def get_model_info(self) -> dict:

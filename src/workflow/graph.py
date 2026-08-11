@@ -24,30 +24,31 @@ import logging
 import uuid
 from typing import Any, Dict, Iterator, Optional, Union
 
-from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
 
 from agents import (
-    RouterAgent,
-    MetadataAgent,
-    DatabaseIdentifierAgent,
-    TableIdentifier,
-    ColumnIdentifier,
-    SchemaBuilderAgent,
-    QueryPlannerAgent,
-    QueryGeneratorAgent,
-    SQLSafetyGuardAgent,
-    QueryValidatorAgent,
     AgentState,
-    HumanInTheLoopAgent
+    ColumnIdentifier,
+    DatabaseIdentifierAgent,
+    HumanInTheLoopAgent,
+    MetadataAgent,
+    QueryGeneratorAgent,
+    QueryPlannerAgent,
+    QueryValidatorAgent,
+    RouterAgent,
+    SchemaBuilderAgent,
+    SQLSafetyGuardAgent,
+    TableIdentifier,
 )
-from config import KB_DIRECTORY, COLLECTION_NAME, EMBEDDING_MODEL_PATH
+from config import COLLECTION_NAME, EMBEDDING_MODEL_PATH, KB_DIRECTORY
 from lib import ModelWrapper
 from retriever.retrieve_sql_kb import SQLKnowledgeBaseRetriever
-from utils import log_section_header, log_workflow_step, Colors
-from .router import WorkflowRouter
-from .resume import ResumeRouter
+from utils import Colors, log_section_header, log_workflow_step
+
 from .display import WorkflowDisplay, WorkflowLogger
+from .resume import ResumeRouter
+from .router import WorkflowRouter
 from .state import StateManager
 
 logger = logging.getLogger(__name__)
@@ -59,24 +60,69 @@ logger = logging.getLogger(__name__)
 # logic (router, the two human-review nodes, query_validator's extra retry
 # bookkeeping) are handled by their own methods below instead.
 PIPELINE_NODE_CONFIGS: Dict[str, Dict[str, Any]] = {
-    "metadata_agent": dict(agent_attr="metadata_agent", step_number=1, step_name="Metadata Agent",
-                            success_step="metadata_completed", error_step="metadata_error"),
-    "database_identifier": dict(agent_attr="database_identifier", step_number=1, step_name="Database Identification",
-                                 success_step="database_identification_completed", error_step="database_identification"),
-    "table_identifier": dict(agent_attr="table_identifier", step_number=2, step_name="Table Identifier",
-                              success_step="table_identification_completed", error_step="table_identifier"),
-    "column_identifier": dict(agent_attr="column_identifier", step_number=3, step_name="Column Identifier",
-                               success_step="column_identification_completed", error_step="column_identifier"),
-    "schema_builder": dict(agent_attr="schema_builder", step_number=4, step_name="Schema Builder",
-                            success_step="schema_building_completed", error_step="schema_building"),
-    "query_planner": dict(agent_attr="query_planner", step_number=5, step_name="Query Planning",
-                           success_step="query_planning_completed", error_step="query_planning"),
-    "query_generator": dict(agent_attr="query_generator", step_number=6, step_name="Query Generation",
-                             success_step="query_generation_completed", error_step="query_generation"),
-    "sql_safety_guard": dict(agent_attr="sql_safety_guard", step_number=6, step_name="Sql Safety Guard",
-                              success_step="sql_safety_check_completed", error_step="sql_safety_guard"),
-    "query_validator": dict(agent_attr="query_validator", step_number=7, step_name="Query Validation",
-                             success_step="query_validation_completed", error_step="query_validation"),
+    "metadata_agent": dict(
+        agent_attr="metadata_agent",
+        step_number=1,
+        step_name="Metadata Agent",
+        success_step="metadata_completed",
+        error_step="metadata_error",
+    ),
+    "database_identifier": dict(
+        agent_attr="database_identifier",
+        step_number=1,
+        step_name="Database Identification",
+        success_step="database_identification_completed",
+        error_step="database_identification",
+    ),
+    "table_identifier": dict(
+        agent_attr="table_identifier",
+        step_number=2,
+        step_name="Table Identifier",
+        success_step="table_identification_completed",
+        error_step="table_identifier",
+    ),
+    "column_identifier": dict(
+        agent_attr="column_identifier",
+        step_number=3,
+        step_name="Column Identifier",
+        success_step="column_identification_completed",
+        error_step="column_identifier",
+    ),
+    "schema_builder": dict(
+        agent_attr="schema_builder",
+        step_number=4,
+        step_name="Schema Builder",
+        success_step="schema_building_completed",
+        error_step="schema_building",
+    ),
+    "query_planner": dict(
+        agent_attr="query_planner",
+        step_number=5,
+        step_name="Query Planning",
+        success_step="query_planning_completed",
+        error_step="query_planning",
+    ),
+    "query_generator": dict(
+        agent_attr="query_generator",
+        step_number=6,
+        step_name="Query Generation",
+        success_step="query_generation_completed",
+        error_step="query_generation",
+    ),
+    "sql_safety_guard": dict(
+        agent_attr="sql_safety_guard",
+        step_number=6,
+        step_name="Sql Safety Guard",
+        success_step="sql_safety_check_completed",
+        error_step="sql_safety_guard",
+    ),
+    "query_validator": dict(
+        agent_attr="query_validator",
+        step_number=7,
+        step_name="Query Validation",
+        success_step="query_validation_completed",
+        error_step="query_validation",
+    ),
 }
 
 
@@ -100,7 +146,7 @@ class Text2QueryWorkflow:
             self.retriever = SQLKnowledgeBaseRetriever(
                 model_path=EMBEDDING_MODEL_PATH,
                 chroma_persist_dir=str(KB_DIRECTORY),
-                collection_name=COLLECTION_NAME
+                collection_name=COLLECTION_NAME,
             )
             logger.info("Shared retriever initialized successfully")
         except Exception as e:
@@ -109,18 +155,20 @@ class Text2QueryWorkflow:
         # Initialize all agents
         self.router = RouterAgent(model)
         self.metadata_agent = MetadataAgent(model, retriever=self.retriever)
-        self.database_identifier = DatabaseIdentifierAgent(model, retriever=self.retriever)
+        self.database_identifier = DatabaseIdentifierAgent(
+            model, retriever=self.retriever
+        )
         self.database_human_review = HumanInTheLoopAgent(
             model,
             confirmation_type="databases",
             data_source="relevant_databases",
-            retriever=self.retriever
+            retriever=self.retriever,
         )
         self.table_human_review = HumanInTheLoopAgent(
             model,
             confirmation_type="tables",
             data_source="relevant_tables",
-            retriever=self.retriever
+            retriever=self.retriever,
         )
         self.table_identifier = TableIdentifier(model, retriever=self.retriever)
         self.column_identifier = ColumnIdentifier(model, retriever=self.retriever)
@@ -156,13 +204,22 @@ class Text2QueryWorkflow:
             - If streaming is True: an iterator yielding AgentState updates
         """
         if streaming:
-            return self._process_query_stream(natural_language_query, interaction_mode, callback)
+            return self._process_query_stream(
+                natural_language_query, interaction_mode, callback
+            )
 
-        log_section_header(logger, f"PROCESSING QUERY: {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
-        logger.info(f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}")
+        log_section_header(
+            logger,
+            f"PROCESSING QUERY: {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}",
+        )
+        logger.info(
+            f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}"
+        )
         logger.info(f"Interaction Mode: {interaction_mode}")
 
-        initial_state = self._create_initial_state(natural_language_query, interaction_mode)
+        initial_state = self._create_initial_state(
+            natural_language_query, interaction_mode
+        )
 
         try:
             thread_id = str(uuid.uuid4())
@@ -173,10 +230,8 @@ class Text2QueryWorkflow:
                 initial_state,
                 config={
                     "recursion_limit": 20,
-                    "configurable": {
-                        "thread_id": thread_id
-                    }
-                }
+                    "configurable": {"thread_id": thread_id},
+                },
             )
 
             # Handle potential dict return (LangGraph sometimes returns dict)
@@ -189,6 +244,7 @@ class Text2QueryWorkflow:
         except Exception as e:
             logger.error(f"Workflow execution failed: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
 
             initial_state.current_step = "workflow_failed"
@@ -218,10 +274,8 @@ class Text2QueryWorkflow:
                 state,
                 config={
                     "recursion_limit": 20,
-                    "configurable": {
-                        "thread_id": thread_id
-                    }
-                }
+                    "configurable": {"thread_id": thread_id},
+                },
             ):
                 if isinstance(chunk, dict) and len(chunk) == 1:
                     node_name = list(chunk.keys())[0]
@@ -241,6 +295,7 @@ class Text2QueryWorkflow:
         except Exception as e:
             logger.error(f"Workflow resume failed: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             state.current_step = "workflow_failed"
             yield state
@@ -253,13 +308,15 @@ class Text2QueryWorkflow:
         """Get a comprehensive summary of the workflow execution."""
         return WorkflowDisplay.get_workflow_summary(state)
 
-    def _create_initial_state(self, natural_language_query: str, interaction_mode: str) -> AgentState:
+    def _create_initial_state(
+        self, natural_language_query: str, interaction_mode: str
+    ) -> AgentState:
         """Build the AgentState a fresh workflow run starts from."""
         return AgentState(
             natural_language_query=natural_language_query,
             interaction_mode=interaction_mode,
             current_step="workflow_started",
-            retries_left=3
+            retries_left=3,
         )
 
     def _create_workflow(self) -> StateGraph:
@@ -269,16 +326,40 @@ class Text2QueryWorkflow:
         # Define agent nodes with their handlers
         agents = [
             ("router", self._run_router),
-            ("metadata_agent", functools.partial(self._run_pipeline_node, "metadata_agent")),
-            ("database_identifier", functools.partial(self._run_pipeline_node, "database_identifier")),
+            (
+                "metadata_agent",
+                functools.partial(self._run_pipeline_node, "metadata_agent"),
+            ),
+            (
+                "database_identifier",
+                functools.partial(self._run_pipeline_node, "database_identifier"),
+            ),
             ("database_human_review", self._run_database_human_review),
-            ("table_identifier", functools.partial(self._run_pipeline_node, "table_identifier")),
+            (
+                "table_identifier",
+                functools.partial(self._run_pipeline_node, "table_identifier"),
+            ),
             ("table_human_review", self._run_table_human_review),
-            ("column_identifier", functools.partial(self._run_pipeline_node, "column_identifier")),
-            ("schema_builder", functools.partial(self._run_pipeline_node, "schema_builder")),
-            ("query_planner", functools.partial(self._run_pipeline_node, "query_planner")),
-            ("query_generator", functools.partial(self._run_pipeline_node, "query_generator")),
-            ("sql_safety_guard", functools.partial(self._run_pipeline_node, "sql_safety_guard")),
+            (
+                "column_identifier",
+                functools.partial(self._run_pipeline_node, "column_identifier"),
+            ),
+            (
+                "schema_builder",
+                functools.partial(self._run_pipeline_node, "schema_builder"),
+            ),
+            (
+                "query_planner",
+                functools.partial(self._run_pipeline_node, "query_planner"),
+            ),
+            (
+                "query_generator",
+                functools.partial(self._run_pipeline_node, "query_generator"),
+            ),
+            (
+                "sql_safety_guard",
+                functools.partial(self._run_pipeline_node, "sql_safety_guard"),
+            ),
             ("query_validator", self._run_query_validator),
         ]
 
@@ -301,13 +382,11 @@ class Text2QueryWorkflow:
             "query_planner": "query_planner",
             "query_generator": "query_generator",
             "query_validator": "query_validator",
-            "end": END
+            "end": END,
         }
 
         workflow.add_conditional_edges(
-            "router",
-            WorkflowRouter.route_after_router,
-            router_targets
+            "router", WorkflowRouter.route_after_router, router_targets
         )
 
         # Metadata flow
@@ -319,8 +398,8 @@ class Text2QueryWorkflow:
             WorkflowRouter.route_after_database_identifier,
             {
                 "database_human_review": "database_human_review",
-                "table_identifier": "table_identifier"
-            }
+                "table_identifier": "table_identifier",
+            },
         )
 
         # Conditional routing after database human review
@@ -330,8 +409,8 @@ class Text2QueryWorkflow:
             {
                 "database_human_review": "database_human_review",  # Show updated list after modifications
                 "database_identifier": "database_identifier",  # Re-identify if rejected
-                "table_identifier": "table_identifier"  # Proceed if approved
-            }
+                "table_identifier": "table_identifier",  # Proceed if approved
+            },
         )
 
         # Conditional routing after table_identifier based on interaction mode
@@ -340,8 +419,8 @@ class Text2QueryWorkflow:
             WorkflowRouter.route_after_table_identifier,
             {
                 "table_human_review": "table_human_review",
-                "column_identifier": "column_identifier"
-            }
+                "column_identifier": "column_identifier",
+            },
         )
 
         # Conditional routing after table human review
@@ -351,8 +430,8 @@ class Text2QueryWorkflow:
             {
                 "table_human_review": "table_human_review",  # Show updated list after modifications
                 "table_identifier": "table_identifier",  # Re-identify if rejected
-                "column_identifier": "column_identifier"  # Proceed if approved
-            }
+                "column_identifier": "column_identifier",  # Proceed if approved
+            },
         )
 
         # Add conditional edges for the main processing pipeline to handle retries
@@ -363,7 +442,7 @@ class Text2QueryWorkflow:
                 "column_identifier": "column_identifier",  # Retry
                 "schema_builder": "schema_builder",  # Continue
                 END: END,  # Fail
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -373,7 +452,7 @@ class Text2QueryWorkflow:
                 "schema_builder": "schema_builder",  # Retry
                 "query_planner": "query_planner",  # Continue
                 END: END,  # Fail
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -383,7 +462,7 @@ class Text2QueryWorkflow:
                 "query_planner": "query_planner",  # Retry
                 "query_generator": "query_generator",  # Continue
                 END: END,  # Fail
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -393,7 +472,7 @@ class Text2QueryWorkflow:
                 "query_generator": "query_generator",  # Retry
                 "sql_safety_guard": "sql_safety_guard",  # Continue
                 END: END,  # Fail
-            }
+            },
         )
 
         # SQL safety guard: deterministic, non-LLM check. A failure here is a
@@ -406,7 +485,7 @@ class Text2QueryWorkflow:
             {
                 "query_validator": "query_validator",  # Safe: continue to semantic validation
                 END: END,  # Unsafe: hard fail, no retry
-            }
+            },
         )
 
         # Metadata agent routing
@@ -416,7 +495,7 @@ class Text2QueryWorkflow:
             {
                 "metadata_agent": "metadata_agent",  # Retry
                 END: END,  # Continue or fail
-            }
+            },
         )
 
         # Validation retry logic
@@ -428,13 +507,20 @@ class Text2QueryWorkflow:
                 "table_identifier": "table_identifier",
                 "query_planner": "query_planner",
                 "end": END,
-            }
+            },
         )
 
         return workflow.compile(checkpointer=self.checkpointer)
 
-    def _run_agent(self, state: AgentState, agent, step_number: int, step_name: str,
-                   success_step: str, error_step: str) -> AgentState:
+    def _run_agent(
+        self,
+        state: AgentState,
+        agent,
+        step_number: int,
+        step_name: str,
+        success_step: str,
+        error_step: str,
+    ) -> AgentState:
         """Common method to run any agent with standardized error handling and logging."""
         log_workflow_step(logger, step_number, step_name)
 
@@ -483,7 +569,9 @@ class Text2QueryWorkflow:
             error_step=cfg["error_step"],
         )
 
-    def _handle_step_retry(self, state: AgentState, step_name: str, error_message: str, error_step: str) -> bool:
+    def _handle_step_retry(
+        self, state: AgentState, step_name: str, error_message: str, error_step: str
+    ) -> bool:
         """
         Handle step retry logic. Returns True if retry was initiated, False if no retry available.
 
@@ -496,18 +584,25 @@ class Text2QueryWorkflow:
         Returns:
             True if retry was initiated, False if no more retries available
         """
-        step_key = step_name.lower().replace(' ', '_')
-        if step_key in state.step_retries_left and state.step_retries_left[step_key] > 0:
+        step_key = step_name.lower().replace(" ", "_")
+        if (
+            step_key in state.step_retries_left
+            and state.step_retries_left[step_key] > 0
+        ):
             # Decrement step retry counter
             state.step_retries_left[step_key] -= 1
             logger.warning(f"{step_name} failed: {error_message}")
-            logger.info(f"Retrying {step_name} (retries left: {state.step_retries_left[step_key]})")
+            logger.info(
+                f"Retrying {step_name} (retries left: {state.step_retries_left[step_key]})"
+            )
             state.current_step = f"{error_step}_retry"
             state.last_error_type = "step_retry"
             return True
         else:
             # No more step retries, mark as failed
-            logger.error(f"{step_name} failed after exhausting retries: {error_message}")
+            logger.error(
+                f"{step_name} failed after exhausting retries: {error_message}"
+            )
             state.current_step = f"{error_step}_failed"
             return False
 
@@ -532,11 +627,13 @@ class Text2QueryWorkflow:
                 state.current_step = "routing_completed"
 
                 # Log routing results for live display
-                if hasattr(state, 'is_metadata_query'):
-                    query_type = "Metadata Query" if state.is_metadata_query else "Data Query"
+                if hasattr(state, "is_metadata_query"):
+                    query_type = (
+                        "Metadata Query" if state.is_metadata_query else "Data Query"
+                    )
                     logger.info(f"Query Type: {query_type}")
 
-                if hasattr(state, 'dialect') and state.dialect:
+                if hasattr(state, "dialect") and state.dialect:
                     logger.info(f"SQL Dialect: {state.dialect}")
 
                 return state
@@ -566,8 +663,8 @@ class Text2QueryWorkflow:
                 state.current_step = "database_review_completed"
 
                 # Log human feedback for live display
-                approvals = getattr(state, 'human_approvals', {}) or {}
-                approved = approvals.get('databases', False)
+                approvals = getattr(state, "human_approvals", {}) or {}
+                approved = approvals.get("databases", False)
                 feedback = getattr(state, "human_feedback", "")
                 status = "Approved" if approved else "Requested Changes"
                 logger.info(f"Database Review: {status}")
@@ -601,8 +698,8 @@ class Text2QueryWorkflow:
                 state.current_step = "table_review_completed"
 
                 # Log human feedback for live display
-                approvals = getattr(state, 'human_approvals', {}) or {}
-                approved = approvals.get('tables', False)
+                approvals = getattr(state, "human_approvals", {}) or {}
+                approved = approvals.get("tables", False)
                 feedback = getattr(state, "human_feedback", "")
                 status = "Approved" if approved else "Requested Changes"
                 logger.info(f"Table Review: {status}")
@@ -625,20 +722,35 @@ class Text2QueryWorkflow:
         result_state = self._run_pipeline_node("query_validator", state)
 
         # If validation failed and we have retries left, decrement retry counter
-        if not getattr(result_state, "is_query_valid", False) and result_state.retries_left > 0:
+        if (
+            not getattr(result_state, "is_query_valid", False)
+            and result_state.retries_left > 0
+        ):
             WorkflowRouter.decrement_retry_and_log(result_state)
 
         return result_state
 
-    def _process_query_stream(self, natural_language_query: str, interaction_mode: str = "ask", callback: Optional[callable] = None):
+    def _process_query_stream(
+        self,
+        natural_language_query: str,
+        interaction_mode: str = "ask",
+        callback: Optional[callable] = None,
+    ):
         """
         Internal generator to process a query and yield streaming updates.
         """
-        log_section_header(logger, f"PROCESSING QUERY (STREAMING): {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
-        logger.info(f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}")
+        log_section_header(
+            logger,
+            f"PROCESSING QUERY (STREAMING): {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}",
+        )
+        logger.info(
+            f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}"
+        )
         logger.info(f"Interaction Mode: {interaction_mode}")
 
-        initial_state = self._create_initial_state(natural_language_query, interaction_mode)
+        initial_state = self._create_initial_state(
+            natural_language_query, interaction_mode
+        )
         # Enable API mode to make HITL agents emit pending_review instead of prompting CLI
         if interaction_mode == "interactive":
             initial_state.api_mode = True
@@ -652,10 +764,8 @@ class Text2QueryWorkflow:
                 initial_state,
                 config={
                     "recursion_limit": 20,
-                    "configurable": {
-                        "thread_id": thread_id
-                    }
-                }
+                    "configurable": {"thread_id": thread_id},
+                },
             ):
                 # Extract the state from the chunk
                 if isinstance(chunk, dict) and len(chunk) == 1:
@@ -680,6 +790,7 @@ class Text2QueryWorkflow:
         except Exception as e:
             logger.error(f"Workflow streaming failed: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
 
             initial_state.current_step = "workflow_failed"

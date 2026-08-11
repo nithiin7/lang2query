@@ -7,12 +7,13 @@ formatted schema context that can be used by other agents.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType
+from models.models import AgentResult, AgentState, AgentType
 from retriever.retrieve_sql_kb import SQLKnowledgeBaseRetriever
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +21,20 @@ logger = logging.getLogger(__name__)
 class SchemaBuilderAgent(BaseAgent):
     """Agent responsible for building comprehensive schema context using new chunk format."""
 
-    def __init__(self, model_wrapper, retriever: Optional[SQLKnowledgeBaseRetriever] = None):
+    def __init__(
+        self, model_wrapper, retriever: Optional[SQLKnowledgeBaseRetriever] = None
+    ):
         super().__init__(AgentType.SCHEMA_BUILDER, model_wrapper)
         self._retriever = retriever
 
-    
     def process(self, state: AgentState) -> AgentResult:
         """Build comprehensive schema context for the given state."""
 
         try:
             # Validate prerequisites
-            validation_error = AgentUtils.validate_state_prerequisites(state, ["relevant_databases", "relevant_tables"])
+            validation_error = AgentUtils.validate_state_prerequisites(
+                state, ["relevant_databases", "relevant_tables"]
+            )
             if validation_error:
                 return validation_error
 
@@ -38,7 +42,7 @@ class SchemaBuilderAgent(BaseAgent):
             schema_context = self._build_schema_context(
                 databases=state.relevant_databases,
                 tables=state.relevant_tables,
-                user_query=state.natural_language_query
+                user_query=state.natural_language_query,
             )
 
             return self._create_success_result(schema_context)
@@ -47,8 +51,9 @@ class SchemaBuilderAgent(BaseAgent):
             logger.error(f"Schema building failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-    def _build_schema_context(self, databases: List[str], tables: List[str],
-                            user_query: str) -> Dict[str, Any]:
+    def _build_schema_context(
+        self, databases: List[str], tables: List[str], user_query: str
+    ) -> Dict[str, Any]:
         """
         Build comprehensive schema context from schemas.
 
@@ -60,7 +65,9 @@ class SchemaBuilderAgent(BaseAgent):
         Returns:
             Dictionary containing formatted schema context
         """
-        logger.info(f"Building schema context for {len(databases)} databases, {len(tables)} tables")
+        logger.info(
+            f"Building schema context for {len(databases)} databases, {len(tables)} tables"
+        )
 
         schema_context = {
             "databases": {},
@@ -69,8 +76,8 @@ class SchemaBuilderAgent(BaseAgent):
             "summary": {
                 "total_databases": len(databases),
                 "total_tables": len(tables),
-                "query_context": user_query
-            }
+                "query_context": user_query,
+            },
         }
 
         # Step 1: Retrieve database information
@@ -85,8 +92,7 @@ class SchemaBuilderAgent(BaseAgent):
 
         # Step 3: Format comprehensive schema for prompt inclusion
         schema_context["formatted_schema"] = self._format_schema_for_prompt(
-            schema_context["databases"],
-            schema_context["tables"]
+            schema_context["databases"], schema_context["tables"]
         )
 
         # Log the formatted schema for review
@@ -109,28 +115,32 @@ class SchemaBuilderAgent(BaseAgent):
                 where={
                     "$and": [
                         {"chunk_type": "database"},
-                        {"database_name": database_name}
+                        {"database_name": database_name},
                     ]
                 }
             )
 
-            if results['documents']:
-                content = results['documents'][0]
-                metadata = results['metadatas'][0] if results['metadatas'] else {}
+            if results["documents"]:
+                content = results["documents"][0]
+                metadata = results["metadatas"][0] if results["metadatas"] else {}
 
                 return {
                     "name": database_name,
                     "system": metadata.get("system_name", "unknown"),
                     "module": metadata.get("module_name", "unknown"),
                     "content": content,
-                    "metadata": metadata
+                    "metadata": metadata,
                 }
         except Exception as e:
-            logger.warning(f"Could not retrieve database info for '{database_name}': {e}")
+            logger.warning(
+                f"Could not retrieve database info for '{database_name}': {e}"
+            )
 
         return None
 
-    def _get_table_details(self, tables: List[str], databases: List[str]) -> Dict[str, Dict[str, Any]]:
+    def _get_table_details(
+        self, tables: List[str], databases: List[str]
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Retrieve comprehensive table details from schemas.
 
@@ -166,12 +176,14 @@ class SchemaBuilderAgent(BaseAgent):
                     "database": db_name,
                     "table": table_name,
                     "summary": table_info,
-                    "columns": column_info
+                    "columns": column_info,
                 }
 
         return table_details
 
-    def _find_database_for_table(self, table_name: str, databases: List[str]) -> Optional[str]:
+    def _find_database_for_table(
+        self, table_name: str, databases: List[str]
+    ) -> Optional[str]:
         """Find which database contains the specified table."""
         for db_name in databases:
             # Check if table exists in this database using schemas
@@ -181,18 +193,22 @@ class SchemaBuilderAgent(BaseAgent):
                         "$and": [
                             {"chunk_type": "table"},
                             {"database_name": db_name},
-                            {"table_name": table_name}
+                            {"table_name": table_name},
                         ]
                     }
                 )
-                if results['documents']:
+                if results["documents"]:
                     return db_name
             except Exception as e:
-                logger.debug(f"Error checking table '{table_name}' in database '{db_name}': {e}")
+                logger.debug(
+                    f"Error checking table '{table_name}' in database '{db_name}': {e}"
+                )
 
         return None
 
-    def _get_table_info(self, database_name: str, table_name: str) -> Optional[Dict[str, Any]]:
+    def _get_table_info(
+        self, database_name: str, table_name: str
+    ) -> Optional[Dict[str, Any]]:
         """Retrieve table information from schemas."""
         try:
             results = self._retriever.collection.get(
@@ -200,34 +216,34 @@ class SchemaBuilderAgent(BaseAgent):
                     "$and": [
                         {"chunk_type": "table"},
                         {"database_name": database_name},
-                        {"table_name": table_name}
+                        {"table_name": table_name},
                     ]
                 }
             )
 
-            if results['documents']:
-                content = results['documents'][0]
-                metadata = results['metadatas'][0] if results['metadatas'] else {}
+            if results["documents"]:
+                content = results["documents"][0]
+                metadata = results["metadatas"][0] if results["metadatas"] else {}
 
                 # Extract purpose from content (format: "Table: table_name\nPurpose: purpose")
                 purpose = "N/A"
                 if content:
-                    for line in content.split('\n'):
-                        if line.startswith('Purpose:'):
+                    for line in content.split("\n"):
+                        if line.startswith("Purpose:"):
                             purpose = line[8:].strip()
                             break
 
-                return {
-                    "content": content,
-                    "purpose": purpose,
-                    "metadata": metadata
-                }
+                return {"content": content, "purpose": purpose, "metadata": metadata}
         except Exception as e:
-            logger.warning(f"Could not retrieve table info for '{database_name}.{table_name}': {e}")
+            logger.warning(
+                f"Could not retrieve table info for '{database_name}.{table_name}': {e}"
+            )
 
         return None
 
-    def _get_column_info(self, database_name: str, table_name: str) -> List[Dict[str, Any]]:
+    def _get_column_info(
+        self, database_name: str, table_name: str
+    ) -> List[Dict[str, Any]]:
         """Retrieve and parse table columns from schemas."""
         try:
             results = self._retriever.collection.get(
@@ -235,25 +251,29 @@ class SchemaBuilderAgent(BaseAgent):
                     "$and": [
                         {"chunk_type": "column"},
                         {"database_name": database_name},
-                        {"table_name": table_name}
+                        {"table_name": table_name},
                     ]
                 }
             )
 
-            if results['documents']:
-                content = results['documents'][0]
-                metadata = results['metadatas'][0] if results['metadatas'] else {}
+            if results["documents"]:
+                content = results["documents"][0]
+                metadata = results["metadatas"][0] if results["metadatas"] else {}
 
                 # Parse columns from schemas
                 columns = self._parse_columns_from_new_format(content, metadata)
                 return columns
 
         except Exception as e:
-            logger.warning(f"Could not retrieve column info for '{database_name}.{table_name}': {e}")
+            logger.warning(
+                f"Could not retrieve column info for '{database_name}.{table_name}': {e}"
+            )
 
         return []
 
-    def _parse_columns_from_new_format(self, content: str, metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_columns_from_new_format(
+        self, content: str, metadata: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Parse column information from schemas."""
         columns = []
 
@@ -264,10 +284,14 @@ class SchemaBuilderAgent(BaseAgent):
 
             # Parse column details from content
             # Format: "column_name data_type constraints nullable description"
-            column_lines = [line.strip() for line in content.split('\n') if line.strip() and not line.startswith('Table:')]
+            column_lines = [
+                line.strip()
+                for line in content.split("\n")
+                if line.strip() and not line.startswith("Table:")
+            ]
 
             for line in column_lines:
-                if not line or line.startswith('Table:'):
+                if not line or line.startswith("Table:"):
                     continue
 
                 # Parse line format: "column_name data_type constraints nullable description"
@@ -288,27 +312,41 @@ class SchemaBuilderAgent(BaseAgent):
                     # Check for pri/uni/mul constraints
                     constraint_flags = []
                     i = 0
-                    while i < len(remaining_parts) and remaining_parts[i].lower() in ['pri', 'uni', 'mul', 'yes', 'no']:
-                        if remaining_parts[i].lower() in ['pri', 'uni', 'mul']:
+                    while i < len(remaining_parts) and remaining_parts[i].lower() in [
+                        "pri",
+                        "uni",
+                        "mul",
+                        "yes",
+                        "no",
+                    ]:
+                        if remaining_parts[i].lower() in ["pri", "uni", "mul"]:
                             constraint_flags.append(remaining_parts[i].lower())
-                        elif remaining_parts[i].lower() in ['yes', 'no']:
+                        elif remaining_parts[i].lower() in ["yes", "no"]:
                             nullable_part = remaining_parts[i].lower()
                             break
                         i += 1
 
                     # Remaining parts are description
-                    description_parts = remaining_parts[i+1:] if i < len(remaining_parts) else remaining_parts[i:]
+                    description_parts = (
+                        remaining_parts[i + 1 :]
+                        if i < len(remaining_parts)
+                        else remaining_parts[i:]
+                    )
 
                 column_info = {
                     "name": col_name,
                     "data_type": data_type,
-                    "nullable": nullable_part.lower() == "yes" if nullable_part else True,
-                    "is_primary_key": "pri" in constraint_flags or col_name in primary_keys,
+                    "nullable": (
+                        nullable_part.lower() == "yes" if nullable_part else True
+                    ),
+                    "is_primary_key": "pri" in constraint_flags
+                    or col_name in primary_keys,
                     "is_unique": "uni" in constraint_flags or col_name in unique_keys,
-                    "is_indexed": "mul" in constraint_flags or col_name in indexed_columns,
+                    "is_indexed": "mul" in constraint_flags
+                    or col_name in indexed_columns,
                     "constraints": constraint_flags,
                     "description": " ".join(description_parts),
-                    "category": ""  # Not available in schemas
+                    "category": "",  # Not available in schemas
                 }
                 columns.append(column_info)
 
@@ -317,13 +355,14 @@ class SchemaBuilderAgent(BaseAgent):
 
         return columns
 
-    def _format_schema_for_prompt(self, databases: Dict[str, Any], 
-                                 tables: Dict[str, Dict[str, Any]]) -> str:
+    def _format_schema_for_prompt(
+        self, databases: Dict[str, Any], tables: Dict[str, Dict[str, Any]]
+    ) -> str:
         """Format schema information into a comprehensive prompt-ready string."""
         sections: List[str] = []
         sections.extend(self._format_databases_section(databases))
         sections.extend(self._format_tables_section(tables))
-        return '\n'.join(sections)
+        return "\n".join(sections)
 
     def _format_databases_section(self, databases: Dict[str, Any]) -> List[str]:
         if not databases:
@@ -334,7 +373,7 @@ class SchemaBuilderAgent(BaseAgent):
             lines.append(f"\n**{db_name}**")
             lines.append(f"   System: {db_info.get('system', 'Unknown')}")
             lines.append(f"   Module: {db_info.get('module', 'Unknown')}")
-            purpose = self._extract_purpose_from_content(db_info.get('content'))
+            purpose = self._extract_purpose_from_content(db_info.get("content"))
             if purpose:
                 lines.append(f"   Purpose: {purpose}")
         return lines
@@ -342,8 +381,8 @@ class SchemaBuilderAgent(BaseAgent):
     def _extract_purpose_from_content(self, content: Optional[str]) -> str:
         if not content:
             return ""
-        for ln in content.split('\n'):
-            if ln.startswith('Purpose:'):
+        for ln in content.split("\n"):
+            if ln.startswith("Purpose:"):
                 return ln[8:].strip()
         return ""
 
@@ -357,22 +396,22 @@ class SchemaBuilderAgent(BaseAgent):
         return lines
 
     def _format_single_table(self, table_data: Dict[str, Any]) -> List[str]:
-        db_name = table_data['database']
-        table_name = table_data['table']
+        db_name = table_data["database"]
+        table_name = table_data["table"]
         lines = [f"\n**{db_name}.{table_name}**"]
 
-        purpose = table_data.get('summary', {}).get('purpose')
+        purpose = table_data.get("summary", {}).get("purpose")
         if purpose:
             lines.append(f"   Purpose: {purpose}")
 
-        columns = table_data.get('columns', [])
+        columns = table_data.get("columns", [])
         if columns:
             lines.append("   Columns:")
             for col in columns:
                 lines.append(self._format_single_column(col))
 
-        primary_keys = [col['name'] for col in columns if col.get('is_primary_key')]
-        unique_cols = [col['name'] for col in columns if col.get('is_unique')]
+        primary_keys = [col["name"] for col in columns if col.get("is_primary_key")]
+        unique_cols = [col["name"] for col in columns if col.get("is_unique")]
         if primary_keys:
             lines.append(f"   Primary Key(s): {', '.join(primary_keys)}")
         if unique_cols:
@@ -381,34 +420,34 @@ class SchemaBuilderAgent(BaseAgent):
 
     def _format_single_column(self, col: Dict[str, Any]) -> str:
         parts = [f"      • {col['name']} ({col['data_type']})"]
-        if col.get('description'):
+        if col.get("description"):
             parts.append(f" - {col['description']}")
 
         constraints: List[str] = []
-        if col.get('is_primary_key'):
+        if col.get("is_primary_key"):
             constraints.append("PK")
-        if col.get('is_unique'):
+        if col.get("is_unique"):
             constraints.append("UNIQUE")
-        if col.get('is_indexed'):
+        if col.get("is_indexed"):
             constraints.append("INDEXED")
-        if not col.get('nullable', True):
+        if not col.get("nullable", True):
             constraints.append("NOT NULL")
 
         if constraints:
             parts.append(f" [{', '.join(constraints)}]")
-        return ''.join(parts)
+        return "".join(parts)
 
     def _create_success_result(self, schema_context: Dict[str, Any]) -> AgentResult:
         """Create success result with schema context."""
         summary = schema_context.get("summary", {})
-        
+
         state_updates = {
             "schema_context": schema_context,
-            "current_step": "schema_built"
+            "current_step": "schema_built",
         }
 
         return AgentResult(
             success=True,
             message=f"Schema context built for {summary.get('total_databases', 0)} databases and {summary.get('total_tables', 0)} tables",
-            state_updates=state_updates
+            state_updates=state_updates,
         )

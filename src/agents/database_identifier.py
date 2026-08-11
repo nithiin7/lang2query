@@ -1,29 +1,30 @@
 """
 Database Identifier Agent for the refined text2query system.
 
-Identifies which database(s) are most likely to contain the information needed 
+Identifies which database(s) are most likely to contain the information needed
 to answer the user's query. This is the first layer of filtering in the two-tiered approach.
 """
 
 import logging
 from typing import List
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
+from models.models import AgentResult, AgentState, AgentType, DatabaseSelection
 from utils import ChunkParsers
-from models.models import AgentState, AgentResult, AgentType, DatabaseSelection
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
 class DatabaseIdentifierAgent(BaseAgent):
     """Agent responsible for identifying relevant databases for the query."""
-    
+
     def __init__(self, model_wrapper, retriever=None):
         super().__init__(AgentType.DATABASE_IDENTIFIER, model_wrapper)
 
         self._retriever = retriever
-    
+
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant databases for the query."""
         logger.info(f"{self.name}: Identifying relevant databases for query")
@@ -42,7 +43,7 @@ class DatabaseIdentifierAgent(BaseAgent):
                 schema_class=DatabaseSelection,
                 system_message=system_message,
                 human_message=human_message,
-                temperature=0.1
+                temperature=0.1,
             )
 
             # Extract database names from the structured response
@@ -60,21 +61,25 @@ class DatabaseIdentifierAgent(BaseAgent):
 
         state_updates = {
             "relevant_databases": database_names,
-            "current_step": "databases_identified"
+            "current_step": "databases_identified",
         }
 
         return AgentResult(
             success=True,
             message="Databases identified successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
-    
+
     def _create_database_identification_system_prompt(self, state: AgentState) -> str:
         """Create system prompt for database identification."""
         feedback_section = AgentUtils.get_validation_feedback_section(state)
-        human_feedback_section = AgentUtils.build_human_feedback_section(state, "database")
+        human_feedback_section = AgentUtils.build_human_feedback_section(
+            state, "database"
+        )
 
-        db_section = self._retrieve_relevant_chunks(state.natural_language_query, n_results=10)
+        db_section = self._retrieve_relevant_chunks(
+            state.natural_language_query, n_results=10
+        )
 
         prompt_parts = [
             "You are an expert database architect specializing in multi-database query routing. Your task is to identify ALL databases needed to construct a complete answer to the user's question."
@@ -87,7 +92,8 @@ class DatabaseIdentifierAgent(BaseAgent):
         if db_section:
             prompt_parts.append(db_section)
 
-        prompt_parts.append("""**Critical Database Selection Guidelines:**
+        prompt_parts.append(
+            """**Critical Database Selection Guidelines:**
 1. **ALWAYS include foundational databases**: For queries involving users, customers, or accounts:
    - Include databases containing user/customer/account data as the primary foundation
    - These are typically needed even if not explicitly mentioned in the query
@@ -141,10 +147,10 @@ class DatabaseIdentifierAgent(BaseAgent):
 - **Simple lookups**: May need 1 database (e.g., user profile queries)
 - **Transactional queries**: Often need 2+ databases (user data + transaction data)
 - **Analytical queries**: Typically need 2-3 databases (entity data + event data + reference data)
-- **Cross-domain queries**: Usually require multiple databases from different business domains""")
+- **Cross-domain queries**: Usually require multiple databases from different business domains"""
+        )
 
         return "\n\n".join(prompt_parts)
-    
 
     def _retrieve_relevant_chunks(self, query: str, n_results: int = 5) -> str:
         """Retrieve and format relevant database chunks directly."""
@@ -155,10 +161,9 @@ class DatabaseIdentifierAgent(BaseAgent):
             # Search for database-related chunks
             results = self._retriever.search_by_chunk_type(query, "database", n_results)
 
-            if results and results.get('documents') and results['documents'][0]:
+            if results and results.get("documents") and results["documents"][0]:
                 return ChunkParsers.format_database_chunks(
-                    results['documents'][0],
-                    results['metadatas'][0]
+                    results["documents"][0], results["metadatas"][0]
                 )
             else:
                 return "**Available Databases:**\n(None found)"

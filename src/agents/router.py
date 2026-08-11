@@ -10,27 +10,33 @@ This helps route metadata queries appropriately.
 
 import logging
 
-from .base_agent import BaseAgent
+from models.models import AgentResult, AgentState, AgentType, RoutingInfo
+
 from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType, RoutingInfo
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
 class RouterAgent(BaseAgent):
     """Agent responsible for routing queries based on their type and requirements."""
-    
+
     def __init__(self, model_wrapper):
         super().__init__(AgentType.LLM_ROUTER, model_wrapper)
-    
+
     def process(self, state: AgentState) -> AgentResult:
         """Analyze the user query and determine routing strategy."""
         logger.info(f"{self.name}: Analyzing query and determining routing strategy")
 
         try:
             # Check prerequisites
-            if not state.natural_language_query or not state.natural_language_query.strip():
-                return AgentUtils.create_error_result("Query text is required for routing")
+            if (
+                not state.natural_language_query
+                or not state.natural_language_query.strip()
+            ):
+                return AgentUtils.create_error_result(
+                    "Query text is required for routing"
+                )
 
             # Generate routing analysis
             system_message = self._create_routing_system_prompt()
@@ -40,7 +46,7 @@ class RouterAgent(BaseAgent):
                 schema_class=RoutingInfo,
                 system_message=system_message,
                 human_message=human_message,
-                temperature=0
+                temperature=0,
             )
 
             return self._create_success_result(routing_info)
@@ -48,22 +54,21 @@ class RouterAgent(BaseAgent):
         except Exception as e:
             logger.error(f"Query routing failed: {e}")
             return AgentUtils.create_error_result(str(e))
-            
 
     def _create_success_result(self, routing_info: RoutingInfo) -> AgentResult:
         """Create success result with routing information."""
         state_updates = {
             "is_metadata_query": routing_info.is_metadata_query,
             "dialect": routing_info.dialect,
-            "current_step": "query_routed"
+            "current_step": "query_routed",
         }
 
         return AgentResult(
             success=True,
             message="Query routing completed successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
-    
+
     def _create_routing_system_prompt(self) -> str:
         """Create system prompt for query routing analysis."""
         return """You are an intelligent query router for a text2query system. Analyze the user query and determine its type and database dialect.

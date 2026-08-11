@@ -4,39 +4,40 @@ Colored logging utilities for the text2query system.
 Provides colorized logging with structured formatting.
 """
 
+import json
 import logging
 import sys
-import json
 
 
 class Colors:
     """ANSI color codes for terminal output."""
+
     # Basic colors
-    CYAN = '\033[36m'
-    WHITE = '\033[37m'
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
 
     # Bright colors
-    BRIGHT_BLACK = '\033[90m'
-    BRIGHT_RED = '\033[91m'
-    BRIGHT_GREEN = '\033[92m'
-    BRIGHT_YELLOW = '\033[93m'
-    BRIGHT_BLUE = '\033[94m'
-    BRIGHT_MAGENTA = '\033[95m'
-    BRIGHT_CYAN = '\033[96m'
-    BRIGHT_WHITE = '\033[97m'
+    BRIGHT_BLACK = "\033[90m"
+    BRIGHT_RED = "\033[91m"
+    BRIGHT_GREEN = "\033[92m"
+    BRIGHT_YELLOW = "\033[93m"
+    BRIGHT_BLUE = "\033[94m"
+    BRIGHT_MAGENTA = "\033[95m"
+    BRIGHT_CYAN = "\033[96m"
+    BRIGHT_WHITE = "\033[97m"
 
     # Styles
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
-    RESET = '\033[0m'
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    RESET = "\033[0m"
 
     # Background colors
-    BG_RED = '\033[41m'
+    BG_RED = "\033[41m"
 
 
 class ColoredFormatter(logging.Formatter):
     """Custom formatter that adds colors and emojis to log messages."""
-    
+
     # Level-specific formatting
     LEVEL_COLORS = {
         logging.DEBUG: Colors.BRIGHT_BLACK,
@@ -45,8 +46,8 @@ class ColoredFormatter(logging.Formatter):
         logging.ERROR: Colors.BRIGHT_RED,
         logging.CRITICAL: Colors.BOLD + Colors.BRIGHT_RED + Colors.BG_RED,
     }
-    
-    def __init__(self, fmt=None, datefmt=None, style='%'):
+
+    def __init__(self, fmt=None, datefmt=None, style="%"):
         super().__init__(fmt, datefmt, style)
 
     def format(self, record):
@@ -57,7 +58,7 @@ class ColoredFormatter(logging.Formatter):
         colored_level = f"{level_color}{record.levelname:<8}{Colors.RESET}"
 
         # Color the logger name
-        logger_color = Colors.BRIGHT_BLUE if 'workflow' in record.name else Colors.CYAN
+        logger_color = Colors.BRIGHT_BLUE if "workflow" in record.name else Colors.CYAN
         colored_logger = f"{logger_color}{record.name}{Colors.RESET}"
 
         # Format timestamp
@@ -71,89 +72,139 @@ class ColoredFormatter(logging.Formatter):
         formatted = f"{timestamp_colored} {colored_level} {colored_logger} - {message}"
 
         return formatted
-    
+
     def _colorize_message(self, message: str, level: int) -> str:
         """Add colors to specific parts of the message based on content."""
-        
+
         # Agent-specific coloring
         if "Query Breakdown" in message:
-            message = message.replace("Query Breakdown", f"{Colors.BRIGHT_MAGENTA}Query Breakdown{Colors.RESET}")
+            message = message.replace(
+                "Query Breakdown",
+                f"{Colors.BRIGHT_MAGENTA}Query Breakdown{Colors.RESET}",
+            )
         elif "Database Selector" in message or "Db Selector" in message:
-            message = message.replace("Database Selector", f"{Colors.BRIGHT_BLUE}Database Selector{Colors.RESET}")
-            message = message.replace("Db Selector", f"{Colors.BRIGHT_BLUE}Db Selector{Colors.RESET}")
+            message = message.replace(
+                "Database Selector",
+                f"{Colors.BRIGHT_BLUE}Database Selector{Colors.RESET}",
+            )
+            message = message.replace(
+                "Db Selector", f"{Colors.BRIGHT_BLUE}Db Selector{Colors.RESET}"
+            )
         elif "Table Selector" in message:
-            message = message.replace("Table Selector", f"{Colors.BRIGHT_GREEN}Table Selector{Colors.RESET}")
+            message = message.replace(
+                "Table Selector", f"{Colors.BRIGHT_GREEN}Table Selector{Colors.RESET}"
+            )
         elif "Column Selector" in message:
-            message = message.replace("Column Selector", f"{Colors.BRIGHT_YELLOW}Column Selector{Colors.RESET}")
+            message = message.replace(
+                "Column Selector",
+                f"{Colors.BRIGHT_YELLOW}Column Selector{Colors.RESET}",
+            )
         elif "Query Combiner" in message:
-            message = message.replace("Query Combiner", f"{Colors.BRIGHT_CYAN}Query Combiner{Colors.RESET}")
+            message = message.replace(
+                "Query Combiner", f"{Colors.BRIGHT_CYAN}Query Combiner{Colors.RESET}"
+            )
         elif "Query Generator" in message:
-            message = message.replace("Query Generator", f"{Colors.BRIGHT_MAGENTA}Query Generator{Colors.RESET}")
+            message = message.replace(
+                "Query Generator",
+                f"{Colors.BRIGHT_MAGENTA}Query Generator{Colors.RESET}",
+            )
         elif "Query Validator" in message:
-            message = message.replace("Query Validator", f"{Colors.BRIGHT_RED}Query Validator{Colors.RESET}")
-        
+            message = message.replace(
+                "Query Validator", f"{Colors.BRIGHT_RED}Query Validator{Colors.RESET}"
+            )
+
         # Step coloring
         if "Step" in message and ":" in message:
             import re
-            step_match = re.search(r'(Step \d+)', message)
+
+            step_match = re.search(r"(Step \d+)", message)
             if step_match:
                 step = step_match.group(1)
-                message = message.replace(step, f"{Colors.BOLD}{Colors.BRIGHT_CYAN}{step}{Colors.RESET}")
-        
+                message = message.replace(
+                    step, f"{Colors.BOLD}{Colors.BRIGHT_CYAN}{step}{Colors.RESET}"
+                )
+
         # Highlight important values
         if "confidence" in message.lower():
             import re
-            confidence_match = re.search(r'(\d+\.\d+)', message)
+
+            confidence_match = re.search(r"(\d+\.\d+)", message)
             if confidence_match:
                 confidence = confidence_match.group(1)
-                color = Colors.BRIGHT_GREEN if float(confidence) > 0.7 else Colors.BRIGHT_YELLOW if float(confidence) > 0.4 else Colors.BRIGHT_RED
-                message = message.replace(confidence, f"{color}{confidence}{Colors.RESET}")
-        
+                color = (
+                    Colors.BRIGHT_GREEN
+                    if float(confidence) > 0.7
+                    else (
+                        Colors.BRIGHT_YELLOW
+                        if float(confidence) > 0.4
+                        else Colors.BRIGHT_RED
+                    )
+                )
+                message = message.replace(
+                    confidence, f"{color}{confidence}{Colors.RESET}"
+                )
+
         # Highlight query-related content (SQL, GraphQL, REST, etc.)
         if "SELECT" in message or "FROM" in message or "WHERE" in message:
-            message = message.replace("SELECT", f"{Colors.BOLD}{Colors.BRIGHT_BLUE}SELECT{Colors.RESET}")
-            message = message.replace("FROM", f"{Colors.BOLD}{Colors.BRIGHT_GREEN}FROM{Colors.RESET}")
-            message = message.replace("WHERE", f"{Colors.BOLD}{Colors.BRIGHT_YELLOW}WHERE{Colors.RESET}")
-            message = message.replace("JOIN", f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}JOIN{Colors.RESET}")
-        
+            message = message.replace(
+                "SELECT", f"{Colors.BOLD}{Colors.BRIGHT_BLUE}SELECT{Colors.RESET}"
+            )
+            message = message.replace(
+                "FROM", f"{Colors.BOLD}{Colors.BRIGHT_GREEN}FROM{Colors.RESET}"
+            )
+            message = message.replace(
+                "WHERE", f"{Colors.BOLD}{Colors.BRIGHT_YELLOW}WHERE{Colors.RESET}"
+            )
+            message = message.replace(
+                "JOIN", f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}JOIN{Colors.RESET}"
+            )
+
         # Highlight GraphQL content
         if "query" in message.lower() and "{" in message:
-            message = message.replace("query", f"{Colors.BOLD}{Colors.BRIGHT_CYAN}query{Colors.RESET}")
-            message = message.replace("mutation", f"{Colors.BOLD}{Colors.BRIGHT_CYAN}mutation{Colors.RESET}")
-        
+            message = message.replace(
+                "query", f"{Colors.BOLD}{Colors.BRIGHT_CYAN}query{Colors.RESET}"
+            )
+            message = message.replace(
+                "mutation", f"{Colors.BOLD}{Colors.BRIGHT_CYAN}mutation{Colors.RESET}"
+            )
+
         # Highlight REST API content
-        if any(method in message.upper() for method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']):
-            for method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']:
-                message = message.replace(method, f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{method}{Colors.RESET}")
-        
+        if any(
+            method in message.upper()
+            for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        ):
+            for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
+                message = message.replace(
+                    method, f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{method}{Colors.RESET}"
+                )
+
         return message
 
 
 def setup_colored_logging(level=logging.INFO):
     """Set up beautiful colored logging for the entire application."""
-    
+
     # Create root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
-    
+
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
-    
+
     # Create console handler with colored formatter
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
-    
+
     # Set up colored formatter
     formatter = ColoredFormatter(
-        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%H:%M:%S'
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
     )
     console_handler.setFormatter(formatter)
-    
+
     # Add handler to root logger
     root_logger.addHandler(console_handler)
-    
+
     return root_logger
 
 
@@ -171,8 +222,6 @@ def log_workflow_step(logger, step_num: int, step_name: str):
     logger.info(f"{Colors.BOLD}{Colors.BRIGHT_BLUE}{step_text}{Colors.RESET}")
 
 
-
-
 def log_ai_response(logger, agent_name: str, response: str):
     """Log a full AI response with beautiful formatting and proper line handling."""
     logger.info(f"{Colors.BRIGHT_MAGENTA}{agent_name} AI Response:{Colors.RESET}")
@@ -182,13 +231,14 @@ def log_ai_response(logger, agent_name: str, response: str):
     try:
         # Check if response looks like JSON (starts with { or [ and ends with } or ])
         response_str = str(response).strip()
-        if (response_str.startswith('{') and response_str.endswith('}')) or \
-           (response_str.startswith('[') and response_str.endswith(']')):
+        if (response_str.startswith("{") and response_str.endswith("}")) or (
+            response_str.startswith("[") and response_str.endswith("]")
+        ):
             # Try to parse as JSON
             parsed_json = json.loads(response_str)
             # Pretty print the JSON
             formatted_json = json.dumps(parsed_json, indent=2)
-            for line in formatted_json.split('\n'):
+            for line in formatted_json.split("\n"):
                 logger.info(f"{Colors.BRIGHT_WHITE}{line}{Colors.RESET}")
         else:
             # Not JSON, handle as regular text
@@ -203,11 +253,9 @@ def log_ai_response(logger, agent_name: str, response: str):
 def _log_text_response(logger, response: str):
     """Log a text response with proper line handling."""
     # Split response into lines and log each line individually
-    lines = response.split('\n')
+    lines = response.split("\n")
     for line in lines:
         if line.strip():  # Only log non-empty lines
             logger.info(f"{Colors.BRIGHT_WHITE}{line}{Colors.RESET}")
         else:
             logger.info("")  # Log empty lines to preserve formatting
-
-

@@ -5,24 +5,25 @@ Creates a logical, step-by-step plan in natural language for how to answer the u
 This is a crucial reasoning step that happens before any SQL is written.
 """
 
-import logging
 import json
+import logging
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType, QueryPlan
+from models.models import AgentResult, AgentState, AgentType, QueryPlan
 from tools.date_tools import get_current_date
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
 class QueryPlannerAgent(BaseAgent):
     """Agent responsible for creating a logical query plan."""
-    
+
     def __init__(self, model_wrapper, retriever=None):
         super().__init__(AgentType.QUERY_PLANNER, model_wrapper)
         self._retriever = retriever
-    
+
     def process(self, state: AgentState) -> AgentResult:
         """Create a step-by-step query plan based on the question and schema."""
         logger.info(f"{self.name}: Creating query plan")
@@ -48,7 +49,7 @@ class QueryPlannerAgent(BaseAgent):
                 system_message=system_message,
                 human_message=human_message,
                 tools=tools,
-                temperature=0.4
+                temperature=0.4,
             )
 
             return self._create_success_result(query_plan_result)
@@ -57,23 +58,18 @@ class QueryPlannerAgent(BaseAgent):
             logger.error(f"Query planning failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-
     def _create_success_result(self, query_plan_result: QueryPlan) -> AgentResult:
         """Create success result with query plan."""
         query_plan_json = json.dumps(query_plan_result.model_dump(), indent=2)
 
-        state_updates = {
-            "query_plan": query_plan_json,
-            "current_step": "query_planned"
-        }
+        state_updates = {"query_plan": query_plan_json, "current_step": "query_planned"}
 
         return AgentResult(
             success=True,
             message="Query plan created successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
 
-    
     def _create_planning_system_prompt(self, state: AgentState) -> str:
         """Create system prompt for query planning with dynamic sections."""
 
@@ -217,4 +213,3 @@ class QueryPlannerAgent(BaseAgent):
         ```
 
         """
-    

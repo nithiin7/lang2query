@@ -6,37 +6,37 @@ Provides common functionality for all agents in the workflow.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any
-from lib.agent import ModelWrapper
-from models.models import AgentState, AgentResult, AgentType
-from utils.logging import log_ai_response
+from typing import Any, Dict
 
+from lib.agent import ModelWrapper
+from models.models import AgentResult, AgentState, AgentType
+from utils.logging import log_ai_response
 
 logger = logging.getLogger(__name__)
 
 
 class BaseAgent(ABC):
     """Base class for all agents in the text2query system."""
-    
+
     def __init__(self, agent_type: AgentType, model_wrapper: ModelWrapper):
         """Initialize the base agent."""
         self.agent_type = agent_type
         self.model_wrapper = model_wrapper
         self.name = agent_type.value.replace("_", " ").title()
-    
+
     @abstractmethod
     def process(self, state: AgentState) -> AgentResult:
         """
         Process the current state and return results.
-        
+
         Args:
             state: Current agent state
-            
+
         Returns:
             AgentResult with processing results
         """
         pass
-    
+
     def update_state(self, state: AgentState, updates: Dict[str, Any]) -> None:
         """Update the state with new information."""
         for key, value in updates.items():
@@ -45,8 +45,15 @@ class BaseAgent(ABC):
                 logger.debug(f"Updated state.{key} = {value}")
             else:
                 logger.warning(f"Attempted to update non-existent state field: {key}")
-    
-    def generate_with_llm(self, schema_class=None, system_message: str = None, human_message: str = None, tools: list = None, **kwargs):
+
+    def generate_with_llm(
+        self,
+        schema_class=None,
+        system_message: str = None,
+        human_message: str = None,
+        tools: list = None,
+        **kwargs,
+    ):
         """Generate text using the model with standardized logging and params.
 
         Args:
@@ -65,7 +72,7 @@ class BaseAgent(ABC):
                 system_message=system_message,
                 human_message=human_message,
                 tools=tools,
-                **kwargs
+                **kwargs,
             )
             log_ai_response(logger, self.name, response)
             return response

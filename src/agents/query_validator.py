@@ -10,11 +10,11 @@ state accordingly.
 import logging
 from datetime import datetime
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType, QueryValidation
+from models.models import AgentResult, AgentState, AgentType, QueryValidation
 from tools.date_tools import get_current_date
 
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,9 @@ class QueryValidatorAgent(BaseAgent):
         try:
             # Check prerequisites
             if not state.generated_query or not state.generated_query.query:
-                return AgentUtils.create_error_result("No query generated; cannot validate")
+                return AgentUtils.create_error_result(
+                    "No query generated; cannot validate"
+                )
 
             # Build schema and validation prompt using new message format
             system_message = self._build_validation_system_prompt(state)
@@ -51,7 +53,7 @@ GENERATED QUERY:
                 system_message=system_message,
                 human_message=human_message,
                 tools=tools,
-                temperature=0.4
+                temperature=0.4,
             )
 
             # Extract validation results
@@ -60,10 +62,12 @@ GENERATED QUERY:
             reason_code = validation_result.reason_code.value
 
             # Classify issue type
-            issue_type = reason_code or 'unknown'
+            issue_type = reason_code or "unknown"
 
             # Create feedback
-            feedback = self._create_feedback(is_valid, issue_type, reason, str(validation_result.model_dump()), state)
+            feedback = self._create_feedback(
+                is_valid, issue_type, reason, str(validation_result.model_dump()), state
+            )
 
             return AgentResult(
                 success=True,
@@ -73,18 +77,19 @@ GENERATED QUERY:
                     "query_validation_feedback": feedback,
                     "last_error_type": None if is_valid else issue_type,
                     "current_step": "query_validated",
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Query validation failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-
     def _build_validation_system_prompt(self, state: AgentState) -> str:
         """Create a structured validation system prompt with schema context."""
 
-        schema_section = AgentUtils.get_schema_section(state, header="AVAILABLE SCHEMA CONTEXT")
+        schema_section = AgentUtils.get_schema_section(
+            state, header="AVAILABLE SCHEMA CONTEXT"
+        )
 
         return f"""You are an expert SQL query validator. Evaluate if the GENERATED QUERY adequately answers the USER REQUEST. Be LENIENT - accept queries that are "close enough" and can be improved through the feedback loop. Only reject queries with major flaws.
 
@@ -177,15 +182,22 @@ REJECT THESE ("NO" - now stricter on these issues):
 
 """
 
-
-    def _create_feedback(self, is_valid: bool, issue_type: str, reason: str, llm_response: str, state: AgentState) -> dict:
+    def _create_feedback(
+        self,
+        is_valid: bool,
+        issue_type: str,
+        reason: str,
+        llm_response: str,
+        state: AgentState,
+    ) -> dict:
         """Create validation feedback dictionary."""
         existing = state.query_validation_feedback or {}
 
         feedback = {
             "overall_valid": is_valid,
             "total_issues": existing.get("total_issues", 0) + (0 if is_valid else 1),
-            "suggestions": existing.get("suggestions", []) + ([] if is_valid else ["Regenerate query based on user intent"]),
+            "suggestions": existing.get("suggestions", [])
+            + ([] if is_valid else ["Regenerate query based on user intent"]),
             "llm_judgment": llm_response,
             "reason": reason,
             "issue_type": issue_type,
@@ -194,13 +206,14 @@ REJECT THESE ("NO" - now stricter on these issues):
 
         # Add to history if existing feedback exists
         if existing:
-            feedback["validation_history"] = existing.get("validation_history", []) + [{
-                "timestamp": datetime.now().isoformat(),
-                "overall_valid": is_valid,
-                "llm_judgment": llm_response,
-                "reason": reason,
-                "issue_type": issue_type,
-            }]
+            feedback["validation_history"] = existing.get("validation_history", []) + [
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "overall_valid": is_valid,
+                    "llm_judgment": llm_response,
+                    "reason": reason,
+                    "issue_type": issue_type,
+                }
+            ]
 
         return feedback
-    

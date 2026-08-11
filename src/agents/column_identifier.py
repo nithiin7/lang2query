@@ -6,12 +6,13 @@ the output style of TableIdentifier and provides data for downstream agents.
 """
 
 import logging
-from typing import List, Dict, Any
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
-from utils import ChunkParsers
-from models.models import AgentState, AgentResult, AgentType, ColumnSelection
+from typing import Any, Dict, List
 
+from models.models import AgentResult, AgentState, AgentType, ColumnSelection
+from utils import ChunkParsers
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -23,20 +24,23 @@ class ColumnIdentifier(BaseAgent):
         super().__init__(AgentType.COLUMN_IDENTIFIER, model_wrapper)
         self._retriever = retriever
 
-
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant columns from previously identified tables."""
         logger.info(f"{self.name}: Identifying relevant columns from tables")
 
         try:
             # Validate prerequisites
-            validation_error = AgentUtils.validate_state_prerequisites(state, ["relevant_tables"])
+            validation_error = AgentUtils.validate_state_prerequisites(
+                state, ["relevant_tables"]
+            )
             if validation_error:
                 return validation_error
 
             # Get column details and generate system prompt
             table_columns = self._get_table_columns(state)
-            system_message = self._create_column_identification_system_prompt(state, table_columns)
+            system_message = self._create_column_identification_system_prompt(
+                state, table_columns
+            )
             human_message = state.natural_language_query
 
             # Generate structured column selection response
@@ -44,7 +48,7 @@ class ColumnIdentifier(BaseAgent):
                 schema_class=ColumnSelection,
                 system_message=system_message,
                 human_message=human_message,
-                temperature=0.1
+                temperature=0.1,
             )
 
             # Extract selected columns from the structured response
@@ -53,7 +57,9 @@ class ColumnIdentifier(BaseAgent):
 
             # If no columns were found
             if not selected_columns:
-                logger.warning("No columns selected - query may not be answerable with current schema")
+                logger.warning(
+                    "No columns selected - query may not be answerable with current schema"
+                )
 
             # Return success result
             return self._create_success_result(selected_columns)
@@ -91,12 +97,12 @@ class ColumnIdentifier(BaseAgent):
         tables_by_db = {}
 
         for table_name in table_names:
-            if '.' in table_name:
+            if "." in table_name:
                 # Format: database.table
-                db_name, table_name_only = table_name.split('.', 1)
+                db_name, table_name_only = table_name.split(".", 1)
             else:
                 # Format: table (no database prefix) - use 'default' as database name
-                db_name = 'default'
+                db_name = "default"
                 table_name_only = table_name
 
             if db_name not in tables_by_db:
@@ -109,16 +115,18 @@ class ColumnIdentifier(BaseAgent):
         """Create success result with state updates."""
         state_updates = {
             "relevant_columns": selected_columns,
-            "current_step": "columns_identified"
+            "current_step": "columns_identified",
         }
 
         return AgentResult(
             success=True,
             message="Columns identified successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
 
-    def _extract_columns_from_selection(self, column_selection: ColumnSelection) -> List[str]:
+    def _extract_columns_from_selection(
+        self, column_selection: ColumnSelection
+    ) -> List[str]:
         """Extract column names from the structured ColumnSelection response."""
         selected_columns = []
 
@@ -129,8 +137,9 @@ class ColumnIdentifier(BaseAgent):
 
         return AgentUtils.normalize_list_items(selected_columns)
 
-
-    def _create_column_identification_system_prompt(self, state: AgentState, table_columns: Dict[str, List[Dict[str, Any]]]) -> str:
+    def _create_column_identification_system_prompt(
+        self, state: AgentState, table_columns: Dict[str, List[Dict[str, Any]]]
+    ) -> str:
         """Create system prompt to choose relevant columns from the given tables."""
         columns_section = ChunkParsers.format_column_details(table_columns)
         feedback_section = AgentUtils.get_validation_feedback_section(state)

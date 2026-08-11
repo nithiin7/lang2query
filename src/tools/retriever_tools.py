@@ -18,7 +18,7 @@ import json
 import logging
 from typing import Any, Dict, List
 
-from langchain_core.tools import tool, BaseTool
+from langchain_core.tools import BaseTool, tool
 
 logger = logging.getLogger(__name__)
 
@@ -68,29 +68,27 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         try:
             results = retriever.semantic_search(query, n_results)
 
-            documents = results.get('documents', [])
-            metadatas = results.get('metadatas', [])
-            distances = results.get('distances', [])
+            documents = results.get("documents", [])
+            metadatas = results.get("metadatas", [])
+            distances = results.get("distances", [])
 
             formatted_results = {
                 "success": True,
                 "query": query,
                 "n_results": n_results,
-                "total_found": len(documents[0]) if documents and len(documents) > 0 else 0,
+                "total_found": (
+                    len(documents[0]) if documents and len(documents) > 0 else 0
+                ),
                 "documents": documents[0] if documents and len(documents) > 0 else [],
                 "metadatas": metadatas[0] if metadatas and len(metadatas) > 0 else [],
-                "distances": distances[0] if distances and len(distances) > 0 else []
+                "distances": distances[0] if distances and len(distances) > 0 else [],
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in semantic_search: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "query": query
-            })
+            return json.dumps({"success": False, "error": str(e), "query": query})
 
     @tool
     def search_by_database(query: str, database_name: str, n_results: int = 5) -> str:
@@ -122,34 +120,40 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         try:
             results = retriever.search_by_database(query, database_name, n_results)
 
-            documents = results.get('documents', [])
-            metadatas = results.get('metadatas', [])
-            distances = results.get('distances', [])
+            documents = results.get("documents", [])
+            metadatas = results.get("metadatas", [])
+            distances = results.get("distances", [])
 
             formatted_results = {
                 "success": True,
                 "query": query,
                 "database": database_name,
                 "n_results": n_results,
-                "total_found": len(documents[0]) if documents and len(documents) > 0 else 0,
+                "total_found": (
+                    len(documents[0]) if documents and len(documents) > 0 else 0
+                ),
                 "documents": documents[0] if documents and len(documents) > 0 else [],
                 "metadatas": metadatas[0] if metadatas and len(metadatas) > 0 else [],
-                "distances": distances[0] if distances and len(distances) > 0 else []
+                "distances": distances[0] if distances and len(distances) > 0 else [],
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in search_by_database: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "query": query,
-                "database": database_name
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "query": query,
+                    "database": database_name,
+                }
+            )
 
     @tool
-    def search_by_table(query: str, database_name: str, table_name: str, n_results: int = 5) -> str:
+    def search_by_table(
+        query: str, database_name: str, table_name: str, n_results: int = 5
+    ) -> str:
         """
         Search for detailed information within a SPECIFIC table in a SPECIFIC database.
 
@@ -177,11 +181,13 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         Note: Best for focused questions about table internals. For general column info, use get_columns_by_table instead.
         """
         try:
-            results = retriever.search_by_table(query, database_name, table_name, n_results)
+            results = retriever.search_by_table(
+                query, database_name, table_name, n_results
+            )
 
-            documents = results.get('documents', [])
-            metadatas = results.get('metadatas', [])
-            distances = results.get('distances', [])
+            documents = results.get("documents", [])
+            metadatas = results.get("metadatas", [])
+            distances = results.get("distances", [])
 
             formatted_results = {
                 "success": True,
@@ -189,23 +195,27 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
                 "database": database_name,
                 "table": table_name,
                 "n_results": n_results,
-                "total_found": len(documents[0]) if documents and len(documents) > 0 else 0,
+                "total_found": (
+                    len(documents[0]) if documents and len(documents) > 0 else 0
+                ),
                 "documents": documents[0] if documents and len(documents) > 0 else [],
                 "metadatas": metadatas[0] if metadatas and len(metadatas) > 0 else [],
-                "distances": distances[0] if distances and len(distances) > 0 else []
+                "distances": distances[0] if distances and len(distances) > 0 else [],
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in search_by_table: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "query": query,
-                "database": database_name,
-                "table": table_name
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "query": query,
+                    "database": database_name,
+                    "table": table_name,
+                }
+            )
 
     @tool
     def get_all_databases() -> str:
@@ -234,17 +244,14 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
             formatted_results = {
                 "success": True,
                 "total_databases": len(databases),
-                "databases": databases
+                "databases": databases,
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in get_all_databases: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e)
-            })
+            return json.dumps({"success": False, "error": str(e)})
 
     @tool
     def count_databases() -> str:
@@ -268,17 +275,15 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         try:
             count = retriever.count_databases()
 
-            return json.dumps({
-                "success": True,
-                "total_databases": count
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {"success": True, "total_databases": count},
+                indent=2,
+                ensure_ascii=False,
+            )
 
         except Exception as e:
             logger.error(f"Error in count_databases: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e)
-            })
+            return json.dumps({"success": False, "error": str(e)})
 
     @tool
     def get_tables_in_database(database_name: str) -> str:
@@ -312,18 +317,16 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
                 "success": True,
                 "database": database_name,
                 "total_tables": len(tables),
-                "tables": tables
+                "tables": tables,
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in get_tables_in_database: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "database": database_name
-            })
+            return json.dumps(
+                {"success": False, "error": str(e), "database": database_name}
+            )
 
     @tool
     def count_tables_in_database(database_name: str) -> str:
@@ -351,22 +354,22 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         try:
             count = retriever.count_tables_in_database(database_name)
 
-            return json.dumps({
-                "success": True,
-                "database": database_name,
-                "total_tables": count
-            }, indent=2, ensure_ascii=False)
+            return json.dumps(
+                {"success": True, "database": database_name, "total_tables": count},
+                indent=2,
+                ensure_ascii=False,
+            )
 
         except Exception as e:
             logger.error(f"Error in count_tables_in_database: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "database": database_name
-            })
+            return json.dumps(
+                {"success": False, "error": str(e), "database": database_name}
+            )
 
     @tool
-    def search_tables_in_databases(query: str, database_names: List[str], n_results: int = 5) -> str:
+    def search_tables_in_databases(
+        query: str, database_names: List[str], n_results: int = 5
+    ) -> str:
         """
         Search for TABLE SUMMARIES across MULTIPLE specific databases simultaneously.
 
@@ -395,36 +398,44 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         Note: Only returns table chunks (not columns or database-level info). Use get_columns_by_table() for detailed column info.
         """
         try:
-            results = retriever.search_tables_in_databases(query, database_names, n_results)
+            results = retriever.search_tables_in_databases(
+                query, database_names, n_results
+            )
 
-            documents = results.get('documents', [])
-            metadatas = results.get('metadatas', [])
-            distances = results.get('distances', [])
+            documents = results.get("documents", [])
+            metadatas = results.get("metadatas", [])
+            distances = results.get("distances", [])
 
             formatted_results = {
                 "success": True,
                 "query": query,
                 "databases": database_names,
                 "n_results": n_results,
-                "total_found": len(documents[0]) if documents and len(documents) > 0 else 0,
+                "total_found": (
+                    len(documents[0]) if documents and len(documents) > 0 else 0
+                ),
                 "documents": documents[0] if documents and len(documents) > 0 else [],
                 "metadatas": metadatas[0] if metadatas and len(metadatas) > 0 else [],
-                "distances": distances[0] if distances and len(distances) > 0 else []
+                "distances": distances[0] if distances and len(distances) > 0 else [],
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in search_tables_in_databases: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "query": query,
-                "databases": database_names
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "query": query,
+                    "databases": database_names,
+                }
+            )
 
     @tool
-    def complex_filter_search(query: str, filters: Dict[str, Any], n_results: int = 5) -> str:
+    def complex_filter_search(
+        query: str, filters: Dict[str, Any], n_results: int = 5
+    ) -> str:
         """
         Perform ADVANCED filtered search with precise ChromaDB query conditions.
 
@@ -459,31 +470,30 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         try:
             results = retriever.complex_filter_search(query, filters, n_results)
 
-            documents = results.get('documents', [])
-            metadatas = results.get('metadatas', [])
-            distances = results.get('distances', [])
+            documents = results.get("documents", [])
+            metadatas = results.get("metadatas", [])
+            distances = results.get("distances", [])
 
             formatted_results = {
                 "success": True,
                 "query": query,
                 "filters": filters,
                 "n_results": n_results,
-                "total_found": len(documents[0]) if documents and len(documents) > 0 else 0,
+                "total_found": (
+                    len(documents[0]) if documents and len(documents) > 0 else 0
+                ),
                 "documents": documents[0] if documents and len(documents) > 0 else [],
                 "metadatas": metadatas[0] if metadatas and len(metadatas) > 0 else [],
-                "distances": distances[0] if distances and len(distances) > 0 else []
+                "distances": distances[0] if distances and len(distances) > 0 else [],
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in complex_filter_search: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "query": query,
-                "filters": filters
-            })
+            return json.dumps(
+                {"success": False, "error": str(e), "query": query, "filters": filters}
+            )
 
     @tool
     def get_columns_by_table(database_name: str, table_names: List[str]) -> str:
@@ -521,19 +531,21 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
                 "success": True,
                 "database": database_name,
                 "tables": table_names,
-                "results": table_columns
+                "results": table_columns,
             }
 
             return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
         except Exception as e:
             logger.error(f"Error in get_columns_by_table: {e}")
-            return json.dumps({
-                "success": False,
-                "error": str(e),
-                "database": database_name,
-                "tables": table_names
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "database": database_name,
+                    "tables": table_names,
+                }
+            )
 
     @tool
     def validate_database_exists(database_name: str) -> str:
@@ -559,12 +571,14 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         """
         try:
             all_databases = retriever.get_all_databases()
-            existing_db_names = {db['database'] for db in all_databases}
+            existing_db_names = {db["database"] for db in all_databases}
 
             if database_name in existing_db_names:
                 return f"VALID: Database '{database_name}' exists in knowledge base"
             else:
-                return f"INVALID: Database '{database_name}' not found in knowledge base"
+                return (
+                    f"INVALID: Database '{database_name}' not found in knowledge base"
+                )
         except Exception as e:
             logger.error(f"Error in validate_database_exists: {e}")
             return f"ERROR: Failed to validate database '{database_name}': {str(e)}"
@@ -594,8 +608,8 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
         """
         try:
             # Parse table name format
-            if '.' in table_name:
-                db_name, tbl_name = table_name.split('.', 1)
+            if "." in table_name:
+                db_name, tbl_name = table_name.split(".", 1)
                 search_databases = [db_name]
             else:
                 tbl_name = table_name
@@ -604,19 +618,23 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
                 else:
                     # If no specific database, check all available databases
                     all_databases = retriever.get_all_databases()
-                    search_databases = [db['database'] for db in all_databases]
+                    search_databases = [db["database"] for db in all_databases]
 
             if not search_databases:
-                return f"ERROR: No databases available to search for table '{table_name}'"
+                return (
+                    f"ERROR: No databases available to search for table '{table_name}'"
+                )
 
             # Search for table in databases
             for db in search_databases:
                 try:
                     tables_in_db = retriever.get_tables_in_database(db)
-                    table_names = {t['table'] for t in tables_in_db}
+                    table_names = {t["table"] for t in tables_in_db}
                     if tbl_name in table_names:
                         full_table_name = f"{db}.{tbl_name}"
-                        return f"VALID: Table '{full_table_name}' exists in knowledge base"
+                        return (
+                            f"VALID: Table '{full_table_name}' exists in knowledge base"
+                        )
                 except Exception as e:
                     logger.warning(f"Error searching tables in database {db}: {e}")
                     continue
@@ -627,7 +645,9 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
             return f"ERROR: Failed to validate table '{table_name}': {str(e)}"
 
     @tool
-    def search_similar_tables(query: str, database_names: List[str] = None, limit: int = 10) -> str:
+    def search_similar_tables(
+        query: str, database_names: List[str] = None, limit: int = 10
+    ) -> str:
         """
         VALIDATION TOOL: Search for tables similar to the query in specified databases.
 
@@ -654,19 +674,23 @@ def make_retriever_tools(retriever) -> Dict[str, BaseTool]:
             if not database_names:
                 # If no databases specified, search all available
                 all_databases = retriever.get_all_databases()
-                database_names = [db['database'] for db in all_databases]
+                database_names = [db["database"] for db in all_databases]
 
             if not database_names:
                 return "ERROR: No databases available for search"
 
             # Search for tables in databases
-            results = retriever.search_tables_in_databases(query, database_names, n_results=limit)
+            results = retriever.search_tables_in_databases(
+                query, database_names, n_results=limit
+            )
 
-            if results and results.get('metadatas') and results['metadatas'][0]:
+            if results and results.get("metadatas") and results["metadatas"][0]:
                 found_tables = []
-                for meta in results['metadatas'][0][:limit]:
-                    if meta.get('database_name') and meta.get('table_name'):
-                        found_tables.append(f"{meta['database_name']}.{meta['table_name']}")
+                for meta in results["metadatas"][0][:limit]:
+                    if meta.get("database_name") and meta.get("table_name"):
+                        found_tables.append(
+                            f"{meta['database_name']}.{meta['table_name']}"
+                        )
 
                 if found_tables:
                     return f"FOUND: {len(found_tables)} relevant tables: {', '.join(found_tables)}"

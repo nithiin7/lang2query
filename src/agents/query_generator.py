@@ -8,9 +8,10 @@ This is a much simpler task than going from natural language directly to query.
 import logging
 from typing import List
 
-from .base_agent import BaseAgent
+from models.models import AgentResult, AgentState, AgentType, Query
+
 from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType, Query
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +19,15 @@ logger = logging.getLogger(__name__)
 class QueryGeneratorAgent(BaseAgent):
     """
     Agent that generates queries from query plan and schema.
-    
+
     Takes the clear, step-by-step plan and translates it into valid query.
     """
-    
+
     def __init__(self, model, retriever=None):
         """Initialize the Query Generator Agent."""
         super().__init__(AgentType.QUERY_GENERATOR, model)
         self._retriever = retriever
-    
+
     def process(self, state: AgentState) -> AgentResult:
         """Generate query from query plan and schema."""
         logger.info("Generating query from query plan...")
@@ -34,11 +35,11 @@ class QueryGeneratorAgent(BaseAgent):
         try:
             # Validate prerequisites
             field_checks = [
-            ("query_plan", "No query plan available for query generation"),
-            ("relevant_databases", "No databases available for query generation"),
-            ("relevant_tables", "No tables available for query generation"),
-            ("relevant_columns", "No columns available for query generation"),
-        ]
+                ("query_plan", "No query plan available for query generation"),
+                ("relevant_databases", "No databases available for query generation"),
+                ("relevant_tables", "No tables available for query generation"),
+                ("relevant_columns", "No columns available for query generation"),
+            ]
 
             validation_error = AgentUtils.validate_multiple_fields(state, field_checks)
             if validation_error:
@@ -56,16 +57,14 @@ class QueryGeneratorAgent(BaseAgent):
             logger.error(f"Query generation failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-
     def _create_success_result(self, query: Query) -> AgentResult:
         """Create success result with generated query."""
         return AgentResult(
             success=True,
             message="Successfully generated query",
-            state_updates={"generated_query": query, "current_step": "query_generated"}
+            state_updates={"generated_query": query, "current_step": "query_generated"},
         )
 
-    
     def _generate_query_from_plan(self, state: AgentState, query_plan: str) -> Query:
         """Generate query from query plan and schema."""
         try:
@@ -80,7 +79,7 @@ class QueryGeneratorAgent(BaseAgent):
                 system_message=system_message,
                 human_message=human_message,
                 tools=[],
-                temperature=0.2
+                temperature=0.2,
             )
             query_text = self._extract_query_from_response(response)
 
@@ -97,25 +96,30 @@ class QueryGeneratorAgent(BaseAgent):
                     # For multiple databases, use the first one as primary
                     # The query will handle cross-database references
                     database_name = state.relevant_databases[0]
-                    logger.info(f"Query spans multiple databases: {state.relevant_databases}, using {database_name} as primary")
+                    logger.info(
+                        f"Query spans multiple databases: {state.relevant_databases}, using {database_name} as primary"
+                    )
 
             return Query(
                 query=query_text,
                 database=database_name,
                 tables_used=self._extract_tables_from_query(query_text),
                 columns_used=self._extract_columns_from_query(query_text),
-                explanation=f"Generated from plan: {query_plan[:100]}..."
+                explanation=f"Generated from plan: {query_plan[:100]}...",
             )
 
         except Exception as e:
             logger.error(f"Query generation from plan failed: {e}")
             return None
 
-    
-    def _create_query_from_plan_system_prompt(self, state: AgentState, query_plan: str, dialect: str = "SQL") -> str:
+    def _create_query_from_plan_system_prompt(
+        self, state: AgentState, query_plan: str, dialect: str = "SQL"
+    ) -> str:
         """Create system prompt for query generation from a query plan."""
         feedback_section = AgentUtils.get_validation_feedback_section(state)
-        schema_section = AgentUtils.get_schema_section(state, header="COMPREHENSIVE SCHEMA CONTEXT")
+        schema_section = AgentUtils.get_schema_section(
+            state, header="COMPREHENSIVE SCHEMA CONTEXT"
+        )
 
         return f"""You are a Senior Database Engineer specializing in precise query construction. Your task is to systematically translate a query plan into a single, syntactically perfect, and dialect-compliant query.
 
@@ -228,7 +232,6 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
 
 **SQL Query:**"""
 
-
     def _get_example_query(self) -> str:
         """Get comprehensive example SQL queries for the prompt."""
         examples = """
@@ -293,7 +296,7 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
         ```
         """
         return examples
-    
+
     def _extract_query_from_response(self, response: str) -> str:
         """Extract the first valid query from LLM response."""
         if not response or not response.strip():
@@ -301,7 +304,7 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
 
         try:
             # Split response by semicolons and find valid queries
-            potential_queries = response.split(';')
+            potential_queries = response.split(";")
 
             for query_part in potential_queries:
                 query_part = query_part.strip()
@@ -322,55 +325,55 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
 
     def _clean_query_text(self, query_text: str) -> str:
         """Clean query text by removing markdown and comments."""
-        lines = query_text.split('\n')
+        lines = query_text.split("\n")
         clean_lines = []
 
         for line in lines:
             line = line.strip()
             # Skip markdown code blocks and comments
-            if (line.startswith('```') or
-                line.startswith('--') or
-                not line):
+            if line.startswith("```") or line.startswith("--") or not line:
                 continue
             clean_lines.append(line)
 
-        query = '\n'.join(clean_lines).strip()
-        return self._clean_query(query) if 'SELECT' in query.upper() else query
+        query = "\n".join(clean_lines).strip()
+        return self._clean_query(query) if "SELECT" in query.upper() else query
 
     def _is_valid_sql_query(self, query: str) -> bool:
         """Check if the extracted text is a valid SQL query."""
-        return bool(query and 'SELECT' in query.upper())
-    
+        return bool(query and "SELECT" in query.upper())
+
     def _clean_query(self, query: str) -> str:
         """Clean and format the query."""
         try:
             # Remove extra whitespace and normalize
-            lines = [line.strip() for line in query.split('\n') if line.strip()]
-            
+            lines = [line.strip() for line in query.split("\n") if line.strip()]
+
             # Join lines with proper spacing
-            cleaned_query = '\n'.join(lines)
-            
+            cleaned_query = "\n".join(lines)
+
             # Ensure query ends with semicolon
-            if not cleaned_query.endswith(';'):
-                cleaned_query += ';'
-            
+            if not cleaned_query.endswith(";"):
+                cleaned_query += ";"
+
             return cleaned_query
-            
+
         except Exception as e:
             logger.error(f"Failed to clean query: {e}")
             return query
-    
+
     def _extract_tables_from_query(self, query: str) -> List[str]:
         """Extract table names from query using regex."""
         import re
-        table_pattern = r'(?:FROM|JOIN)\s+(\w+)'
+
+        table_pattern = r"(?:FROM|JOIN)\s+(\w+)"
         matches = re.findall(table_pattern, query, re.IGNORECASE)
         return list(set(matches))  # Remove duplicates
 
     def _extract_columns_from_query(self, query: str) -> List[str]:
         """Extract column names from SELECT clause."""
         import re
-        column_pattern = r'SELECT\s+(.*?)\s+FROM'
+
+        column_pattern = r"SELECT\s+(.*?)\s+FROM"
         match = re.search(column_pattern, query, re.IGNORECASE | re.DOTALL)
 
         if not match:
@@ -379,14 +382,13 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
         columns_text = match.group(1)
         # Parse column names, handling aliases and functions
         columns = []
-        for col in columns_text.split(','):
+        for col in columns_text.split(","):
             col = col.strip()
-            if not col or col == '*':
+            if not col or col == "*":
                 continue
             # Extract the actual column name (before AS or space)
-            col_name = col.split()[0].split('(')[-1]  # Handle functions like COUNT(col)
-            if col_name and col_name != '*':
+            col_name = col.split()[0].split("(")[-1]  # Handle functions like COUNT(col)
+            if col_name and col_name != "*":
                 columns.append(col_name)
 
         return columns
-    

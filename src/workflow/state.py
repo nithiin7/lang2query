@@ -9,7 +9,7 @@ class StateManager:
     @staticmethod
     def update_state_with_preservation(state: AgentState, updates: dict) -> None:
         """Update state while preserving critical system fields."""
-        system_fields_to_preserve = ['retries_left', 'is_query_valid']
+        system_fields_to_preserve = ["retries_left", "is_query_valid"]
 
         # Only preserve system fields that are NOT being updated by the agent
         preserved_values = {}

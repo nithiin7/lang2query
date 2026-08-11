@@ -9,10 +9,11 @@ to fetch relevant schema chunks and generates natural language responses.
 import logging
 from typing import List
 
-from .base_agent import BaseAgent
-from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType
+from models.models import AgentResult, AgentState, AgentType
 from tools import make_retriever_tools
+
+from .agent_utils import AgentUtils
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,9 @@ class MetadataAgent(BaseAgent):
                 retriever_tools["get_columns_by_table"],
             ]
         else:
-            logger.warning("MetadataAgent initialized without a retriever - no retrieval tools available")
+            logger.warning(
+                "MetadataAgent initialized without a retriever - no retrieval tools available"
+            )
             self.tools = []
 
         self.tool_names = [tool.name for tool in self.tools]
@@ -66,69 +69,59 @@ class MetadataAgent(BaseAgent):
             logger.error(f"Metadata query processing failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
-
     def _create_success_result(self, response: str, query: str) -> AgentResult:
         """Create success result with natural language response."""
 
         state_updates = {
             "metadata_response": f"Query: {query}\n\nResponse: {response}",
             "metadata_type": "schema_info",
-            "current_step": "metadata_completed"
+            "current_step": "metadata_completed",
         }
 
         logger.info("Metadata query processing completed successfully")
         return AgentResult(
             success=True,
             message="Metadata query processed successfully",
-            state_updates=state_updates
+            state_updates=state_updates,
         )
-    
+
     def _create_metadata_tool_system_prompt(self) -> str:
         """Create a comprehensive system prompt with detailed tool usage guidance."""
 
         return (
             "You are an expert database metadata assistant.\n\n"
-
             "## CRITICAL RULES:\n"
             f"**TOOLS ({len(self.tool_names)}):** {', '.join(self.tool_names)}\n"
             "**NEVER call tools that don't exist!** Calling 'assistant' or any non-listed tool will FAIL.\n\n"
-
             "## COLUMNS QUERY WORKFLOW:\n"
             "**For 'list columns in TABLE':**\n"
             "1. `complex_filter_search('table_name', {'chunk_type': 'table'})` → finds table & database\n"
             "2. `get_columns_by_table('database_name', ['table_name'])` → gets column details\n"
             "3. Respond with results\n\n"
-
             "## TOOLS QUICK REFERENCE:\n\n"
             "**DISCOVERY:**\n"
             "• `get_all_databases()` - List all databases\n"
             "• `get_tables_in_database(db)` - List tables in database\n"
             "• `count_databases()` - Count total databases (efficient)\n"
             "• `count_tables_in_database(db)` - Count tables in database (efficient)\n\n"
-
             "**SEARCH:**\n"
             "• `semantic_search(query)` - Broad search across all data\n"
             "• `search_by_database(query, db)` - Search within specific database\n"
             "• `complex_filter_search(query, filters)` - Advanced filtered search\n\n"
-
             "**COLUMNS:**\n"
             "• `get_columns_by_table(db, [tables])` - Get detailed column info\n\n"
-
             "## QUICK DECISIONS:\n"
             "**Columns in table:** complex_filter_search → get_columns_by_table\n"
             "**Tables in database:** get_tables_in_database\n"
             "**Count tables in database:** count_tables_in_database\n"
             "**Count all databases:** count_databases\n"
             "**Find anything:** semantic_search\n\n"
-
             "## FORBIDDEN:\n"
             "• Calling non-existent tools (assistant, clarify, help)\n"
             "• Making up tool names\n"
             "• Skipping workflow steps\n\n"
-
             "**COLUMN TYPES:** PRI=Primary Key, UNI=Unique, MUL=Index"
         )
-
 
     def _process_query_with_tools(self, query: str) -> str:
         """
@@ -149,12 +142,14 @@ class MetadataAgent(BaseAgent):
                 tools=self.tools,
                 max_length=2048,
                 temperature=0.2,
-                max_tool_iterations=10
+                max_tool_iterations=10,
             )
 
             # Best-effort normalize to string
             try:
-                response_text = response.strip() if isinstance(response, str) else str(response)
+                response_text = (
+                    response.strip() if isinstance(response, str) else str(response)
+                )
             except Exception:
                 response_text = str(response)
 

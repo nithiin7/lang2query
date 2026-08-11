@@ -17,7 +17,9 @@ class WorkflowRouter:
     """Centralized routing logic for workflow state transitions."""
 
     @staticmethod
-    def check_permanent_failure(state: AgentState, step_context: str = "", return_failed_step: bool = False) -> str:
+    def check_permanent_failure(
+        state: AgentState, step_context: str = "", return_failed_step: bool = False
+    ) -> str:
         """
         Check if the current step has permanently failed.
 
@@ -31,13 +33,13 @@ class WorkflowRouter:
         """
         from langgraph.graph import END
 
-        current_step = getattr(state, 'current_step', '')
-        if current_step.endswith('_failed') or current_step.endswith('_error'):
+        current_step = getattr(state, "current_step", "")
+        if current_step.endswith("_failed") or current_step.endswith("_error"):
             context_msg = f" {step_context}" if step_context else ""
             logger.error(f"{context_msg} failed permanently")
 
             if return_failed_step:
-                step_name = current_step.replace('_failed', '').replace('_error', '')
+                step_name = current_step.replace("_failed", "").replace("_error", "")
                 return f"{step_name}_failed"
             else:
                 return END
@@ -77,7 +79,9 @@ class WorkflowRouter:
             return failure_result
 
         # Check if this step needs to be retried (only for actual step failures, not resumes)
-        if getattr(state, 'last_error_type', None) == "step_retry" and not getattr(state, 'is_resuming', False):
+        if getattr(state, "last_error_type", None) == "step_retry" and not getattr(
+            state, "is_resuming", False
+        ):
             logger.info(f"Retrying {step_context.lower()} step")
             return step_name
 
@@ -87,7 +91,9 @@ class WorkflowRouter:
             logger.info(f"Interactive mode: Routing to {review_node.replace('_', ' ')}")
             return review_node
         else:
-            logger.info(f"Ask mode: Skipping human review, proceeding to {next_node.replace('_', ' ')}")
+            logger.info(
+                f"Ask mode: Skipping human review, proceeding to {next_node.replace('_', ' ')}"
+            )
             return next_node
 
     @staticmethod
@@ -125,24 +131,30 @@ class WorkflowRouter:
         proceeds if approved, re-shows the review after a modification, or re-runs
         identification on rejection.
         """
-        approvals = getattr(state, 'human_approvals', {}) or {}
+        approvals = getattr(state, "human_approvals", {}) or {}
         approved = approvals.get(approval_key, False)
 
         if approved:
-            logger.info(f"User approved {approval_key}, proceeding to {next_node.replace('_', ' ')}")
+            logger.info(
+                f"User approved {approval_key}, proceeding to {next_node.replace('_', ' ')}"
+            )
             return next_node
 
         # Check if we need to show updated list (modifications made) or re-identify
-        modification_type = getattr(state, 'last_modification_type', None)
-        feedback_processed = getattr(state, 'feedback_processed', False)
+        modification_type = getattr(state, "last_modification_type", None)
+        feedback_processed = getattr(state, "feedback_processed", False)
 
-        if feedback_processed and modification_type in ['add', 'remove', 'modify']:
-            logger.info(f"Modifications applied, showing updated {singular_label} list to user")
+        if feedback_processed and modification_type in ["add", "remove", "modify"]:
+            logger.info(
+                f"Modifications applied, showing updated {singular_label} list to user"
+            )
             # Clear the flag so next iteration doesn't loop
             state.feedback_processed = False
             return review_node
         else:
-            logger.info(f"User rejected {approval_key}, re-running {singular_label} identification")
+            logger.info(
+                f"User rejected {approval_key}, re-running {singular_label} identification"
+            )
             return identifier_node
 
     @staticmethod
@@ -173,10 +185,10 @@ class WorkflowRouter:
     def route_after_pipeline_step(state: AgentState) -> str:
         """Route after a pipeline step (column_identifier, schema_builder, etc.) checking for retries."""
         # Check if this step needs to be retried
-        if getattr(state, 'last_error_type', None) == "step_retry":
-            current_step = getattr(state, 'current_step', '')
-            if current_step.endswith('_retry'):
-                step_name = current_step.replace('_retry', '')
+        if getattr(state, "last_error_type", None) == "step_retry":
+            current_step = getattr(state, "current_step", "")
+            if current_step.endswith("_retry"):
+                step_name = current_step.replace("_retry", "")
                 logger.info(f"Retrying pipeline step: {step_name}")
                 return step_name
 
@@ -194,7 +206,7 @@ class WorkflowRouter:
         from langgraph.graph import END
 
         # Check if this step needs to be retried
-        if getattr(state, 'last_error_type', None) == "step_retry":
+        if getattr(state, "last_error_type", None) == "step_retry":
             logger.info("Retrying metadata agent step")
             return "metadata_agent"
 
@@ -212,7 +224,7 @@ class WorkflowRouter:
         """Get the next step based on current step completion."""
         from langgraph.graph import END
 
-        current_step = getattr(state, 'current_step', '')
+        current_step = getattr(state, "current_step", "")
 
         # Map completion steps to next steps
         next_step_map = {
@@ -243,13 +255,15 @@ class WorkflowRouter:
 
         # Precondition error on this node (e.g. missing generated_query): reuse
         # the standard pipeline step retry/failure handling.
-        if getattr(state, 'last_error_type', None) == "step_retry":
-            current_step = getattr(state, 'current_step', '')
-            if current_step.endswith('_retry'):
+        if getattr(state, "last_error_type", None) == "step_retry":
+            current_step = getattr(state, "current_step", "")
+            if current_step.endswith("_retry"):
                 logger.info("Retrying SQL safety guard step")
                 return "sql_safety_guard"
 
-        failure_result = WorkflowRouter.check_permanent_failure(state, "SQL safety guard")
+        failure_result = WorkflowRouter.check_permanent_failure(
+            state, "SQL safety guard"
+        )
         if failure_result:
             return failure_result
 
@@ -302,7 +316,11 @@ class WorkflowRouter:
             return WorkflowRouter._route_schema_missing(state)
         elif issue_type == "query_scope_issue":
             return WorkflowRouter._route_query_scope_issue(state)
-        elif issue_type in ("sql_generation_issue", "data_type_mismatch", "join_relationship_error"):
+        elif issue_type in (
+            "sql_generation_issue",
+            "data_type_mismatch",
+            "join_relationship_error",
+        ):
             return WorkflowRouter._route_sql_issue(state, issue_type)
         else:
             return WorkflowRouter._route_unknown_issue(state, issue_type)
@@ -310,21 +328,27 @@ class WorkflowRouter:
     @staticmethod
     def _route_insufficient_data(state: AgentState) -> str:
         """Handle insufficient data routing."""
-        logger.warning("Insufficient data detected; attempting broader re-identification.")
+        logger.warning(
+            "Insufficient data detected; attempting broader re-identification."
+        )
         state.current_step = "retry_due_to_insufficient_data"
         return "database_identifier"
 
     @staticmethod
     def _route_schema_missing(state: AgentState) -> str:
         """Handle schema missing routing."""
-        logger.info("Routing to table_identifier due to schema issues (missing tables/columns)")
+        logger.info(
+            "Routing to table_identifier due to schema issues (missing tables/columns)"
+        )
         state.current_step = "route_to_table_identifier"
         return "table_identifier"
 
     @staticmethod
     def _route_query_scope_issue(state: AgentState) -> str:
         """Handle query scope issue routing - go back to database identification for broader perspective."""
-        logger.info("Routing to database_identifier due to query_scope_issue (wrong scope/approach)")
+        logger.info(
+            "Routing to database_identifier due to query_scope_issue (wrong scope/approach)"
+        )
         state.current_step = "route_to_database_identifier_scope_issue"
         return "database_identifier"
 
@@ -338,19 +362,25 @@ class WorkflowRouter:
     @staticmethod
     def _route_unknown_issue(state: AgentState, issue_type: str) -> str:
         """Handle unknown issue type routing."""
-        logger.warning(f"Validation failed ({issue_type or 'unknown'}), retrying from database identification.")
+        logger.warning(
+            f"Validation failed ({issue_type or 'unknown'}), retrying from database identification."
+        )
         state.current_step = "retry_unknown_issue"
         return "database_identifier"
 
     @staticmethod
     def _handle_exhausted_retries(state: AgentState) -> None:
         """Handle the case when maximum retries are exhausted."""
-        logger.warning("Maximum retries exhausted; ending workflow with best available query.")
+        logger.warning(
+            "Maximum retries exhausted; ending workflow with best available query."
+        )
 
         feedback = getattr(state, "query_validation_feedback", {}) or {}
 
         if state.generated_query:
-            WorkflowRouter._update_query_with_validation_feedback(state.generated_query, feedback)
+            WorkflowRouter._update_query_with_validation_feedback(
+                state.generated_query, feedback
+            )
             state.user_message = "Query generated with validation issues after maximum retries. Please review the query and validation feedback carefully."
 
         state.current_step = "max_retries_exhausted"
@@ -359,10 +389,12 @@ class WorkflowRouter:
     def _update_query_with_validation_feedback(query, feedback: dict) -> None:
         """Update query explanation with validation feedback."""
         validation_issues = []
-        if feedback.get('issues'):
-            validation_issues = [issue.get('description', '') for issue in feedback['issues']]
+        if feedback.get("issues"):
+            validation_issues = [
+                issue.get("description", "") for issue in feedback["issues"]
+            ]
 
-        suggestions = feedback.get('suggestions', [])
+        suggestions = feedback.get("suggestions", [])
 
         explanation_parts = []
         if validation_issues:

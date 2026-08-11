@@ -3,12 +3,13 @@
 Model Download Script - Download and cache models locally
 """
 
-from pathlib import Path
-from sentence_transformers import SentenceTransformer
-from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
-
 import json
+from pathlib import Path
+
 import torch
+from sentence_transformers import SentenceTransformer
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+
 
 def get_model_choice():
     """Prompt user to select which model to download"""
@@ -30,6 +31,7 @@ def get_model_choice():
         except KeyboardInterrupt:
             print("\n\nOperation cancelled")
             exit(1)
+
 
 def download_bge_m3():
     """Download BGE-M3 model and save it locally"""
@@ -65,8 +67,12 @@ def download_bge_m3():
             # Alternative: Download using transformers directly
             try:
                 print("Downloading model components separately...")
-                tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-                model_transformer = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+                tokenizer = AutoTokenizer.from_pretrained(
+                    model_name, trust_remote_code=True
+                )
+                model_transformer = AutoModel.from_pretrained(
+                    model_name, trust_remote_code=True
+                )
 
                 # Save components
                 tokenizer.save_pretrained(str(local_model_path))
@@ -79,11 +85,21 @@ def download_bge_m3():
 
                 # Create modules.json
                 modules_config = [
-                    {"idx": 0, "name": "0", "path": "", "type": "sentence_transformers.models.Transformer"},
-                    {"idx": 1, "name": "1", "path": "1_Pooling", "type": "sentence_transformers.models.Pooling"}
+                    {
+                        "idx": 0,
+                        "name": "0",
+                        "path": "",
+                        "type": "sentence_transformers.models.Transformer",
+                    },
+                    {
+                        "idx": 1,
+                        "name": "1",
+                        "path": "1_Pooling",
+                        "type": "sentence_transformers.models.Pooling",
+                    },
                 ]
                 modules_path = local_model_path / "modules.json"
-                with open(modules_path, 'w') as f:
+                with open(modules_path, "w") as f:
                     json.dump(modules_config, f, indent=2)
 
                 # Create pooling configuration
@@ -97,9 +113,9 @@ def download_bge_m3():
                     "pooling_mode_mean_sqrt_len_tokens": False,
                     "pooling_mode_weightedmean_tokens": False,
                     "pooling_mode_lasttoken": False,
-                    "include_prompt": True
+                    "include_prompt": True,
                 }
-                with open(pooling_dir / "config.json", 'w') as f:
+                with open(pooling_dir / "config.json", "w") as f:
                     json.dump(pooling_config, f, indent=2)
 
                 model = SentenceTransformer(str(local_model_path))
@@ -113,7 +129,7 @@ def download_bge_m3():
     test_sentences = [
         "This is a test sentence.",
         "BGE-M3 is a powerful embedding model.",
-        "It supports multiple languages and long context."
+        "It supports multiple languages and long context.",
     ]
 
     # Generate embeddings
@@ -132,6 +148,7 @@ def download_bge_m3():
 
     return model, local_model_path
 
+
 def download_llama():
     """Download LLaMA model and save it locally"""
 
@@ -140,7 +157,9 @@ def download_llama():
 
     # Define local model path
     model_name = MODEL_NAME
-    local_model_path = Path(__file__).parent.parent / "models" / MODEL_NAME.split('/')[-1]
+    local_model_path = (
+        Path(__file__).parent.parent / "models" / MODEL_NAME.split("/")[-1]
+    )
 
     print(f"Model will be saved to: {local_model_path}")
 
@@ -152,12 +171,14 @@ def download_llama():
         print(f"\nModel already exists at {local_model_path}")
         print("Loading from local cache...")
 
-        tokenizer = AutoTokenizer.from_pretrained(str(local_model_path), trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            str(local_model_path), trust_remote_code=True
+        )
         model = AutoModelForCausalLM.from_pretrained(
             str(local_model_path),
             torch_dtype="auto",
             device_map="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
         )
     else:
         print(f"\nDownloading model {model_name} from HuggingFace...")
@@ -167,14 +188,16 @@ def download_llama():
         try:
             # First attempt with trust_remote_code
             print("Downloading tokenizer...")
-            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, trust_remote_code=True
+            )
 
             print("Downloading model...")
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 torch_dtype="auto",
                 device_map="auto",
-                trust_remote_code=True
+                trust_remote_code=True,
             )
 
             # Save both tokenizer and model
@@ -193,7 +216,7 @@ def download_llama():
                 tokenizer = AutoTokenizer.from_pretrained(
                     model_name,
                     trust_remote_code=True,
-                    use_fast=False  # Use slow tokenizer as fallback
+                    use_fast=False,  # Use slow tokenizer as fallback
                 )
 
                 model = AutoModelForCausalLM.from_pretrained(
@@ -201,7 +224,7 @@ def download_llama():
                     torch_dtype=torch.float16,  # Use float16 to reduce memory
                     device_map="auto",
                     trust_remote_code=True,
-                    low_cpu_mem_usage=True
+                    low_cpu_mem_usage=True,
                 )
 
                 # Save both tokenizer and model
@@ -218,16 +241,14 @@ def download_llama():
 
     # Test prompt
     prompt = "Give me a short introduction to large language models."
-    messages = [
-        {"role": "user", "content": prompt}
-    ]
+    messages = [{"role": "user", "content": prompt}]
 
     # Apply chat template
     text = tokenizer.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True,
-        enable_thinking=False  # Enable thinking mode for better reasoning
+        enable_thinking=False,  # Enable thinking mode for better reasoning
     )
 
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
@@ -242,10 +263,10 @@ def download_llama():
             top_p=0.95,
             top_k=20,
             do_sample=True,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
         )
 
-    output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist()
+    output_ids = generated_ids[0][len(model_inputs.input_ids[0]) :].tolist()
 
     # Parse thinking content and final response
     try:
@@ -254,7 +275,9 @@ def download_llama():
     except ValueError:
         index = 0
 
-    thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
+    thinking_content = tokenizer.decode(
+        output_ids[:index], skip_special_tokens=True
+    ).strip("\n")
     content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
 
     print("\nModel loaded successfully!")
@@ -270,6 +293,7 @@ def download_llama():
     print(f"Response: '{content[:300]}...'")
 
     return model, tokenizer, local_model_path
+
 
 def main():
     print("Unified Model Download Script")
@@ -295,8 +319,12 @@ def main():
             print("\nSuccess! LLaMA model is ready to use.")
             print("\nTo use this model in your code:")
             print("   from transformers import AutoModelForCausalLM, AutoTokenizer")
-            print(f"   tokenizer = AutoTokenizer.from_pretrained('{model_path}', trust_remote_code=True)")
-            print(f"   model = AutoModelForCausalLM.from_pretrained('{model_path}', torch_dtype='auto', device_map='auto', trust_remote_code=True)")
+            print(
+                f"   tokenizer = AutoTokenizer.from_pretrained('{model_path}', trust_remote_code=True)"
+            )
+            print(
+                f"   model = AutoModelForCausalLM.from_pretrained('{model_path}', torch_dtype='auto', device_map='auto', trust_remote_code=True)"
+            )
 
     except Exception as e:
         print(f"\nError: {e}")
@@ -308,6 +336,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     exit(main())

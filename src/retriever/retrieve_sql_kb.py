@@ -8,10 +8,10 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import torch
-from sentence_transformers import SentenceTransformer
 import chromadb
+import torch
 from chromadb.config import Settings
+from sentence_transformers import SentenceTransformer
 
 from retriever.embedding_utils import BGE_M3_EmbeddingFunction
 
@@ -37,10 +37,12 @@ _COLUMN_LINE_RE = re.compile(
 class SQLKnowledgeBaseRetriever:
     """Read-only query interface over an existing SQL Knowledge Base collection"""
 
-    def __init__(self,
-                 model_path: str = None,
-                 chroma_persist_dir: str = "./src/kb",
-                 collection_name: str = "sql_generation_kb"):
+    def __init__(
+        self,
+        model_path: str = None,
+        chroma_persist_dir: str = "./src/kb",
+        collection_name: str = "sql_generation_kb",
+    ):
         """
         Connect to the BGE-M3 model and the ChromaDB collection previously
         populated by SQLKnowledgeBaseEmbedder.
@@ -56,20 +58,20 @@ class SQLKnowledgeBaseRetriever:
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
 
         if not Path(model_path).exists():
-            raise FileNotFoundError(f"Model not found at {model_path}. Please ensure BGE-M3 is downloaded.")
+            raise FileNotFoundError(
+                f"Model not found at {model_path}. Please ensure BGE-M3 is downloaded."
+            )
         self.model = SentenceTransformer(model_path, device=self.device)
 
         self.chroma_client = chromadb.PersistentClient(
-            path=chroma_persist_dir,
-            settings=Settings(anonymized_telemetry=False)
+            path=chroma_persist_dir, settings=Settings(anonymized_telemetry=False)
         )
 
         self.collection_name = collection_name
         embedding_function = BGE_M3_EmbeddingFunction(self.model)
         try:
             self.collection = self.chroma_client.get_collection(
-                name=collection_name,
-                embedding_function=embedding_function
+                name=collection_name, embedding_function=embedding_function
             )
         except Exception as e:
             raise RuntimeError(
@@ -84,36 +86,53 @@ class SQLKnowledgeBaseRetriever:
     def semantic_search(self, query: str, n_results: int = 5) -> Dict[str, Any]:
         return self.collection.query(query_texts=[query], n_results=n_results)
 
-    def search_by_chunk_type(self, query: str, chunk_type: str, n_results: int = 5) -> Dict[str, Any]:
+    def search_by_chunk_type(
+        self, query: str, chunk_type: str, n_results: int = 5
+    ) -> Dict[str, Any]:
+        return self.collection.query(
+            query_texts=[query], n_results=n_results, where={"chunk_type": chunk_type}
+        )
+
+    def search_by_database(
+        self, query: str, database_name: str, n_results: int = 5
+    ) -> Dict[str, Any]:
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
-            where={"chunk_type": chunk_type}
+            where={"database_name": database_name},
         )
 
-    def search_by_database(self, query: str, database_name: str, n_results: int = 5) -> Dict[str, Any]:
+    def search_by_table(
+        self, query: str, database_name: str, table_name: str, n_results: int = 5
+    ) -> Dict[str, Any]:
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
-            where={"database_name": database_name}
+            where={
+                "$and": [{"database_name": database_name}, {"table_name": table_name}]
+            },
         )
 
-    def search_by_table(self, query: str, database_name: str, table_name: str, n_results: int = 5) -> Dict[str, Any]:
+    def search_tables_in_databases(
+        self, query: str, database_names: List[str], n_results: int = 5
+    ) -> Dict[str, Any]:
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
-            where={"$and": [{"database_name": database_name}, {"table_name": table_name}]}
+            where={
+                "$and": [
+                    {"chunk_type": "table"},
+                    {"database_name": {"$in": database_names}},
+                ]
+            },
         )
 
-    def search_tables_in_databases(self, query: str, database_names: List[str], n_results: int = 5) -> Dict[str, Any]:
+    def complex_filter_search(
+        self, query: str, filters: Dict[str, Any], n_results: int = 5
+    ) -> Dict[str, Any]:
         return self.collection.query(
-            query_texts=[query],
-            n_results=n_results,
-            where={"$and": [{"chunk_type": "table"}, {"database_name": {"$in": database_names}}]}
+            query_texts=[query], n_results=n_results, where=filters
         )
-
-    def complex_filter_search(self, query: str, filters: Dict[str, Any], n_results: int = 5) -> Dict[str, Any]:
-        return self.collection.query(query_texts=[query], n_results=n_results, where=filters)
 
     # ------------------------------------------------------------------
     # Enumeration (ChromaDB collection.get - deterministic metadata scan,
@@ -122,15 +141,21 @@ class SQLKnowledgeBaseRetriever:
     # ------------------------------------------------------------------
 
     def get_all_databases(self) -> List[Dict[str, Any]]:
-        result = self.collection.get(where={"chunk_type": "database"}, include=["metadatas", "documents"])
+        result = self.collection.get(
+            where={"chunk_type": "database"}, include=["metadatas", "documents"]
+        )
         databases = []
-        for metadata, document in zip(result.get("metadatas", []), result.get("documents", [])):
-            databases.append({
-                "database": metadata.get("database_name"),
-                "system_name": metadata.get("system_name"),
-                "module_name": metadata.get("module_name"),
-                "purpose": self._extract_field(document, "Purpose:"),
-            })
+        for metadata, document in zip(
+            result.get("metadatas", []), result.get("documents", [])
+        ):
+            databases.append(
+                {
+                    "database": metadata.get("database_name"),
+                    "system_name": metadata.get("system_name"),
+                    "module_name": metadata.get("module_name"),
+                    "purpose": self._extract_field(document, "Purpose:"),
+                }
+            )
         return databases
 
     def count_databases(self) -> int:
@@ -140,26 +165,36 @@ class SQLKnowledgeBaseRetriever:
     def get_tables_in_database(self, database_name: str) -> List[Dict[str, Any]]:
         result = self.collection.get(
             where={"$and": [{"chunk_type": "table"}, {"database_name": database_name}]},
-            include=["metadatas", "documents"]
+            include=["metadatas", "documents"],
         )
         tables = []
-        for metadata, document in zip(result.get("metadatas", []), result.get("documents", [])):
-            tables.append({
-                "table": metadata.get("table_name"),
-                "purpose": self._extract_field(document, "Purpose:"),
-                "primary_keys": self._split_metadata_list(metadata.get("primary_keys")),
-                "unique_keys": self._split_metadata_list(metadata.get("unique_keys")),
-            })
+        for metadata, document in zip(
+            result.get("metadatas", []), result.get("documents", [])
+        ):
+            tables.append(
+                {
+                    "table": metadata.get("table_name"),
+                    "purpose": self._extract_field(document, "Purpose:"),
+                    "primary_keys": self._split_metadata_list(
+                        metadata.get("primary_keys")
+                    ),
+                    "unique_keys": self._split_metadata_list(
+                        metadata.get("unique_keys")
+                    ),
+                }
+            )
         return tables
 
     def count_tables_in_database(self, database_name: str) -> int:
         result = self.collection.get(
             where={"$and": [{"chunk_type": "table"}, {"database_name": database_name}]},
-            include=[]
+            include=[],
         )
         return len(result.get("ids", []))
 
-    def get_columns_by_table(self, database_name: str, table_names: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+    def get_columns_by_table(
+        self, database_name: str, table_names: List[str]
+    ) -> Dict[str, List[Dict[str, Any]]]:
         result = self.collection.get(
             where={
                 "$and": [
@@ -168,11 +203,13 @@ class SQLKnowledgeBaseRetriever:
                     {"table_name": {"$in": table_names}},
                 ]
             },
-            include=["metadatas", "documents"]
+            include=["metadatas", "documents"],
         )
 
         table_columns: Dict[str, List[Dict[str, Any]]] = {}
-        for metadata, document in zip(result.get("metadatas", []), result.get("documents", [])):
+        for metadata, document in zip(
+            result.get("metadatas", []), result.get("documents", [])
+        ):
             table_name = metadata.get("table_name")
             table_columns[table_name] = self._parse_column_lines(document)
 
@@ -193,7 +230,7 @@ class SQLKnowledgeBaseRetriever:
         for line in content.split("\n"):
             line = line.strip()
             if line.startswith(prefix):
-                return line[len(prefix):].strip()
+                return line[len(prefix) :].strip()
         return None
 
     @staticmethod
@@ -228,17 +265,19 @@ class SQLKnowledgeBaseRetriever:
                 else:
                     description = rest
 
-            columns.append({
-                "column_name": match.group("name"),
-                "data_type": match.group("data_type"),
-                "key_type": key.upper() if key else None,
-                "nullable": (nullable == "yes") if nullable else None,
-                "description": description,
-                "category": category,
-                # Not captured anywhere in the ingestion pipeline (chunker
-                # only parses name/data_type/key/null/description/category
-                # from source markdown) - always None, not a parsing gap.
-                "default_value": None,
-                "extra": None,
-            })
+            columns.append(
+                {
+                    "column_name": match.group("name"),
+                    "data_type": match.group("data_type"),
+                    "key_type": key.upper() if key else None,
+                    "nullable": (nullable == "yes") if nullable else None,
+                    "description": description,
+                    "category": category,
+                    # Not captured anywhere in the ingestion pipeline (chunker
+                    # only parses name/data_type/key/null/description/category
+                    # from source markdown) - always None, not a parsing gap.
+                    "default_value": None,
+                    "extra": None,
+                }
+            )
         return columns

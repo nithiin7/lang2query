@@ -6,10 +6,12 @@ and gets their feedback before proceeding with the query generation pipeline.
 """
 
 import logging
-from typing import Dict, Any, Callable, Union, List, Optional
-from .base_agent import BaseAgent
-from models.models import AgentState, AgentResult, HumanFeedback, AgentType
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from models.models import AgentResult, AgentState, AgentType, HumanFeedback
 from tools import make_retriever_tools
+
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +19,14 @@ logger = logging.getLogger(__name__)
 class HumanInTheLoopAgent(BaseAgent):
     """Generic agent for human-in-the-loop confirmation workflows."""
 
-    def __init__(self, model_wrapper, confirmation_type: str = "databases",
-                 data_source: Union[str, Callable] = None,
-                 display_formatter: Callable = None,
-                 retriever=None):
+    def __init__(
+        self,
+        model_wrapper,
+        confirmation_type: str = "databases",
+        data_source: Union[str, Callable] = None,
+        display_formatter: Callable = None,
+        retriever=None,
+    ):
         """
         Initialize the human-in-the-loop agent.
 
@@ -38,7 +44,6 @@ class HumanInTheLoopAgent(BaseAgent):
         self._retriever = retriever
         self.name = f"Human-in-the-Loop Agent ({confirmation_type.title()})"
 
-
     def process(self, state: AgentState) -> AgentResult:
         """
         Present identified items to user and get their approval/feedback.
@@ -54,24 +59,32 @@ class HumanInTheLoopAgent(BaseAgent):
             items_data = self._get_items_data(state)
 
             if not items_data:
-                logger.warning(f"No {self.confirmation_type} identified for human review")
+                logger.warning(
+                    f"No {self.confirmation_type} identified for human review"
+                )
                 return AgentResult(
                     success=True,
                     message=f"No {self.confirmation_type} to review, proceeding",
                     state_updates={
                         "human_approvals": {self.confirmation_type: True},
-                        "human_feedback": "no_items"
-                    }
+                        "human_feedback": "no_items",
+                    },
                 )
 
             # If feedback is already present (resume), process it; else return awaiting checkpoint
-            pre_supplied = getattr(state, 'human_feedback', None)
-            approvals = getattr(state, 'human_approvals', {}) or {}
+            pre_supplied = getattr(state, "human_feedback", None)
+            approvals = getattr(state, "human_approvals", {}) or {}
 
             if pre_supplied:
                 # Process existing feedback using LLM
-                feedback_result = self._process_feedback_with_llm(state, pre_supplied, items_data)
-                return AgentResult(success=True, message="Human feedback applied (resume)", state_updates=feedback_result)
+                feedback_result = self._process_feedback_with_llm(
+                    state, pre_supplied, items_data
+                )
+                return AgentResult(
+                    success=True,
+                    message="Human feedback applied (resume)",
+                    state_updates=feedback_result,
+                )
 
             # Otherwise, signal awaiting approval and stop
             return AgentResult(
@@ -80,7 +93,11 @@ class HumanInTheLoopAgent(BaseAgent):
                 state_updates={
                     "pending_review": {
                         "type": self.confirmation_type,
-                        "items": items_data if isinstance(items_data, list) else list(items_data) if items_data else [],
+                        "items": (
+                            items_data
+                            if isinstance(items_data, list)
+                            else list(items_data) if items_data else []
+                        ),
                     },
                     "human_approvals": {**approvals, self.confirmation_type: False},
                     "human_feedback": None,
@@ -92,7 +109,7 @@ class HumanInTheLoopAgent(BaseAgent):
             return AgentResult(
                 success=False,
                 message=f"Failed to process human feedback: {str(e)}",
-                state_updates=None
+                state_updates=None,
             )
 
     def _get_items_data(self, state: AgentState) -> Any:
@@ -102,8 +119,9 @@ class HumanInTheLoopAgent(BaseAgent):
         else:
             return getattr(state, self.data_source, [])
 
-
-    def _validate_feedback_suggestions(self, feedback: HumanFeedback, state: AgentState) -> HumanFeedback:
+    def _validate_feedback_suggestions(
+        self, feedback: HumanFeedback, state: AgentState
+    ) -> HumanFeedback:
         """
         Validate suggested items using retriever directly.
 
@@ -137,7 +155,6 @@ class HumanInTheLoopAgent(BaseAgent):
 
         return feedback
 
-
     def _validate_item_with_retriever(self, item: str, state: AgentState) -> bool:
         """
         Validate a single item using retriever.
@@ -150,7 +167,9 @@ class HumanInTheLoopAgent(BaseAgent):
             True if item exists in knowledge base, False otherwise
         """
         if not self._retriever:
-            logger.warning("No retriever available, accepting suggestion without validation")
+            logger.warning(
+                "No retriever available, accepting suggestion without validation"
+            )
             return True
 
         try:
@@ -158,30 +177,32 @@ class HumanInTheLoopAgent(BaseAgent):
                 # Validate database exists
                 all_dbs = self._retriever.get_all_databases()
                 return item in all_dbs
-            
+
             elif self.confirmation_type == "tables":
                 # For tables, need to handle both "db.table" and just "table" formats
-                if '.' in item:
+                if "." in item:
                     # Already has database name
-                    db_name, table_name = item.rsplit('.', 1)
+                    db_name, table_name = item.rsplit(".", 1)
                     return self._check_table_exists(table_name, db_name)
                 else:
                     # No database name provided, search in relevant databases
-                    relevant_dbs = getattr(state, 'relevant_databases', [])
+                    relevant_dbs = getattr(state, "relevant_databases", [])
                     if not relevant_dbs:
-                        logger.warning(f"No relevant databases to search for table: {item}")
+                        logger.warning(
+                            f"No relevant databases to search for table: {item}"
+                        )
                         return False
-                    
+
                     # Check if table exists in any of the relevant databases
                     for db in relevant_dbs:
                         if self._check_table_exists(item, db):
                             logger.info(f"Found table {item} in database {db}")
                             return True
-                    
+
                     return False
-            
+
             return False
-        
+
         except Exception as e:
             logger.error(f"Error validating item {item}: {e}")
             return False
@@ -203,9 +224,9 @@ class HumanInTheLoopAgent(BaseAgent):
             for table_info in tables:
                 if isinstance(table_info, dict):
                     # parse_table_chunk returns 'table' as key, not 'table_name'
-                    if table_info.get('table') == table_name:
+                    if table_info.get("table") == table_name:
                         return True
-                elif hasattr(table_info, 'table'):
+                elif hasattr(table_info, "table"):
                     if table_info.table == table_name:
                         return True
             return False
@@ -213,7 +234,9 @@ class HumanInTheLoopAgent(BaseAgent):
             logger.error(f"Error checking table {table_name} in {database_name}: {e}")
             return False
 
-    def _default_display_formatter(self, items_data: Any, confirmation_type: str) -> str:
+    def _default_display_formatter(
+        self, items_data: Any, confirmation_type: str
+    ) -> str:
         """Default display formatter for list-type data."""
         if isinstance(items_data, list):
             if not items_data:
@@ -234,8 +257,9 @@ class HumanInTheLoopAgent(BaseAgent):
         else:
             return str(items_data)
 
-
-    def _process_feedback_with_llm(self, state: AgentState, user_feedback: str, items_data: Any) -> Dict[str, Any]:
+    def _process_feedback_with_llm(
+        self, state: AgentState, user_feedback: str, items_data: Any
+    ) -> Dict[str, Any]:
         """
         Process user feedback using LLM with validation tools to generate structured response.
 
@@ -260,7 +284,9 @@ class HumanInTheLoopAgent(BaseAgent):
                 retriever_tools["get_all_databases"],
             ]
         else:
-            logger.warning(f"{self.name}: no retriever available - LLM will validate without tools")
+            logger.warning(
+                f"{self.name}: no retriever available - LLM will validate without tools"
+            )
             validation_tools = []
 
         # Generate structured feedback analysis with tools
@@ -269,11 +295,13 @@ class HumanInTheLoopAgent(BaseAgent):
             system_message=system_message,
             human_message=human_message,
             tools=validation_tools,
-            temperature=0.1
+            temperature=0.1,
         )
 
         # Validate suggestions using retriever directly
-        feedback_analysis = self._validate_feedback_suggestions(feedback_analysis, state)
+        feedback_analysis = self._validate_feedback_suggestions(
+            feedback_analysis, state
+        )
 
         # Process the structured response into state updates
         return self._convert_feedback_to_state_updates(state, feedback_analysis)
@@ -333,7 +361,9 @@ For "use wallet.user table as well":
 - **Clear feedback** about validation results in feedback_summary
 - **Use search_similar_tables** if user suggests invalid items to find alternatives"""
 
-    def _convert_feedback_to_state_updates(self, state: AgentState, feedback: HumanFeedback) -> Dict[str, Any]:
+    def _convert_feedback_to_state_updates(
+        self, state: AgentState, feedback: HumanFeedback
+    ) -> Dict[str, Any]:
         """
         Convert structured feedback analysis into state updates.
 
@@ -347,118 +377,154 @@ For "use wallet.user table as well":
         updates = {}
 
         # Set human feedback and approvals
-        updates['human_feedback'] = feedback.feedback_summary
+        updates["human_feedback"] = feedback.feedback_summary
 
         # Determine approval status based on feedback
-        approvals = dict(getattr(state, 'human_approvals', {}) or {})
+        approvals = dict(getattr(state, "human_approvals", {}) or {})
 
-        if feedback.approval_status == 'APPROVE':
+        if feedback.approval_status == "APPROVE":
             approvals[self.confirmation_type] = True
-            updates['feedback_processed'] = False  # No modifications made
-            updates['last_modification_type'] = 'approve'
-            updates['human_feedback'] = None  # Clear feedback after approval
+            updates["feedback_processed"] = False  # No modifications made
+            updates["last_modification_type"] = "approve"
+            updates["human_feedback"] = None  # Clear feedback after approval
             logger.info(f"User approved {self.confirmation_type} selection")
         else:
             approvals[self.confirmation_type] = False
-            if feedback.approval_status == 'REJECT':
-                updates['feedback_processed'] = False  # Will re-identify
-                updates['last_modification_type'] = 'reject'
-                updates['human_feedback'] = None  # Clear feedback to prevent re-processing
-                logger.info(f"User rejected {self.confirmation_type} selection - needs complete restart")
+            if feedback.approval_status == "REJECT":
+                updates["feedback_processed"] = False  # Will re-identify
+                updates["last_modification_type"] = "reject"
+                updates["human_feedback"] = (
+                    None  # Clear feedback to prevent re-processing
+                )
+                logger.info(
+                    f"User rejected {self.confirmation_type} selection - needs complete restart"
+                )
             else:  # MODIFY
                 # Will determine if modifications were actually made below
                 # Don't set feedback_processed yet - will be set based on actual changes
-                updates['last_modification_type'] = feedback.modification_type
-                logger.info(f"User requested {self.confirmation_type} modifications (type: {feedback.modification_type})")
+                updates["last_modification_type"] = feedback.modification_type
+                logger.info(
+                    f"User requested {self.confirmation_type} modifications (type: {feedback.modification_type})"
+                )
 
-        updates['human_approvals'] = approvals
+        updates["human_approvals"] = approvals
 
         # Handle item modifications based on feedback
         changes_made = False  # Track if actual changes were made
-        
-        if self.confirmation_type in ['databases', 'tables']:
-            current_items = list(getattr(state, f'relevant_{self.confirmation_type}', []) or [])
+
+        if self.confirmation_type in ["databases", "tables"]:
+            current_items = list(
+                getattr(state, f"relevant_{self.confirmation_type}", []) or []
+            )
             original_items = current_items.copy()
 
-            if feedback.modification_type == 'replace':
+            if feedback.modification_type == "replace":
                 # Replace current items with selected_values
                 if feedback.selected_values:
-                    updates[f'relevant_{self.confirmation_type}'] = feedback.selected_values
-                    changes_made = (feedback.selected_values != original_items)
-                    logger.info(f"Replaced {self.confirmation_type} with: {feedback.selected_values}")
+                    updates[f"relevant_{self.confirmation_type}"] = (
+                        feedback.selected_values
+                    )
+                    changes_made = feedback.selected_values != original_items
+                    logger.info(
+                        f"Replaced {self.confirmation_type} with: {feedback.selected_values}"
+                    )
                 else:
                     # Clear items if no selection provided
-                    updates[f'relevant_{self.confirmation_type}'] = []
+                    updates[f"relevant_{self.confirmation_type}"] = []
                     changes_made = len(original_items) > 0
                     logger.info(f"Cleared {self.confirmation_type} selection")
 
-            elif feedback.modification_type == 'add':
+            elif feedback.modification_type == "add":
                 # Normalize items (add database name to tables if missing)
                 items_to_add = self._normalize_items(feedback.valid_suggestions, state)
-                
+
                 if items_to_add:
                     added_count = 0
                     for item in items_to_add:
                         if item not in current_items:
                             current_items.append(item)
                             added_count += 1
-                    
+
                     if added_count > 0:
-                        updates[f'relevant_{self.confirmation_type}'] = current_items
+                        updates[f"relevant_{self.confirmation_type}"] = current_items
                         changes_made = True
-                        logger.info(f"Added {added_count} to {self.confirmation_type}: {items_to_add}")
+                        logger.info(
+                            f"Added {added_count} to {self.confirmation_type}: {items_to_add}"
+                        )
                     else:
                         logger.info(f"ℹ️  No new items to add (all already present)")
 
                 # Log invalid suggestions that couldn't be added
                 if feedback.invalid_suggestions:
-                    logger.warning(f"Could not add invalid {self.confirmation_type}: {feedback.invalid_suggestions}")
+                    logger.warning(
+                        f"Could not add invalid {self.confirmation_type}: {feedback.invalid_suggestions}"
+                    )
                     # Add invalid suggestions to feedback summary for user notification
-                    current_feedback = updates.get('human_feedback', feedback.feedback_summary)
-                    invalid_list = ", ".join(f'"{item}"' for item in feedback.invalid_suggestions)
-                    updates['human_feedback'] = f"{current_feedback} (Note: {invalid_list} not found in knowledge base)"
+                    current_feedback = updates.get(
+                        "human_feedback", feedback.feedback_summary
+                    )
+                    invalid_list = ", ".join(
+                        f'"{item}"' for item in feedback.invalid_suggestions
+                    )
+                    updates["human_feedback"] = (
+                        f"{current_feedback} (Note: {invalid_list} not found in knowledge base)"
+                    )
 
-            elif feedback.modification_type == 'remove':
+            elif feedback.modification_type == "remove":
                 # Remove items from current selection (handle both with and without db prefix for tables)
-                items_to_remove = set(feedback.suggested_values) if feedback.suggested_values else set()
-                
+                items_to_remove = (
+                    set(feedback.suggested_values)
+                    if feedback.suggested_values
+                    else set()
+                )
+
                 # For tables, normalize removal items to match format in current_items
-                if self.confirmation_type == 'tables':
+                if self.confirmation_type == "tables":
                     normalized_removals = set()
                     for item in items_to_remove:
                         # Check both with and without database prefix
                         normalized_removals.add(item)
-                        if '.' not in item:
+                        if "." not in item:
                             # Add all possible fully-qualified versions
                             for current_item in current_items:
-                                if current_item.endswith('.' + item):
+                                if current_item.endswith("." + item):
                                     normalized_removals.add(current_item)
                     items_to_remove = normalized_removals
-                
+
                 # Keep items that are not in the removal set
-                filtered_items = [item for item in current_items if item not in items_to_remove]
-                changes_made = (len(filtered_items) != len(original_items))
-                updates[f'relevant_{self.confirmation_type}'] = filtered_items
-                
+                filtered_items = [
+                    item for item in current_items if item not in items_to_remove
+                ]
+                changes_made = len(filtered_items) != len(original_items)
+                updates[f"relevant_{self.confirmation_type}"] = filtered_items
+
                 if changes_made:
-                    logger.info(f"Removed from {self.confirmation_type}: {items_to_remove}")
+                    logger.info(
+                        f"Removed from {self.confirmation_type}: {items_to_remove}"
+                    )
                     logger.info(f"Remaining {self.confirmation_type}: {filtered_items}")
                 else:
                     logger.info(f"ℹ️  No items removed (none matched)")
 
         # Only set feedback_processed and clear feedback if actual changes were made
-        if feedback.approval_status == 'MODIFY':
+        if feedback.approval_status == "MODIFY":
             if changes_made:
-                updates['feedback_processed'] = True
-                updates['human_feedback'] = None  # Clear feedback after successful modifications
+                updates["feedback_processed"] = True
+                updates["human_feedback"] = (
+                    None  # Clear feedback after successful modifications
+                )
                 logger.info(f"Modifications applied, will show updated list to user")
             else:
                 # No actual changes made - treat as approval to move forward
-                updates['feedback_processed'] = False
-                updates['human_feedback'] = None  # Clear feedback to prevent loop
-                approvals[self.confirmation_type] = True  # Auto-approve since no valid changes
-                updates['human_approvals'] = approvals
-                logger.info(f"ℹ️  No valid modifications made, auto-approving current selection")
+                updates["feedback_processed"] = False
+                updates["human_feedback"] = None  # Clear feedback to prevent loop
+                approvals[self.confirmation_type] = (
+                    True  # Auto-approve since no valid changes
+                )
+                updates["human_approvals"] = approvals
+                logger.info(
+                    f"ℹ️  No valid modifications made, auto-approving current selection"
+                )
 
         return updates
 
@@ -476,17 +542,17 @@ For "use wallet.user table as well":
         if not items:
             return []
 
-        if self.confirmation_type == 'databases':
+        if self.confirmation_type == "databases":
             # Databases don't need normalization
             return items
 
-        if self.confirmation_type == 'tables':
+        if self.confirmation_type == "tables":
             # Add database names to tables if missing
             normalized = []
-            relevant_dbs = getattr(state, 'relevant_databases', [])
-            
+            relevant_dbs = getattr(state, "relevant_databases", [])
+
             for item in items:
-                if '.' in item:
+                if "." in item:
                     # Already has database name
                     normalized.append(item)
                 else:
@@ -499,12 +565,14 @@ For "use wallet.user table as well":
                         # Couldn't find database, keep as-is and log warning
                         logger.warning(f"Could not find database for table: {item}")
                         normalized.append(item)
-            
+
             return normalized
 
         return items
 
-    def _find_database_for_table(self, table_name: str, relevant_dbs: List[str]) -> Optional[str]:
+    def _find_database_for_table(
+        self, table_name: str, relevant_dbs: List[str]
+    ) -> Optional[str]:
         """
         Find which database contains a table.
 

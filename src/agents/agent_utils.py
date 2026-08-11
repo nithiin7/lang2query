@@ -32,20 +32,20 @@ class AgentUtils:
         if not text or not text.strip():
             return None
 
-        json_start = text.find('{')
-        json_end = text.rfind('}')
+        json_start = text.find("{")
+        json_end = text.rfind("}")
 
         if json_start >= 0 and json_end > json_start:
-            json_text = text[json_start:json_end + 1]
+            json_text = text[json_start : json_end + 1]
 
             # Ensure we have a complete JSON object
-            if json_text.endswith('}'):
+            if json_text.endswith("}"):
                 return json_text
             else:
                 # Try to find the last complete brace
-                last_brace = json_text.rfind('}')
+                last_brace = json_text.rfind("}")
                 if last_brace > 0:
-                    return json_text[:last_brace + 1]
+                    return json_text[: last_brace + 1]
 
         return None
 
@@ -70,7 +70,7 @@ class AgentUtils:
     @staticmethod
     def get_validation_feedback_section(state: AgentState) -> str:
         """Get standardized validation feedback section for prompts."""
-        feedback = getattr(state, 'query_validation_feedback', None) or {}
+        feedback = getattr(state, "query_validation_feedback", None) or {}
         if not feedback.get("overall_valid", True):
             reason = feedback.get("reason") or feedback.get("llm_judgment")
             if reason:
@@ -80,7 +80,9 @@ class AgentUtils:
         return ""
 
     @staticmethod
-    def validate_state_prerequisites(state: AgentState, required_fields: List[str]) -> Optional[AgentResult]:
+    def validate_state_prerequisites(
+        state: AgentState, required_fields: List[str]
+    ) -> Optional[AgentResult]:
         """
         Validate that required state fields are present.
 
@@ -94,7 +96,9 @@ class AgentUtils:
         for field in required_fields:
             value = getattr(state, field, None)
             if value is None or (isinstance(value, (list, str)) and not value):
-                return AgentUtils.create_error_result(f"Missing required field: {field}")
+                return AgentUtils.create_error_result(
+                    f"Missing required field: {field}"
+                )
 
         return None
 
@@ -106,7 +110,9 @@ class AgentUtils:
         return None
 
     @staticmethod
-    def validate_multiple_fields(state: AgentState, field_checks: List[tuple[str, str]]) -> Optional[AgentResult]:
+    def validate_multiple_fields(
+        state: AgentState, field_checks: List[tuple[str, str]]
+    ) -> Optional[AgentResult]:
         """
         Validate multiple state fields with custom error messages.
 
@@ -125,7 +131,9 @@ class AgentUtils:
         return None
 
     @staticmethod
-    def normalize_list_items(items: List[str], case_sensitive: bool = False) -> List[str]:
+    def normalize_list_items(
+        items: List[str], case_sensitive: bool = False
+    ) -> List[str]:
         """Normalize list items by stripping whitespace and handling duplicates."""
         if not items:
             return []
@@ -138,8 +146,11 @@ class AgentUtils:
             if not case_sensitive:
                 normalized_lower = normalized.lower()
 
-            if normalized and (case_sensitive and normalized not in seen) or \
-               (not case_sensitive and normalized_lower not in seen):
+            if (
+                normalized
+                and (case_sensitive and normalized not in seen)
+                or (not case_sensitive and normalized_lower not in seen)
+            ):
                 processed.append(normalized)
                 seen.add(normalized_lower if not case_sensitive else normalized)
 
@@ -160,22 +171,22 @@ class AgentUtils:
             "database": {
                 "items_attr": "relevant_databases",
                 "label": "Previously Selected Databases",
-                "item_type": "databases"
+                "item_type": "databases",
             },
             "tables": {
-                "items_attr": "relevant_tables", 
+                "items_attr": "relevant_tables",
                 "label": "Previously Selected Tables",
-                "item_type": "tables"
-            }
+                "item_type": "tables",
+            },
         }
-        
+
         if kind_lower not in kind_config:
             return ""
-            
+
         config = kind_config[kind_lower]
-        human_feedback_text = getattr(state, 'human_feedback', None)
-        previously_selected_items = getattr(state, config['items_attr'], [])
-        previously_label = config['label']
+        human_feedback_text = getattr(state, "human_feedback", None)
+        previously_selected_items = getattr(state, config["items_attr"], [])
+        previously_label = config["label"]
         suffix_note = f"Note: Consider the previously selected {config['item_type']} as a foundation, and user suggestions as recommendations to enhance the selection."
 
         if not previously_selected_items and not human_feedback_text:
@@ -183,7 +194,9 @@ class AgentUtils:
 
         context_text = ""
         if previously_selected_items:
-            context_text += f"\n**{previously_label}:** {', '.join(previously_selected_items)}"
+            context_text += (
+                f"\n**{previously_label}:** {', '.join(previously_selected_items)}"
+            )
 
         suggestion_text = ""
         if human_feedback_text:

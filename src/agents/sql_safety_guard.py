@@ -24,9 +24,10 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.dialects.dialect import Dialect
 
-from .base_agent import BaseAgent
+from models.models import AgentResult, AgentState, AgentType
+
 from .agent_utils import AgentUtils
-from models.models import AgentState, AgentResult, AgentType
+from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +81,13 @@ class SQLSafetyGuardAgent(BaseAgent):
         logger.info("Running deterministic SQL safety check")
 
         if not state.generated_query or not state.generated_query.query:
-            return AgentUtils.create_error_result("No query generated; cannot run safety check")
+            return AgentUtils.create_error_result(
+                "No query generated; cannot run safety check"
+            )
 
-        is_safe, reason = check_sql_is_read_only(state.generated_query.query, dialect=state.dialect)
+        is_safe, reason = check_sql_is_read_only(
+            state.generated_query.query, dialect=state.dialect
+        )
 
         if is_safe:
             logger.info("SQL safety check passed")
@@ -95,6 +100,8 @@ class SQLSafetyGuardAgent(BaseAgent):
             state_updates={
                 "is_sql_safe": is_safe,
                 "sql_safety_violation": None if is_safe else reason,
-                "current_step": "sql_safety_check_passed" if is_safe else "sql_safety_check_failed",
-            }
+                "current_step": (
+                    "sql_safety_check_passed" if is_safe else "sql_safety_check_failed"
+                ),
+            },
         )

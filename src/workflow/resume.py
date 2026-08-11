@@ -23,35 +23,52 @@ class ResumeRouter:
 
         This analyzes the state to find the logical next step in the workflow.
         """
-        current_step = getattr(state, 'current_step', '')
+        current_step = getattr(state, "current_step", "")
 
         # If workflow completed or failed, no resume needed
-        if current_step in ['workflow_completed', 'workflow_failed', 'max_retries_exhausted', 'sql_safety_check_failed']:
+        if current_step in [
+            "workflow_completed",
+            "workflow_failed",
+            "max_retries_exhausted",
+            "sql_safety_check_failed",
+        ]:
             return "end"
 
         # PRIORITY 1: If there's human feedback to process, route to the appropriate human review agent first
-        human_feedback = getattr(state, 'human_feedback', None)
-        if human_feedback and not current_step.endswith('_completed'):
+        human_feedback = getattr(state, "human_feedback", None)
+        if human_feedback and not current_step.endswith("_completed"):
             # Check which type of review this feedback is for
-            approvals = getattr(state, 'human_approvals', {}) or {}
+            approvals = getattr(state, "human_approvals", {}) or {}
 
             # If we have database feedback to process and database review not completed, go to database human review
-            if ('databases' in approvals or hasattr(state, 'relevant_databases')) and current_step != "database_review_completed":
+            if (
+                "databases" in approvals or hasattr(state, "relevant_databases")
+            ) and current_step != "database_review_completed":
                 return "database_human_review"
 
             # If we have table feedback to process and table review not completed, go to table human review
-            if ('tables' in approvals or hasattr(state, 'relevant_tables')) and current_step != "table_review_completed":
+            if (
+                "tables" in approvals or hasattr(state, "relevant_tables")
+            ) and current_step != "table_review_completed":
                 return "table_human_review"
 
         # Check for pending human reviews (no feedback yet provided)
-        approvals = getattr(state, 'human_approvals', {}) or {}
+        approvals = getattr(state, "human_approvals", {}) or {}
 
         # If database review is pending approval, resume from database_human_review
-        if not approvals.get('databases', False) and hasattr(state, 'relevant_databases') and state.relevant_databases:
+        if (
+            not approvals.get("databases", False)
+            and hasattr(state, "relevant_databases")
+            and state.relevant_databases
+        ):
             return "database_human_review"
 
         # If table review is pending approval, resume from table_human_review
-        if not approvals.get('tables', False) and hasattr(state, 'relevant_tables') and state.relevant_tables:
+        if (
+            not approvals.get("tables", False)
+            and hasattr(state, "relevant_tables")
+            and state.relevant_tables
+        ):
             return "table_human_review"
 
         # Check current step and determine next logical node
@@ -79,15 +96,23 @@ class ResumeRouter:
         }
 
         # Handle validation routing based on validation feedback
-        if current_step == "query_validation_completed" and not getattr(state, "is_query_valid", True):
+        if current_step == "query_validation_completed" and not getattr(
+            state, "is_query_valid", True
+        ):
             feedback = getattr(state, "query_validation_feedback", {}) or {}
-            issue_type = feedback.get("issue_type") or getattr(state, "last_error_type", None)
+            issue_type = feedback.get("issue_type") or getattr(
+                state, "last_error_type", None
+            )
 
             if issue_type == "insufficient_data":
                 return "database_identifier"
             elif issue_type == "schema_missing":
                 return "table_identifier"
-            elif issue_type in ("sql_generation_issue", "data_type_mismatch", "join_relationship_error"):
+            elif issue_type in (
+                "sql_generation_issue",
+                "data_type_mismatch",
+                "join_relationship_error",
+            ):
                 return "query_planner"
             else:
                 return "database_identifier"  # Default fallback
@@ -109,28 +134,32 @@ class ResumeRouter:
 
             # Special handling for review steps that may have requested changes
             if current_step == "table_review_completed":
-                approvals = getattr(state, 'human_approvals', {}) or {}
-                if not approvals.get('tables', True):  # If not approved, go back to table identifier
+                approvals = getattr(state, "human_approvals", {}) or {}
+                if not approvals.get(
+                    "tables", True
+                ):  # If not approved, go back to table identifier
                     return "table_identifier"
             elif current_step == "database_review_completed":
-                approvals = getattr(state, 'human_approvals', {}) or {}
-                if not approvals.get('databases', True):  # If not approved, go back to database identifier
+                approvals = getattr(state, "human_approvals", {}) or {}
+                if not approvals.get(
+                    "databases", True
+                ):  # If not approved, go back to database identifier
                     return "database_identifier"
 
             return next_node
 
         # Fallback logic based on what data is available
-        if hasattr(state, 'generated_query') and state.generated_query:
+        if hasattr(state, "generated_query") and state.generated_query:
             return "query_validator"  # If we have a query, validate it
-        elif hasattr(state, 'query_plan') and state.query_plan:
+        elif hasattr(state, "query_plan") and state.query_plan:
             return "query_generator"  # If we have a plan, generate query
-        elif hasattr(state, 'schema_context') and state.schema_context:
+        elif hasattr(state, "schema_context") and state.schema_context:
             return "query_planner"  # If we have schema, plan query
-        elif hasattr(state, 'relevant_columns') and state.relevant_columns:
+        elif hasattr(state, "relevant_columns") and state.relevant_columns:
             return "schema_builder"  # If we have columns, build schema
-        elif hasattr(state, 'relevant_tables') and state.relevant_tables:
+        elif hasattr(state, "relevant_tables") and state.relevant_tables:
             return "column_identifier"  # If we have tables, find columns
-        elif hasattr(state, 'relevant_databases') and state.relevant_databases:
+        elif hasattr(state, "relevant_databases") and state.relevant_databases:
             return "table_identifier"  # If we have databases, find tables
         else:
             return "database_identifier"  # Start from database identification

@@ -20,7 +20,7 @@ EMBEDDING_MODEL_PATH = None
 # Options: "ollama", "local", "chatgpt"
 PROVIDER = "ollama"
 BASE_URL = "http://localhost:11434"
-MODEL = "gpt-oss:20b" # "qwen2.5:14b"
+MODEL = "gpt-oss:20b"  # "qwen2.5:14b"
 
 # ChatGPT/OpenAI configuration
 OPENAI_API_KEY = None  # Set your OpenAI API key here or via environment variable
