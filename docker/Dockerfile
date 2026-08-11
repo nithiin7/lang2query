@@ -43,7 +43,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/system/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # `main.py`'s package-relative imports (e.g. `from core.config import ...`)
 # assume backend/app/ is the import root, so run from inside app/ rather

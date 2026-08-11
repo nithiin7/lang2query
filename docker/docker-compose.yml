@@ -25,7 +25,7 @@ services:
       - lang2query-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/system/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -34,7 +34,7 @@ services:
   # Lang2Query Frontend
   frontend:
     build:
-      context: ./app
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: lang2query-frontend
     ports:

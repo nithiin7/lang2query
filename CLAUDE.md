@@ -14,7 +14,7 @@ The core idea: instead of one LLM call given the whole schema and asked to "writ
 
 **Backend** (`backend/app/`): Python, FastAPI (REST + WebSocket), LangGraph (agent orchestration via `StateGraph`), Pydantic (typed state + structured LLM outputs), ChromaDB (vector store), `sentence-transformers` running BGE-M3 locally for embeddings. LLM providers are pluggable: Ollama (local), OpenAI/ChatGPT, and local HF models — selected via `backend/app/core/config.py` / env vars.
 
-**Frontend** (`app/`): Next.js 15, React 19, TypeScript, Tailwind CSS, native WebSocket client for streaming workflow state.
+**Frontend** (`frontend/`): Next.js 15, React 19, TypeScript, Tailwind CSS, native WebSocket client for streaming workflow state.
 
 ## 3. Architecture (the part you must understand before editing agents or the workflow)
 
@@ -67,14 +67,25 @@ backend/                        # Python, FastAPI
 ├── tests/
 └── pyproject.toml
 
-app/src/                         # Next.js
-├── components/       # One folder per component (ComponentName/ComponentName.tsx + index.ts barrel export)
-├── hooks/             # Custom React hooks
-├── lib/               # API client (api.ts) + WebSocket client (websocket.ts) — no business logic, just transport
-└── types/             # Shared TypeScript types
+frontend/                        # Next.js
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # "/" — redirects to /chat
+│   │   ├── layout.tsx            # Root layout (Toaster, globals.css)
+│   │   └── (dashboard)/
+│   │       └── chat/page.tsx     # "/chat" — the query UI (Header + Sidebar + ChatContainer)
+│   ├── components/
+│   │   ├── chat/       # One folder per component (ComponentName/ComponentName.tsx + index.ts barrel export). Chat-domain: ChatContainer, ChatMessage, QueryInput, ResultsDisplay, SelectionReviewCard, Sidebar, StatusPanel.
+│   │   ├── ui/         # Generic, non-chat-specific presentational components (e.g. MarkdownRenderer).
+│   │   └── Header/     # App-wide chrome shared across (future) dashboard pages — not chat-specific, so it stays outside both chat/ and ui/.
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # API client (api.ts) + WebSocket client (websocket.ts) — no business logic, just transport
+│   ├── types/          # Shared TypeScript types
+│   └── styles/         # globals.css
+└── public/
 ```
 
-`modules/`, `ai/`, `core/`, and `workers/` mirror a generic RAG-app template adopted ahead of upcoming features; `db/` and `core/security.py` from that template are deliberately not present yet — there's no relational store or auth code to justify them, and empty stub packages aren't worth the confusion. Add `modules/{auth,users,...}` siblings to `modules/query/` as those features land, rather than restructuring again.
+`modules/`, `ai/`, `core/`, and `workers/` mirror a generic RAG-app template adopted ahead of upcoming features; `db/` and `core/security.py` from that template are deliberately not present yet — there's no relational store or auth code to justify them, and empty stub packages aren't worth the confusion. Add `modules/{auth,users,...}` siblings to `modules/query/` as those features land, rather than restructuring again. Same idea on the frontend: `(dashboard)/chat/` exists because the chat page is real; sibling route groups like `(auth)/login` or `(dashboard)/documents` aren't stubbed in until there's actual auth/documents code behind them.
 
 **Separation-of-concerns rule for the backend**: an agent file (`agents/*.py`) should contain _decision logic_ — what to ask the LLM, how to interpret the structured response, what state to update. It should not contain generic plumbing (logging formatting, routing between nodes, model-provider details) — that belongs in `workflow/` (routing, resume, display, state) and `ai/llm/` (model-provider details) respectively. The `workflow/` package's `router.py` / `resume.py` / `display.py` / `state.py` split is the right pattern already in the codebase — follow it when adding new cross-cutting workflow concerns instead of inlining them into an agent or into `workflow/graph.py`.
 
@@ -108,8 +119,8 @@ Not urgent, but relevant since the stated direction is evolving this into a real
 make venv && make install && make download   # first-time backend setup
 make embeddings                                # (re)build the vector KB from backend/app/ai/input/*.md
 make dev                                       # run API + frontend together
-cd app && npm run dev                          # frontend only
+cd frontend && npm run dev                     # frontend only
 cd backend/app && python -m main               # backend API only
 cd backend && pytest                           # backend tests
-cd app && npm test                             # frontend tests
+cd frontend && npm test                        # frontend tests
 ```

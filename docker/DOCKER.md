@@ -52,14 +52,14 @@ docker-compose -f docker/docker-compose.dev.yml --project-directory . up -d
 - **Port**: 8000
 - **Volumes**: Knowledge base, input/output directories
 
-### Frontend Dockerfile (`app/Dockerfile`)
+### Frontend Dockerfile (`frontend/Dockerfile`)
 
 - **Base**: Node.js 20-alpine
 - **Features**: Multi-stage build, standalone output, optimized for production
 - **Port**: 3000
 - **Build**: Next.js with standalone output
 
-### Development Dockerfile (`app/Dockerfile.dev`)
+### Development Dockerfile (`frontend/Dockerfile.dev`)
 
 - **Base**: Node.js 20-alpine
 - **Features**: Development mode with hot reload
@@ -214,7 +214,7 @@ All services include health checks:
 
 ```yaml
 healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:8000/api/system/health"]
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
   interval: 30s
   timeout: 10s
   retries: 3
@@ -349,7 +349,7 @@ docker stats lang2query-backend
 
 All services include health checks accessible at:
 
-- **Backend**: `http://localhost:8000/api/system/health`
+- **Backend**: `http://localhost:8000/health`
 - **Frontend**: `http://localhost:3000`
 - **ChromaDB**: `http://localhost:8001/api/v1/heartbeat`
 

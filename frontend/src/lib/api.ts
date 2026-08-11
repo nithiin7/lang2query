@@ -1,4 +1,9 @@
-import { QueryResponse, WebSocketCallbacks, WorkflowState, WorkflowStep } from "@/types";
+import {
+  QueryResponse,
+  WebSocketCallbacks,
+  WorkflowState,
+  WorkflowStep,
+} from "@/types";
 import axios, { AxiosResponse } from "axios";
 import { getWebSocketService } from "./websocket";
 

@@ -60,7 +60,7 @@
 1. **Navigate to the frontend directory:**
 
    ```bash
-   cd app
+   cd frontend
    ```
 
 2. **Install dependencies:**
@@ -95,70 +95,45 @@ This will start both the FastAPI backend (`http://localhost:8000`) and Next.js f
 ## Project Structure
 
 ```
-app/
+frontend/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── globals.css         # Global styles and Tailwind imports
-│   │   ├── layout.tsx          # Root layout component
-│   │   └── page.tsx            # Home page component
-│   ├── components/             # React components
-│   │   ├── ChatContainer/      # Chat interface container
-│   │   │   ├── ChatContainer.tsx
-│   │   │   └── index.ts
-│   │   ├── ChatMessage/        # Individual chat message
-│   │   │   ├── ChatMessage.tsx
-│   │   │   └── index.ts
-│   │   ├── Header/             # Application header
-│   │   │   ├── Header.tsx
-│   │   │   └── index.ts
-│   │   ├── LiveStateDisplay/   # Real-time state visualization
-│   │   │   ├── LiveStateDisplay.tsx
-│   │   │   └── index.ts
-│   │   ├── MarkdownRenderer/   # Markdown content rendering
-│   │   │   ├── MarkdownRenderer.tsx
-│   │   │   └── index.ts
-│   │   ├── ProgressIndicator/  # Progress tracking component
-│   │   │   ├── ProgressIndicator.tsx
-│   │   │   └── index.ts
-│   │   ├── QueryForm/          # Query input form
-│   │   │   ├── QueryForm.tsx
-│   │   │   └── index.ts
-│   │   ├── QueryInput/         # Query input component
-│   │   │   ├── QueryInput.tsx
-│   │   │   └── index.ts
-│   │   ├── QueryInterface/     # Main query interface
-│   │   │   ├── QueryInterface.tsx
-│   │   │   └── index.ts
-│   │   ├── ResultsDisplay/     # Results presentation
-│   │   │   ├── ResultsDisplay.tsx
-│   │   │   └── index.ts
-│   │   ├── SelectionReviewCard/ # Selection review component
-│   │   │   ├── SelectionReviewCard.tsx
-│   │   │   └── index.ts
-│   │   ├── Sidebar/            # Application sidebar
-│   │   │   ├── Sidebar.tsx
-│   │   │   └── index.ts
-│   │   ├── StatusPanel/        # Status information panel
-│   │   │   ├── StatusPanel.tsx
-│   │   │   └── index.ts
-│   │   └── index.ts            # Component exports
-│   ├── hooks/                  # Custom React hooks
-│   │   └── useSystemStatus.ts  # System status hook
-│   ├── lib/                    # Utilities and API client
-│   │   ├── api.ts              # API client and HTTP utilities
-│   │   ├── toast.ts            # Toast notification utilities
-│   │   └── websocket.ts        # WebSocket client
-│   ├── styles/                 # Styling
-│   │   └── globals.css         # Global CSS and Tailwind
-│   └── types/                  # TypeScript type definitions
-│       └── index.ts            # Shared types and interfaces
-├── package.json                # Dependencies and scripts
-├── tsconfig.json              # TypeScript configuration
-├── tailwind.config.js         # Tailwind CSS configuration
-├── postcss.config.js          # PostCSS configuration
-├── next.config.js             # Next.js configuration
-└── eslint.config.js           # ESLint configuration
+│   ├── app/                        # Next.js App Router
+│   │   ├── page.tsx                # "/" — redirects to /chat
+│   │   ├── layout.tsx              # Root layout (Toaster, globals.css)
+│   │   └── (dashboard)/
+│   │       └── chat/page.tsx       # "/chat" — the query UI (Header + Sidebar + ChatContainer)
+│   ├── components/
+│   │   ├── chat/                   # Chat-domain components (one folder per component, barrel-exported)
+│   │   │   ├── ChatContainer/      # Orchestrates a chat session: sends queries, renders messages/results
+│   │   │   ├── ChatMessage/        # A single chat bubble (user or assistant)
+│   │   │   ├── QueryInput/         # The message composer
+│   │   │   ├── ResultsDisplay/     # Renders a query's SQL/results/error
+│   │   │   ├── SelectionReviewCard/ # Human-in-the-loop database/table review card
+│   │   │   ├── Sidebar/            # Chat history list (new/select/delete chat)
+│   │   │   └── StatusPanel/        # Live workflow progress (current step, database/table/column state)
+│   │   ├── ui/                     # Generic, non-chat-specific presentational components
+│   │   │   └── MarkdownRenderer/   # Renders markdown (used by ChatMessage, but not chat-specific itself)
+│   │   ├── Header/                 # App-wide chrome (system status indicator) — shared across dashboard pages
+│   │   └── index.ts                # Barrel re-exporting Header + chat/ + ui/
+│   ├── hooks/
+│   │   └── useSystemStatus.ts      # Polls backend health for the Header status dot
+│   ├── lib/
+│   │   ├── api.ts                  # REST API client
+│   │   ├── toast.ts                # Toast notification helper (sonner)
+│   │   └── websocket.ts            # WebSocket client for streaming workflow state
+│   ├── styles/
+│   │   └── globals.css
+│   └── types/
+│       └── index.ts                # Shared types (WorkflowState, HitlRequest, QueryResponse, ...)
+├── package.json
+├── tsconfig.json
+├── tailwind.config.js
+├── postcss.config.js
+├── next.config.js
+└── eslint.config.mjs
 ```
+
+`(dashboard)/chat/` exists because the chat page is real; there's no `(auth)/login` or `(dashboard)/documents` yet since there's no auth or document-management code behind them — add those route groups when the features actually land, not as placeholders.
 
 ## Scripts
 
@@ -326,4 +301,4 @@ NEXT_PUBLIC_WS_URL=wss://your-backend-api.com/ws
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.

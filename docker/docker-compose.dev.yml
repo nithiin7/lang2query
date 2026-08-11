@@ -33,7 +33,7 @@ services:
   # Lang2Query Frontend (Development)
   frontend-dev:
     build:
-      context: ./app
+      context: ./frontend
       dockerfile: Dockerfile.dev
     container_name: lang2query-frontend-dev
     ports:
@@ -43,7 +43,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
     volumes:
-      - ./app:/app
+      - ./frontend:/app
       - /app/node_modules
     depends_on:
       - backend-dev

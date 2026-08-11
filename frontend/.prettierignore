@@ -15,6 +15,3 @@ coverage
 **/venv
 **/.vscode
 **/.idea
-
-# generated
-app/.next

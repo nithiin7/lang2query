@@ -87,7 +87,10 @@ Full Docker walkthrough (services, dev vs. prod, hot reload): **[DOCKER.md](DOCK
 
 ```
 lang2query/
-├── app/                     # Next.js frontend (React 19, TypeScript, Tailwind)
+├── frontend/                # Next.js frontend (React 19, TypeScript, Tailwind)
+│   └── src/
+│       ├── app/(dashboard)/chat/  # The query UI, at /chat ("/" redirects here)
+│       └── components/            # chat/, ui/, and shared chrome (Header/)
 ├── backend/                 # Python backend
 │   ├── app/
 │   │   ├── modules/query/     # LangGraph agents + workflow — one file per agent
@@ -106,7 +109,7 @@ lang2query/
 
 | Doc | Covers |
 | --- | --- |
-| [DOCKER.md](DOCKER.md) | Full Docker guide — services, dev vs. prod, troubleshooting |
+| [DOCKER.md](docker/DOCKER.md) | Full Docker guide — services, dev vs. prod, troubleshooting |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, coding standards, PR process |
 | [backend/README.md](backend/README.md) | Backend architecture, agents, API reference |
 

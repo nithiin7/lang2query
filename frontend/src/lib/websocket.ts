@@ -1,4 +1,9 @@
-import { HitlFeedback, HitlRequest, WebSocketCallbacks, WebSocketMessage } from "@/types";
+import {
+  HitlFeedback,
+  HitlRequest,
+  WebSocketCallbacks,
+  WebSocketMessage,
+} from "@/types";
 
 export class WebSocketService {
   private ws: WebSocket | null = null;

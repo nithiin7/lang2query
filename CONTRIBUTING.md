@@ -30,7 +30,7 @@ cd backend && pip install ".[dev]" && cd ..   # installs dev tooling (pytest, bl
 pre-commit install
 
 # Frontend
-cd app && npm install && cd ..
+cd frontend && npm install && cd ..
 
 # Run everything
 make dev
@@ -49,7 +49,7 @@ pytest --cov=app --cov-report=html  # with coverage
 pytest tests/test_sql_safety_guard.py -v
 
 # Frontend
-cd app && npm test
+cd frontend && npm test
 ```
 
 Write tests for new functionality, cover both success and error paths, and mock external dependencies (LLM calls, DB connections).

@@ -1,6 +1,6 @@
 "use client";
 
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { Bot, User } from "lucide-react";
 
 interface ChatMessageProps {

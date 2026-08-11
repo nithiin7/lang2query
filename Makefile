@@ -30,7 +30,7 @@ embeddings:
 # Run the frontend
 run-app:
 	@echo "🚀 Starting Text2Query Frontend..."
-	cd app && npm run dev
+	cd frontend && npm run dev
 
 # Run the Flask API
 run-api:
@@ -40,7 +40,7 @@ run-api:
 # Run API and frontend together
 dev:
 	@echo "🔧 Starting API and Frontend..."
-	( cd app && npm run dev ) & \
+	( cd frontend && npm run dev ) & \
 	cd backend/app && python3 -m main
 
 # Run the download script

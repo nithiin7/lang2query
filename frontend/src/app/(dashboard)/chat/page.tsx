@@ -1,11 +1,10 @@
 "use client";
-import { ChatContainer } from "@/components/ChatContainer";
+import { ChatContainer, Sidebar } from "@/components/chat";
 import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/Sidebar";
 import { getWebSocketService } from "@/lib/websocket";
 import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function ChatPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mode, setMode] = useState<"agentic" | "ask">("ask");
   const [chatHistory, setChatHistory] = useState<{ id: string; title: string }[]>([]);

@@ -1,10 +1,10 @@
 "use client";
 
-import { ChatMessage } from "@/components/ChatMessage";
-import { QueryInput } from "@/components/QueryInput";
-import { ResultsDisplay } from "@/components/ResultsDisplay";
-import { SelectionReviewCard } from "@/components/SelectionReviewCard";
-import { StatusPanel } from "@/components/StatusPanel";
+import { ChatMessage } from "@/components/chat/ChatMessage";
+import { QueryInput } from "@/components/chat/QueryInput";
+import { ResultsDisplay } from "@/components/chat/ResultsDisplay";
+import { SelectionReviewCard } from "@/components/chat/SelectionReviewCard";
+import { StatusPanel } from "@/components/chat/StatusPanel";
 import { handleApiError, queryApi } from "@/lib/api";
 import { showToast } from "@/lib/toast";
 import { getWebSocketService, resetWebSocketService } from "@/lib/websocket";

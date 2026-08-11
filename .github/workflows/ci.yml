@@ -70,6 +70,9 @@ jobs:
     strategy:
       matrix:
         node-version: [18, 20, 21]
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -79,27 +82,19 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-          cache-dependency-path: app/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          cd app
-          npm ci
+        run: npm ci
 
       - name: Lint with ESLint
-        run: |
-          cd app
-          npm run lint
+        run: npm run lint
 
       - name: Type check with TypeScript
-        run: |
-          cd app
-          npm run type-check
+        run: npm run type-check
 
       - name: Build application
-        run: |
-          cd app
-          npm run build
+        run: npm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
           NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
