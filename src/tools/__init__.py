@@ -7,19 +7,9 @@ This package contains various tools used by agents in the system.
 # Date tools
 from .date_tools import get_current_date
 
-# Retriever tools
-from .retriever_tools import (
-    semantic_search,
-    search_by_database,
-    search_by_table,
-    get_all_databases,
-    get_tables_in_database,
-    count_databases,
-    count_tables_in_database,
-    search_tables_in_databases,
-    complex_filter_search,
-    get_columns_by_table
-)
+# Retriever tools - factory bound to a shared retriever instance, see
+# retriever_tools.make_retriever_tools for why these aren't plain module-level tools.
+from .retriever_tools import make_retriever_tools
 
 
 __all__ = [
@@ -27,14 +17,5 @@ __all__ = [
     "get_current_date",
 
     # Retriever tools
-    "semantic_search",
-    "search_by_database",
-    "search_by_table",
-    "get_all_databases",
-    "get_tables_in_database",
-    "count_databases",
-    "count_tables_in_database",
-    "search_tables_in_databases",
-    "complex_filter_search",
-    "get_columns_by_table"
+    "make_retriever_tools",
 ]

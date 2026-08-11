@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Any, Callable, Union, List, Optional
 from .base_agent import BaseAgent
 from models.models import AgentState, AgentResult, HumanFeedback, AgentType
-from tools.retriever_tools import validate_database_exists, validate_table_exists, search_similar_tables, get_all_databases
+from tools import make_retriever_tools
 
 logger = logging.getLogger(__name__)
 
@@ -250,8 +250,18 @@ class HumanInTheLoopAgent(BaseAgent):
         system_message = self._create_feedback_analysis_system_prompt(items_data)
         human_message = f"User feedback: {user_feedback}"
 
-        # Create validation tools for the LLM to use
-        validation_tools = [validate_database_exists, validate_table_exists, search_similar_tables, get_all_databases]
+        # Create validation tools for the LLM to use, bound to the shared retriever
+        if self._retriever is not None:
+            retriever_tools = make_retriever_tools(self._retriever)
+            validation_tools = [
+                retriever_tools["validate_database_exists"],
+                retriever_tools["validate_table_exists"],
+                retriever_tools["search_similar_tables"],
+                retriever_tools["get_all_databases"],
+            ]
+        else:
+            logger.warning(f"{self.name}: no retriever available - LLM will validate without tools")
+            validation_tools = []
 
         # Generate structured feedback analysis with tools
         feedback_analysis = self.generate_with_llm(

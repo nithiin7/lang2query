@@ -12,18 +12,7 @@ from typing import List
 from .base_agent import BaseAgent
 from .agent_utils import AgentUtils
 from models.models import AgentState, AgentResult, AgentType
-from tools import (
-    semantic_search,
-    search_by_database,
-    search_by_table,
-    get_all_databases,
-    get_tables_in_database,
-    count_databases,
-    count_tables_in_database,
-    search_tables_in_databases,
-    complex_filter_search,
-    get_columns_by_table
-)
+from tools import make_retriever_tools
 
 logger = logging.getLogger(__name__)
 
@@ -34,19 +23,28 @@ class MetadataAgent(BaseAgent):
     def __init__(self, model_wrapper, tools: List = None, retriever=None):
         super().__init__(AgentType.METADATA_AGENT, model_wrapper)
 
-        self.tools = tools if tools is not None else [
-            semantic_search,
-            search_by_database,
-            search_by_table,
-            get_all_databases,
-            get_tables_in_database,
-            count_databases,
-            count_tables_in_database,
-            search_tables_in_databases,
-            complex_filter_search,
-            get_columns_by_table
-        ]
         self.retriever = retriever
+
+        if tools is not None:
+            self.tools = tools
+        elif retriever is not None:
+            retriever_tools = make_retriever_tools(retriever)
+            self.tools = [
+                retriever_tools["semantic_search"],
+                retriever_tools["search_by_database"],
+                retriever_tools["search_by_table"],
+                retriever_tools["get_all_databases"],
+                retriever_tools["get_tables_in_database"],
+                retriever_tools["count_databases"],
+                retriever_tools["count_tables_in_database"],
+                retriever_tools["search_tables_in_databases"],
+                retriever_tools["complex_filter_search"],
+                retriever_tools["get_columns_by_table"],
+            ]
+        else:
+            logger.warning("MetadataAgent initialized without a retriever - no retrieval tools available")
+            self.tools = []
+
         self.tool_names = [tool.name for tool in self.tools]
 
     def process(self, state: AgentState) -> AgentResult:

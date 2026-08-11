@@ -11,23 +11,12 @@ import torch
 from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
-from chromadb.utils import embedding_functions
 
 from src.retriever.sql_kb_chunker import SQLKnowledgeBaseChunker
+from src.retriever.embedding_utils import BGE_M3_EmbeddingFunction
 
 # Add the parent directory to Python path to allow absolute imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-
-class BGE_M3_EmbeddingFunction(embedding_functions.EmbeddingFunction):
-    """Custom embedding function for ChromaDB using BGE-M3"""
-    
-    def __init__(self, model):
-        self.model = model
-    
-    def __call__(self, input: List[str]) -> List[List[float]]:
-        embeddings = self.model.encode(input, show_progress_bar=False)
-        return embeddings.tolist()
 
 
 class SQLKnowledgeBaseEmbedder:
