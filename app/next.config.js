@@ -3,22 +3,14 @@ const nextConfig = {
   // Enable standalone output for Docker
   output: "standalone",
 
-  // API rewrites for backend communication
+  // API rewrites for backend communication.
+  // WebSocket connections are opened directly by the client (see src/lib/websocket.ts) —
+  // Next.js rewrites don't support ws:// destinations, so there's no rewrite for /ws here.
   async rewrites() {
     return [
       {
         source: "/api/:path*",
         destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/:path*`,
-      },
-    ];
-  },
-
-  // WebSocket rewrites for real-time communication
-  async rewrites() {
-    return [
-      {
-        source: "/ws/:path*",
-        destination: `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws"}/:path*`,
       },
     ];
   },
@@ -29,10 +21,8 @@ const nextConfig = {
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws",
   },
 
-  // Experimental features
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  // Externalize server-only packages from bundling
+  serverExternalPackages: [],
 
   // Image optimization
   images: {
