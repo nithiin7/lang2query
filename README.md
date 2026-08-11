@@ -1,325 +1,115 @@
+<div align="center">
+
 # Lang2Query
 
-**Lang2Query** - Transform natural language into SQL queries with AI-powered precision using multi-agent workflows and intelligent knowledge base retrieval.
+**Ask your database a question in plain English. Get back validated SQL.**
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black.svg)](https://nextjs.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Agents-orange.svg)](https://langchain-ai.github.io/langgraph/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agents-1C3C3C?style=flat-square&logo=langchain&logoColor=white)](https://langchain-ai.github.io/langgraph/)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20DB-FF6F00?style=flat-square)](https://www.trychroma.com)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+
+[Quick Start](#quick-start) · [How it works](#how-it-works) · [Features](#features) · [Docs](#documentation)
+
+</div>
+
+<!--
+  Add a demo screenshot or short GIF here once available, e.g.:
+  <p align="center"><img src="docs/demo.gif" width="800" alt="Lang2Query demo" /></p>
+-->
+
+## What it does
+
+Lang2Query converts a natural-language question into a correct SQL query against one of several documented databases — no schema knowledge required. Instead of one LLM call given the whole schema, the request flows through a chain of specialized LangGraph agents that each narrow the search space, backed by a RAG layer over hand-written schema docs, with optional human-in-the-loop checkpoints before committing to a set of tables.
+
+> **Status:** functional prototype under active development — great for demos and single-user use, not yet hardened for multi-user production load (no auth, no rate limiting, no execution-time safety guardrails beyond read-only enforcement).
+
+## How it works
+
+```mermaid
+flowchart LR
+    Q([Question]) --> R{Router}
+    R -->|"list tables, show columns"| M[Metadata Agent]
+    R -->|natural-language query| DB[Database Identifier]
+    DB -.optional review.-> TBL[Table Identifier]
+    TBL -.optional review.-> COL[Column Identifier]
+    COL --> SCH[Schema Builder]
+    SCH --> PLAN[Query Planner]
+    PLAN --> GEN[Query Generator]
+    GEN --> VAL{Query Validator}
+    VAL -->|valid| SQL([Validated SQL])
+    VAL -.retry.-> DB
+    VAL -.retry.-> PLAN
+```
+
+Each identification step is backed by agentic RAG: the LLM itself chooses which retrieval tool to call (semantic search, per-database, per-table) against a ChromaDB knowledge base of BGE-M3 embeddings, pulling in only the schema slice it needs rather than the whole schema at once.
 
 ## Quick Start
 
-### Option 1: Docker (Recommended)
+### Docker (recommended)
 
 ```bash
-git clone https://github.com/yourusername/lang2query.git
+git clone git@github.com:nithiin7/lang2query.git
 cd lang2query
-
-# Copy environment file
-cp env.example .env
-# Edit .env with your OpenAI API key
-
-# Start with Docker Compose
+cp env.example .env        # add your OPENAI_API_KEY
 docker-compose up -d
 ```
 
-**Web Interface**: Visit `http://localhost:3000` for the modern web UI  
-**API Documentation**: Visit `http://localhost:8000/docs` for interactive API docs
+Web UI → `http://localhost:3000` · API docs → `http://localhost:8000/docs`
 
-### Option 2: Local Development
+### Local development
 
 ```bash
-git clone https://github.com/yourusername/lang2query.git
+git clone git@github.com:nithiin7/lang2query.git
 cd lang2query
-
-# Setup Python environment
-make venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-make install
-make download
-
-# Start the API backend + frontend
+make venv && source venv/bin/activate
+make install && make download
 make dev
 ```
+
+Full Docker walkthrough (services, dev vs. prod, hot reload): **[DOCKER.md](DOCKER.md)**
 
 ## Features
 
-### AI-Powered Query Generation
-
-- **Multi-Agent Workflow**: Intelligent LangGraph agents for database identification, table selection, and SQL generation
-- **Natural Language Processing**: Convert complex queries like "Show me all customers with pending verification" into precise SQL
-- **Context-Aware**: Understands database schemas and relationships for accurate query generation
-
-### Knowledge Base & Retrieval
-
-- **Vector Search**: ChromaDB-powered semantic search over database documentation
-- **Schema Understanding**: Automatic database, table, and column identification
-- **BGE-M3 Embeddings**: State-of-the-art multilingual embeddings for precise retrieval
-
-### Modern User Interface
-
-- **Next.js Frontend**: React 19 with TypeScript for type-safe development
-- **Real-time Updates**: Live WebSocket streaming of workflow progress
-- **Interactive Mode**: Step-by-step query processing visualization
-- **Responsive Design**: Clean, modern UI with Tailwind CSS
-
-### High-Performance Backend
-
-- **FastAPI**: Async Python API with automatic OpenAPI documentation
-- **WebSocket Support**: Real-time communication for live updates
-- **Multiple LLM Providers**: Support for OpenAI, Ollama, and local models
-- **Modular Architecture**: Extensible agent system for custom workflows
-
-## Installation
-
-### Prerequisites
-
-- **Python 3.8+** (recommended: Python 3.11+)
-- **Node.js 18+** (for frontend)
-- **Git**
-
-### Setup
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/yourusername/lang2query.git
-   cd lang2query
-   ```
-
-2. **Setup Python environment:**
-
-   ```bash
-   make venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   make install
-   make download
-   ```
-
-3. **Setup frontend:**
-   ```bash
-   cd app
-   npm install
-   cd ..
-   ```
-
-### Make Commands
-
-| Command         | Description                                         |
-| --------------- | --------------------------------------------------- |
-| `make dev`      | Start the complete application (backend + frontend) |
-| `make run-api`  | Start the FastAPI backend only                      |
-| `make install`  | Install Python dependencies                         |
-| `make download` | Download required models                            |
-| `make venv`     | Create Python virtual environment                   |
-| `make clean`    | Clean up temporary files                            |
-| `make test`     | Run test suite                                      |
-
-### Docker Commands
-
-| Command                                          | Description                      |
-| ------------------------------------------------ | -------------------------------- |
-| `docker-compose up -d`                           | Start all services in background |
-| `docker-compose down`                            | Stop all services                |
-| `docker-compose logs -f`                         | View logs in real-time           |
-| `docker-compose build`                           | Rebuild all images               |
-| `docker-compose -f docker-compose.dev.yml up -d` | Start development environment    |
-
-## Usage
-
-### Web Interface (Recommended)
-
-Start the complete application:
-
-```bash
-make dev
-```
-
-This will start both the FastAPI backend (`http://localhost:8000`) and Next.js frontend (`http://localhost:3000`).
-
-#### Web Interface Features:
-
-- **Mode Selection**: Choose between Interactive and Normal processing modes
-- **Live Updates**: Real-time WebSocket streaming of workflow progress
-- **Dynamic Discovery**: Watch as databases, tables, and columns are identified
-- **Clean Results**: View formatted SQL queries and detailed summaries
-- **Responsive Design**: Modern interface that works on all devices
-
-#### Example Queries:
-
-- "Show me all customers with pending verification"
-- "List all payment transactions from last month"
-- "Find products with low inventory levels"
-- "Get user profiles created in the last 30 days"
-
-### Development Mode
-
-#### Backend Only:
-
-```bash
-cd src
-python -m api.app
-# or
-uvicorn api.app:create_app --factory --host 0.0.0.0 --port 8000
-```
-
-#### Frontend Only:
-
-```bash
-cd app
-npm run dev
-```
-
-## Configuration
-
-### LLM Provider Setup
-
-Edit `src/config.py` to configure your preferred LLM provider:
-
-#### OpenAI (ChatGPT) - Recommended
-
-```python
-PROVIDER = "chatgpt"
-OPENAI_API_KEY = "your-api-key-here"  # Set via environment variable
-OPENAI_MODEL = "gpt-4o"  # or gpt-4o-mini for cost efficiency
-```
-
-**Setup:**
-
-1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Set environment variable:
-   ```bash
-   export OPENAI_API_KEY="your-api-key-here"
-   ```
-
-#### Ollama (Local)
-
-```python
-PROVIDER = "ollama"
-OLLAMA_MODEL = "llama3.1"  # or any Ollama model
-```
-
-**Setup:**
-
-1. Install [Ollama](https://ollama.ai)
-2. Pull a model: `ollama pull llama3.1`
-
-#### Local Models
-
-```python
-PROVIDER = "local"
-# Models auto-downloaded via make download
-```
-
-### Knowledge Base Setup
-
-1. **Add your database documentation** to `src/retriever/input/` as markdown files
-2. **Create embeddings:**
-   ```bash
-   python -m src.retriever.create_sql_kb_embeddings --md-dir src/retriever/input
-   ```
-
-## Architecture
-
-### Backend (Python)
-
-- **FastAPI**: High-performance async API
-- **LangGraph**: Multi-agent workflow orchestration
-- **ChromaDB**: Vector database for knowledge retrieval
-- **BGE-M3**: Multilingual embeddings for semantic search
-
-### Frontend (Next.js)
-
-- **React 19**: Modern UI with TypeScript
-- **Tailwind CSS**: Utility-first styling
-- **WebSocket**: Real-time communication
-- **Axios**: HTTP client for API calls
-
-### Agents
-
-- **Database Identifier**: Finds relevant databases
-- **Table Identifier**: Selects appropriate tables
-- **Column Identifier**: Identifies required columns
-- **Query Generator**: Creates SQL queries
-- **Query Validator**: Validates and optimizes queries
+- **Multi-agent pipeline** — LangGraph agents narrow database → tables → columns → query plan before generating SQL, instead of one LLM call against the full schema
+- **Agentic RAG retrieval** — the LLM chooses which retrieval tool to call over a ChromaDB knowledge base, rather than always injecting top-k chunks
+- **Human-in-the-loop checkpoints** — pause after database/table selection for review, backed by real WebSocket pause/resume
+- **Streaming UI** — Next.js frontend shows each agent's progress live as the query is processed
+- **Pluggable LLM providers** — OpenAI, Ollama, or local Hugging Face models behind one provider interface
+- **Read-only by design** — every SQL-generation path is read-only; no write queries are ever produced
 
 ## Project Structure
 
 ```
 lang2query/
-├── app/                          # Next.js frontend
-│   ├── src/
-│   │   ├── components/           # React components
-│   │   ├── lib/                  # Utilities and API client
-│   │   └── types/                # TypeScript definitions
-│   ├── Dockerfile                # Frontend production image
-│   ├── Dockerfile.dev            # Frontend development image
-│   └── package.json
-├── src/                          # Python backend
-│   ├── agents/                   # LangGraph agents
-│   ├── api/                      # FastAPI application
-│   ├── retriever/                # Knowledge base system
-│   ├── tools/                    # LangChain tools
-│   └── workflow.py               # Main workflow
-├── docker-compose.yml            # Production Docker setup
-├── docker-compose.dev.yml        # Development Docker setup
-├── Dockerfile                    # Backend production image
-├── .dockerignore                 # Docker ignore file
-├── env.example                   # Environment variables template
-├── requirements.txt              # Python dependencies
-└── Makefile                     # Build automation
+├── app/                # Next.js frontend (React 19, TypeScript, Tailwind)
+├── src/                # Python backend
+│   ├── agents/          # LangGraph nodes — one file per agent
+│   ├── api/              # FastAPI routes (REST + WebSocket)
+│   ├── lib/              # LLM provider abstraction (OpenAI, Ollama, local)
+│   ├── models/            # Pydantic schemas — the typed AgentState contract
+│   ├── retriever/        # Ingestion pipeline + query-side retriever
+│   ├── tools/             # LangChain @tool retrieval functions
+│   └── workflow/          # Graph wiring, routing, retries, resume
+├── docker-compose.yml   # Production Docker setup
+├── docker-compose.dev.yml
+├── pyproject.toml       # Python dependencies
+└── Makefile             # Build automation
 ```
 
-## Docker Setup
+## Documentation
 
-Lang2Query includes comprehensive Docker support for easy deployment and development.
-
-### Quick Docker Start
-
-```bash
-# Clone and start with Docker
-git clone https://github.com/yourusername/lang2query.git
-cd lang2query
-cp env.example .env
-# Edit .env with your API keys
-docker-compose up -d
-```
-
-### Docker Services
-
-- **Backend**: FastAPI application with LangGraph agents
-- **Frontend**: Next.js React application
-- **Redis**: Caching and session storage
-- **ChromaDB**: Vector database for knowledge retrieval
-
-### Development with Docker
-
-```bash
-# Start development environment with hot reload
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-For detailed Docker documentation, see [DOCKER.md](DOCKER.md).
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+| Doc | Covers |
+| --- | --- |
+| [DOCKER.md](DOCKER.md) | Full Docker guide — services, dev vs. prod, troubleshooting |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, coding standards, PR process |
+| [src/README.md](src/README.md) | Backend architecture, agents, API reference |
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [LangChain](https://langchain.com) for the agent framework
-- [FastAPI](https://fastapi.tiangolo.com) for the backend framework
-- [Next.js](https://nextjs.org) for the frontend framework
-- [ChromaDB](https://www.trychroma.com) for vector storage
-- [BAAI](https://huggingface.co/BAAI/bge-m3) for the embedding model
+MIT — see [LICENSE](LICENSE).

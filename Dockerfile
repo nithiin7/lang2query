@@ -18,11 +18,11 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt requirements-dev.txt ./
+# Copy dependency metadata first for better caching
+COPY pyproject.toml ./
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir .
 
 # Copy source code
 COPY src/ ./src/

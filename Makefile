@@ -51,7 +51,7 @@ download:
 # Install dependencies
 install:
 	@echo "📦 Installing dependencies..."
-	pip install -r requirements.txt
+	pip install .
 
 # Setup virtual environment
 venv:
