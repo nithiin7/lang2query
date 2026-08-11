@@ -91,7 +91,6 @@ Not urgent, but relevant since the stated direction is evolving this into a real
 ```bash
 make venv && make install && make download   # first-time backend setup
 make embeddings                                # (re)build the vector KB from src/retriever/input/*.md
-make run                                       # run the app (CLI entrypoint, src/main.py)
 make dev                                       # run API + frontend together
 cd app && npm run dev                          # frontend only
 cd src && python -m api.app                    # backend API only

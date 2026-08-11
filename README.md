@@ -39,8 +39,8 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 make install
 make download
 
-# Start the application
-make run
+# Start the API backend + frontend
+make dev
 ```
 
 ## Features
@@ -108,7 +108,8 @@ make run
 
 | Command         | Description                                         |
 | --------------- | --------------------------------------------------- |
-| `make run`      | Start the complete application (backend + frontend) |
+| `make dev`      | Start the complete application (backend + frontend) |
+| `make run-api`  | Start the FastAPI backend only                      |
 | `make install`  | Install Python dependencies                         |
 | `make download` | Download required models                            |
 | `make venv`     | Create Python virtual environment                   |
@@ -132,7 +133,7 @@ make run
 Start the complete application:
 
 ```bash
-make run
+make dev
 ```
 
 This will start both the FastAPI backend (`http://localhost:8000`) and Next.js frontend (`http://localhost:3000`).
@@ -168,14 +169,6 @@ uvicorn api.app:create_app --factory --host 0.0.0.0 --port 8000
 ```bash
 cd app
 npm run dev
-```
-
-### CLI Mode
-
-For command-line usage:
-
-```bash
-python src/main.py
 ```
 
 ## Configuration

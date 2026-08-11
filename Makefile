@@ -1,12 +1,11 @@
 # Text2Query Makefile
 # Run commands for the Text2Query application
 
-.PHONY: help run embeddings download install venv clean run-api run-api-ollama dev run-frontend
+.PHONY: help embeddings download install venv clean run-api run-api-ollama dev run-frontend
 
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  run        - Run the main Text2Query application"
 	@echo "  embeddings - Create/update knowledge base embeddings"
 	@echo "  run-app - Run the app frontend"
 	@echo "  run-api   - Run the Flask API""
@@ -27,11 +26,6 @@ embeddings:
 		--batch-size 1 \
 		--output-dir "src/retriever/output" \
 		--chunked-json-dir "src/retriever/output"
-
-# Run the main application
-run:
-	@echo "🚀 Starting Text2Query application..."
-	python3 src/main.py
 
 # Run the frontend
 run-app:

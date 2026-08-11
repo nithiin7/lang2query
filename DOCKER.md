@@ -152,7 +152,6 @@ docker-compose -f docker-compose.dev.yml logs -f
 docker-compose build --no-cache
 
 # Execute commands in running container
-docker-compose exec backend python -m src.main
 docker-compose exec frontend npm run build
 ```
 

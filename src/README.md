@@ -120,7 +120,6 @@ src/
 │   └── models.py           # Pydantic models
 ├── config.py               # Configuration
 ├── download.py             # Model downloader
-├── main.py                 # CLI entry point
 └── workflow.py             # Main workflow orchestration
 ```
 

@@ -76,7 +76,7 @@ npm run dev
 
 ```bash
 # From project root, start both backend and frontend
-make run
+make dev
 ```
 
 ## Coding Standards
