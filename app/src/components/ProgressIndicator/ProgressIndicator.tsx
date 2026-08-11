@@ -44,7 +44,6 @@ export function ProgressIndicator({
                 : "border-gray-200 bg-gray-50"
             }`}
           >
-            <span className="text-2xl mb-2">{step.emoji}</span>
             <h4 className="text-sm font-semibold text-gray-900 text-center">
               {step.name}
             </h4>

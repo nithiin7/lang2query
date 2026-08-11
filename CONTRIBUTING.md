@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Lang2Query! This document provides guidelines and information for contributors.
 
-## 🤝 How to Contribute
+## How to Contribute
 
 ### Reporting Issues
 
@@ -31,7 +31,7 @@ Thank you for your interest in contributing to Lang2Query! This document provide
 6. **Commit your changes** with clear, descriptive messages
 7. **Push to your fork** and create a Pull Request
 
-## 🛠️ Development Setup
+## Development Setup
 
 ### Prerequisites
 
@@ -79,7 +79,7 @@ npm run dev
 make run
 ```
 
-## 📝 Coding Standards
+## Coding Standards
 
 ### Python (Backend)
 
@@ -145,7 +145,7 @@ export const QueryForm: React.FC<QueryFormProps> = ({
 };
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Backend Testing
 
@@ -222,7 +222,7 @@ describe("QueryForm", () => {
 });
 ```
 
-## 📋 Pull Request Guidelines
+## Pull Request Guidelines
 
 ### Before Submitting
 
@@ -269,7 +269,7 @@ Brief description of changes
 4. **Documentation**: Documentation must be updated if needed
 5. **Approval**: Maintainer approves and merges the PR
 
-## 🏗️ Project Structure
+## Project Structure
 
 ### Backend (`src/`)
 
@@ -296,7 +296,7 @@ app/
 └── public/          # Static assets
 ```
 
-## 🐛 Bug Reports
+## Bug Reports
 
 When reporting bugs, please include:
 
@@ -319,7 +319,7 @@ When reporting bugs, please include:
    - Log files
    - Configuration files (sanitized)
 
-## 💡 Feature Requests
+## Feature Requests
 
 When suggesting features:
 
@@ -328,14 +328,14 @@ When suggesting features:
 3. **Alternatives**: Other solutions you've considered
 4. **Additional Context**: Any other relevant information
 
-## 📚 Documentation
+## Documentation
 
 - Update documentation for any new features
 - Add docstrings to new functions and classes
 - Update README files if needed
 - Include examples in your documentation
 
-## 🎯 Areas for Contribution
+## Areas for Contribution
 
 - **New Agents**: Add new LangGraph agents for specific tasks
 - **UI Components**: Create new React components
@@ -346,18 +346,18 @@ When suggesting features:
 - **Accessibility**: Improve accessibility features
 - **Internationalization**: Add multi-language support
 
-## 📞 Getting Help
+## Getting Help
 
 - **GitHub Issues**: For bugs and feature requests
 - **Discussions**: For questions and general discussion
 - **Discord**: Join our community Discord (if available)
 - **Email**: Contact maintainers directly for sensitive issues
 
-## 📄 License
+## License
 
 By contributing to Lang2Query, you agree that your contributions will be licensed under the MIT License.
 
-## 🙏 Recognition
+## Recognition
 
 Contributors will be recognized in:
 
@@ -366,4 +366,4 @@ Contributors will be recognized in:
 - Project documentation
 - GitHub contributors page
 
-Thank you for contributing to Lang2Query! 🚀
+Thank you for contributing to Lang2Query! 

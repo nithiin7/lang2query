@@ -26,7 +26,7 @@ class DatabaseIdentifierAgent(BaseAgent):
     
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant databases for the query."""
-        logger.info(f"🔍 {self.name}: Identifying relevant databases for query")
+        logger.info(f"{self.name}: Identifying relevant databases for query")
 
         try:
             # Validate prerequisites
@@ -51,12 +51,12 @@ class DatabaseIdentifierAgent(BaseAgent):
             return self._create_success_result(database_names)
 
         except Exception as e:
-            logger.error(f"❌ Database identification failed: {e}")
+            logger.error(f"Database identification failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
     def _create_success_result(self, database_names: List[str]) -> AgentResult:
         """Create success result with database names."""
-        logger.info(f"🗄️ Identified databases: {database_names}")
+        logger.info(f"Identified databases: {database_names}")
 
         state_updates = {
             "relevant_databases": database_names,

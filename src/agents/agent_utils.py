@@ -117,7 +117,7 @@ class AgentUtils:
         """
         for field_name, error_message in field_checks:
             if not getattr(state, field_name, None):
-                logger.warning(f"⚠️ {error_message}")
+                logger.warning(f"{error_message}")
                 return AgentUtils.create_error_result(error_message)
 
         return None

@@ -113,7 +113,7 @@ export function QueryForm({ onSubmit, isProcessing }: QueryFormProps) {
               Processing...
             </span>
           ) : (
-            "🚀 Generate SQL Query"
+            "Generate SQL Query"
           )}
         </button>
       </div>

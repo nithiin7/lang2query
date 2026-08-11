@@ -49,7 +49,7 @@ class MetadataAgent(BaseAgent):
 
     def process(self, state: AgentState) -> AgentResult:
         """Process metadata queries to provide database structure information."""
-        logger.info(f"📊 {self.name}: Processing metadata query")
+        logger.info(f"{self.name}: Processing metadata query")
 
         try:
             # Validate prerequisites
@@ -63,7 +63,7 @@ class MetadataAgent(BaseAgent):
             return self._create_success_result(response, state.natural_language_query)
 
         except Exception as e:
-            logger.error(f"❌ Metadata query processing failed: {e}")
+            logger.error(f"Metadata query processing failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
 
@@ -76,7 +76,7 @@ class MetadataAgent(BaseAgent):
             "current_step": "metadata_completed"
         }
 
-        logger.info("✅ Metadata query processing completed successfully")
+        logger.info("Metadata query processing completed successfully")
         return AgentResult(
             success=True,
             message="Metadata query processed successfully",
@@ -89,17 +89,17 @@ class MetadataAgent(BaseAgent):
         return (
             "You are an expert database metadata assistant.\n\n"
 
-            "## 🚨 CRITICAL RULES:\n"
+            "## CRITICAL RULES:\n"
             f"**TOOLS ({len(self.tool_names)}):** {', '.join(self.tool_names)}\n"
             "**NEVER call tools that don't exist!** Calling 'assistant' or any non-listed tool will FAIL.\n\n"
 
-            "## 📋 COLUMNS QUERY WORKFLOW:\n"
+            "## COLUMNS QUERY WORKFLOW:\n"
             "**For 'list columns in TABLE':**\n"
             "1. `complex_filter_search('table_name', {'chunk_type': 'table'})` → finds table & database\n"
             "2. `get_columns_by_table('database_name', ['table_name'])` → gets column details\n"
             "3. Respond with results\n\n"
 
-            "## 🛠️ TOOLS QUICK REFERENCE:\n\n"
+            "## TOOLS QUICK REFERENCE:\n\n"
             "**DISCOVERY:**\n"
             "• `get_all_databases()` - List all databases\n"
             "• `get_tables_in_database(db)` - List tables in database\n"
@@ -114,14 +114,14 @@ class MetadataAgent(BaseAgent):
             "**COLUMNS:**\n"
             "• `get_columns_by_table(db, [tables])` - Get detailed column info\n\n"
 
-            "## 🎯 QUICK DECISIONS:\n"
+            "## QUICK DECISIONS:\n"
             "**Columns in table:** complex_filter_search → get_columns_by_table\n"
             "**Tables in database:** get_tables_in_database\n"
             "**Count tables in database:** count_tables_in_database\n"
             "**Count all databases:** count_databases\n"
             "**Find anything:** semantic_search\n\n"
 
-            "## 🚫 FORBIDDEN:\n"
+            "## FORBIDDEN:\n"
             "• Calling non-existent tools (assistant, clarify, help)\n"
             "• Making up tool names\n"
             "• Skipping workflow steps\n\n"

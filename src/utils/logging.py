@@ -1,7 +1,7 @@
 """
-Beautiful colored logging utilities for the text2query system.
+Colored logging utilities for the text2query system.
 
-Provides colorized logging with emojis and structured formatting.
+Provides colorized logging with structured formatting.
 """
 
 import logging
@@ -46,39 +46,30 @@ class ColoredFormatter(logging.Formatter):
         logging.CRITICAL: Colors.BOLD + Colors.BRIGHT_RED + Colors.BG_RED,
     }
     
-    LEVEL_EMOJIS = {
-        logging.DEBUG: '🔍',
-        logging.INFO: 'ℹ️ ',
-        logging.WARNING: '⚠️ ',
-        logging.ERROR: '❌',
-        logging.CRITICAL: '🚨',
-    }
-    
     def __init__(self, fmt=None, datefmt=None, style='%'):
         super().__init__(fmt, datefmt, style)
-    
+
     def format(self, record):
-        # Get color and emoji for level
+        # Get color for level
         level_color = self.LEVEL_COLORS.get(record.levelno, Colors.WHITE)
-        level_emoji = self.LEVEL_EMOJIS.get(record.levelno, '📝')
-        
+
         # Color the level name
         colored_level = f"{level_color}{record.levelname:<8}{Colors.RESET}"
-        
+
         # Color the logger name
         logger_color = Colors.BRIGHT_BLUE if 'workflow' in record.name else Colors.CYAN
         colored_logger = f"{logger_color}{record.name}{Colors.RESET}"
-        
+
         # Format timestamp
         timestamp = self.formatTime(record, self.datefmt)
         timestamp_colored = f"{Colors.DIM}{timestamp}{Colors.RESET}"
-        
+
         # Format the message with appropriate colors
         message = self._colorize_message(record.getMessage(), record.levelno)
-        
+
         # Combine everything
-        formatted = f"{timestamp_colored} {level_emoji} {colored_level} {colored_logger} - {message}"
-        
+        formatted = f"{timestamp_colored} {colored_level} {colored_logger} - {message}"
+
         return formatted
     
     def _colorize_message(self, message: str, level: int) -> str:
@@ -108,20 +99,6 @@ class ColoredFormatter(logging.Formatter):
             if step_match:
                 step = step_match.group(1)
                 message = message.replace(step, f"{Colors.BOLD}{Colors.BRIGHT_CYAN}{step}{Colors.RESET}")
-        
-        # Status coloring
-        if "✅" in message:
-            # Success messages
-            message = message.replace("✅", f"{Colors.BRIGHT_GREEN}✅{Colors.RESET}")
-        elif "❌" in message:
-            # Error messages  
-            message = message.replace("❌", f"{Colors.BRIGHT_RED}❌{Colors.RESET}")
-        elif "⚠️" in message:
-            # Warning messages
-            message = message.replace("⚠️", f"{Colors.BRIGHT_YELLOW}⚠️{Colors.RESET}")
-        elif "🔄" in message:
-            # Processing messages
-            message = message.replace("🔄", f"{Colors.BRIGHT_BLUE}🔄{Colors.RESET}")
         
         # Highlight important values
         if "confidence" in message.lower():
@@ -188,9 +165,9 @@ def log_section_header(logger, title: str, width: int = 80, char: str = "="):
     logger.info(f"{Colors.BOLD}{Colors.BRIGHT_CYAN}{border}{Colors.RESET}")
 
 
-def log_workflow_step(logger, step_num: int, step_name: str, emoji: str = "🔄"):
+def log_workflow_step(logger, step_num: int, step_name: str):
     """Log a workflow step with beautiful formatting."""
-    step_text = f"{emoji} Step {step_num}: {step_name}"
+    step_text = f"Step {step_num}: {step_name}"
     logger.info(f"{Colors.BOLD}{Colors.BRIGHT_BLUE}{step_text}{Colors.RESET}")
 
 
@@ -198,7 +175,7 @@ def log_workflow_step(logger, step_num: int, step_name: str, emoji: str = "🔄"
 
 def log_ai_response(logger, agent_name: str, response: str):
     """Log a full AI response with beautiful formatting and proper line handling."""
-    logger.info(f"{Colors.BRIGHT_MAGENTA}🤖 {agent_name} AI Response:{Colors.RESET}")
+    logger.info(f"{Colors.BRIGHT_MAGENTA}{agent_name} AI Response:{Colors.RESET}")
     logger.info(f"{Colors.DIM}{'─' * 80}{Colors.RESET}")
 
     # Try to parse and pretty-print JSON responses
@@ -236,7 +213,7 @@ def _log_text_response(logger, response: str):
 
 def log_query(logger, query: str, confidence: float = None):
     """Log a query with syntax highlighting."""
-    logger.info(f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}🔍 Generated Query:{Colors.RESET}")
+    logger.info(f"{Colors.BOLD}{Colors.BRIGHT_MAGENTA}Generated Query:{Colors.RESET}")
     
     # Detect query type and apply appropriate highlighting
     query_type = _detect_query_type(query)

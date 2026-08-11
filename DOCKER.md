@@ -1,8 +1,8 @@
 # Docker Setup for Lang2Query
 
-🐳 **Complete Docker setup** for running Lang2Query with all dependencies and services.
+**Complete Docker setup** for running Lang2Query with all dependencies and services.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -43,7 +43,7 @@ For development with hot reload:
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-## 📁 Docker Files
+## Docker Files
 
 ### Backend Dockerfile (`Dockerfile`)
 
@@ -65,7 +65,7 @@ docker-compose -f docker-compose.dev.yml up -d
 - **Features**: Development mode with hot reload
 - **Volumes**: Source code mounted for live updates
 
-## 🐳 Docker Compose Services
+## Docker Compose Services
 
 ### Production (`docker-compose.yml`)
 
@@ -85,7 +85,7 @@ docker-compose -f docker-compose.dev.yml up -d
 | `redis` | Redis Cache | 6379 | Development data |
 | `chromadb` | Vector Database | 8001 | Development data |
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -118,7 +118,7 @@ The following directories are mounted as volumes:
 - `./src/retriever/input` → `/app/src/retriever/input` (Input docs)
 - `./src/retriever/output` → `/app/src/retriever/output` (Generated chunks)
 
-## 🛠️ Docker Commands
+## Docker Commands
 
 ### Basic Commands
 
@@ -173,7 +173,7 @@ docker-compose exec backend bash
 docker-compose exec frontend sh
 ```
 
-## 🔧 Customization
+## Customization
 
 ### Adding New Services
 
@@ -222,7 +222,7 @@ healthcheck:
   start_period: 40s
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Production Deployment
 
@@ -298,7 +298,7 @@ steps:
     args: ['run', 'deploy', 'lang2query', '--image', 'gcr.io/$PROJECT_ID/lang2query']
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -344,7 +344,7 @@ docker inspect lang2query-backend
 docker stats lang2query-backend
 ```
 
-## 📊 Monitoring
+## Monitoring
 
 ### Health Checks
 
@@ -368,7 +368,7 @@ docker-compose logs frontend
 docker-compose logs -f --tail=100
 ```
 
-## 🔒 Security
+## Security
 
 ### Best Practices
 
@@ -391,7 +391,7 @@ docker-compose config --services | xargs -I {} docker run --rm \
   aquasec/trivy image lang2query-{}:latest
 ```
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)

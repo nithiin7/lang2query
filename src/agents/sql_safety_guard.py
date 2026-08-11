@@ -77,7 +77,7 @@ class SQLSafetyGuardAgent(BaseAgent):
 
     def process(self, state: AgentState) -> AgentResult:
         """Check the generated query is read-only. No LLM call is made."""
-        logger.info("🛡️ Running deterministic SQL safety check")
+        logger.info("Running deterministic SQL safety check")
 
         if not state.generated_query or not state.generated_query.query:
             return AgentUtils.create_error_result("No query generated; cannot run safety check")
@@ -85,9 +85,9 @@ class SQLSafetyGuardAgent(BaseAgent):
         is_safe, reason = check_sql_is_read_only(state.generated_query.query, dialect=state.dialect)
 
         if is_safe:
-            logger.info("✅ SQL safety check passed")
+            logger.info("SQL safety check passed")
         else:
-            logger.error(f"🚫 SQL safety check failed: {reason}")
+            logger.error(f"SQL safety check failed: {reason}")
 
         return AgentResult(
             success=True,

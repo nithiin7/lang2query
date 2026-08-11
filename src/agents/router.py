@@ -25,7 +25,7 @@ class RouterAgent(BaseAgent):
     
     def process(self, state: AgentState) -> AgentResult:
         """Analyze the user query and determine routing strategy."""
-        logger.info(f"🧭 {self.name}: Analyzing query and determining routing strategy")
+        logger.info(f"{self.name}: Analyzing query and determining routing strategy")
 
         try:
             # Check prerequisites
@@ -46,7 +46,7 @@ class RouterAgent(BaseAgent):
             return self._create_success_result(routing_info)
 
         except Exception as e:
-            logger.error(f"❌ Query routing failed: {e}")
+            logger.error(f"Query routing failed: {e}")
             return AgentUtils.create_error_result(str(e))
             
 

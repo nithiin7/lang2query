@@ -28,7 +28,7 @@ class QueryValidatorAgent(BaseAgent):
 
     def process(self, state: AgentState) -> AgentResult:
         """Validate whether the generated query matches the user's request."""
-        logger.info("🔍 Performing LLM-based query validation")
+        logger.info("Performing LLM-based query validation")
 
         try:
             # Check prerequisites
@@ -77,7 +77,7 @@ GENERATED QUERY:
             )
 
         except Exception as e:
-            logger.error(f"❌ Query validation failed: {e}")
+            logger.error(f"Query validation failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
 

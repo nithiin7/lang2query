@@ -17,33 +17,28 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
-  { name: "Router", description: "Analyzing query type", emoji: "🎯" },
+  { name: "Router", description: "Analyzing query type" },
   {
     name: "Metadata Agent",
     description: "Processing metadata queries",
-    emoji: "📊",
   },
   {
     name: "Database Identifier",
     description: "Finding relevant databases",
-    emoji: "🗄️",
   },
   {
     name: "Table Identifier",
     description: "Identifying relevant tables",
-    emoji: "📋",
   },
   {
     name: "Column Identifier",
     description: "Finding relevant columns",
-    emoji: "🔍",
   },
-  { name: "Query Planner", description: "Creating query plan", emoji: "🧠" },
-  { name: "Query Generator", description: "Generating SQL query", emoji: "⚡" },
+  { name: "Query Planner", description: "Creating query plan" },
+  { name: "Query Generator", description: "Generating SQL query" },
   {
     name: "Query Validator",
     description: "Validating generated query",
-    emoji: "✅",
   },
 ];
 
@@ -188,7 +183,7 @@ export function QueryInterface() {
       {error && (
         <div className="card border-error-200 bg-error-50">
           <div className="text-error-800">
-            <h3 className="text-lg font-semibold mb-2">❌ Error</h3>
+            <h3 className="text-lg font-semibold mb-2">Error</h3>
             <p>{error}</p>
           </div>
         </div>
@@ -197,7 +192,7 @@ export function QueryInterface() {
       <div className="card">
         <details className="group">
           <summary className="cursor-pointer text-lg font-semibold text-gray-900 group-hover:text-primary-600">
-            💡 Example Queries
+            Example Queries
           </summary>
           <div className="mt-4 space-y-4">
             <div>

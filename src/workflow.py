@@ -67,9 +67,9 @@ class Text2QueryWorkflow:
                 chroma_persist_dir=str(KB_DIRECTORY),
                 collection_name=COLLECTION_NAME
             )
-            logger.info("✅ Shared retriever initialized successfully")
+            logger.info("Shared retriever initialized successfully")
         except Exception as e:
-            logger.warning(f"⚠️  Shared retriever initialization failed: {e}")
+            logger.warning(f"Shared retriever initialization failed: {e}")
 
         # Initialize all agents
         self.router = RouterAgent(model)
@@ -98,7 +98,7 @@ class Text2QueryWorkflow:
         # Create the workflow graph
         self.checkpointer = MemorySaver()
         self.workflow = self._create_workflow()
-        logger.info("🚀 Text2Query workflow initialized successfully")
+        logger.info("Text2Query workflow initialized successfully")
 
     def process_query(
         self,
@@ -123,9 +123,9 @@ class Text2QueryWorkflow:
         if streaming:
             return self._process_query_stream(natural_language_query, interaction_mode, callback)
 
-        log_section_header(logger, f"🚀 PROCESSING QUERY: {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
-        logger.info(f"{Colors.BRIGHT_CYAN}📝 Full Query: {natural_language_query}{Colors.RESET}")
-        logger.info(f"🎯 Interaction Mode: {interaction_mode}")
+        log_section_header(logger, f"PROCESSING QUERY: {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
+        logger.info(f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}")
+        logger.info(f"Interaction Mode: {interaction_mode}")
 
         # Create initial state
         initial_state = AgentState(
@@ -159,7 +159,7 @@ class Text2QueryWorkflow:
             return final_state
 
         except Exception as e:
-            logger.error(f"❌ Workflow execution failed: {e}")
+            logger.error(f"Workflow execution failed: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
 
@@ -179,7 +179,7 @@ class Text2QueryWorkflow:
 
             # Determine the appropriate starting node based on current state
             start_node = self._determine_resume_node(state)
-            logger.info(f"🔄 Resuming workflow from node: {start_node}")
+            logger.info(f"Resuming workflow from node: {start_node}")
 
             # Mark state as resuming to modify routing behavior
             state.is_resuming = True
@@ -208,10 +208,10 @@ class Text2QueryWorkflow:
                     yield new_state
 
                     step_display = self.get_current_step_display(new_state)
-                    logger.info(f"📊 Resume update from {node_name}: {step_display}")
+                    logger.info(f"Resume update from {node_name}: {step_display}")
 
         except Exception as e:
-            logger.error(f"❌ Workflow resume failed: {e}")
+            logger.error(f"Workflow resume failed: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             state.current_step = "workflow_failed"
@@ -220,30 +220,30 @@ class Text2QueryWorkflow:
     def get_current_step_display(self, state: AgentState) -> str:
         """Get user-friendly display text for current step."""
         step_mapping = {
-            "workflow_started": "🚀 Starting workflow...",
-            "processing_routing": "🧭 Analyzing query type...",
-            "routing_completed": "✅ Query type identified",
-            "processing_metadata_agent": "📊 Processing metadata query...",
-            "processing_database_identification": "🗄️ Identifying relevant databases...",
-            "processing_database_review": "👤 Reviewing database selection...",
-            "processing_table_identifier": "📋 Finding relevant tables...",
-            "processing_table_review": "👤 Reviewing table selection...",
-            "processing_column_identifier": "🔍 Discovering relevant columns...",
-            "processing_schema_builder": "🏗️ Building schema context...",
-            "processing_query_planning": "🧠 Creating query plan...",
-            "processing_query_generation": "⚡ Generating SQL query...",
-            "processing_sql_safety_guard": "🛡️ Checking query is read-only...",
-            "sql_safety_check_failed": "🚫 Query rejected: not read-only",
-            "processing_query_validation": "✅ Validating generated query...",
-            "metadata_completed": "✅ Metadata query completed",
-            "database_review_completed": "✅ Database review completed",
-            "table_review_completed": "✅ Table review completed",
-            "workflow_completed": "🎉 Workflow completed successfully",
-            "max_retries_exhausted": "⚠️ Maximum retries reached",
-            "workflow_failed": "❌ Workflow failed"
+            "workflow_started": "Starting workflow...",
+            "processing_routing": "Analyzing query type...",
+            "routing_completed": "Query type identified",
+            "processing_metadata_agent": "Processing metadata query...",
+            "processing_database_identification": "Identifying relevant databases...",
+            "processing_database_review": "Reviewing database selection...",
+            "processing_table_identifier": "Finding relevant tables...",
+            "processing_table_review": "Reviewing table selection...",
+            "processing_column_identifier": "Discovering relevant columns...",
+            "processing_schema_builder": "Building schema context...",
+            "processing_query_planning": "Creating query plan...",
+            "processing_query_generation": "Generating SQL query...",
+            "processing_sql_safety_guard": "Checking query is read-only...",
+            "sql_safety_check_failed": "Query rejected: not read-only",
+            "processing_query_validation": "Validating generated query...",
+            "metadata_completed": "Metadata query completed",
+            "database_review_completed": "Database review completed",
+            "table_review_completed": "Table review completed",
+            "workflow_completed": "Workflow completed successfully",
+            "max_retries_exhausted": "Maximum retries reached",
+            "workflow_failed": "Workflow failed"
         }
 
-        return step_mapping.get(state.current_step, f"🔄 {state.current_step.replace('_', ' ').title()}...")
+        return step_mapping.get(state.current_step, f"{state.current_step.replace('_', ' ').title()}...")
 
     def get_workflow_summary(self, state: AgentState) -> Dict[str, Any]:
         """Get a comprehensive summary of the workflow execution."""
@@ -458,9 +458,9 @@ class Text2QueryWorkflow:
 
 
     def _run_agent(self, state: AgentState, agent, step_number: int, step_name: str,
-                   step_emoji: str, success_step: str, error_step: str) -> AgentState:
+                   success_step: str, error_step: str) -> AgentState:
         """Common method to run any agent with standardized error handling and logging."""
-        log_workflow_step(logger, step_number, step_name, step_emoji)
+        log_workflow_step(logger, step_number, step_name)
 
         # Update current step for real-time display
         state.current_step = f"processing_{step_name.lower().replace(' ', '_')}"
@@ -471,7 +471,7 @@ class Text2QueryWorkflow:
             if result.success and result.state_updates:
                 # Update state with agent results, preserving system fields
                 StateManager.update_state_with_preservation(state, result.state_updates)
-                logger.info(f"✅ {step_name} completed successfully")
+                logger.info(f"{step_name} completed successfully")
                 state.current_step = success_step
 
                 # Log specific results for live display
@@ -510,14 +510,14 @@ class Text2QueryWorkflow:
         if step_key in state.step_retries_left and state.step_retries_left[step_key] > 0:
             # Decrement step retry counter
             state.step_retries_left[step_key] -= 1
-            logger.warning(f"⚠️ {step_name} failed: {error_message}")
-            logger.info(f"🔄 Retrying {step_name} (retries left: {state.step_retries_left[step_key]})")
+            logger.warning(f"{step_name} failed: {error_message}")
+            logger.info(f"Retrying {step_name} (retries left: {state.step_retries_left[step_key]})")
             state.current_step = f"{error_step}_retry"
             state.last_error_type = "step_retry"
             return True
         else:
             # No more step retries, mark as failed
-            logger.error(f"❌ {step_name} failed after exhausting retries: {error_message}")
+            logger.error(f"{step_name} failed after exhausting retries: {error_message}")
             state.current_step = f"{error_step}_failed"
             return False
 
@@ -581,31 +581,31 @@ class Text2QueryWorkflow:
 
     def _route_insufficient_data(self, state: AgentState) -> str:
         """Handle insufficient data routing."""
-        logger.warning("⚠️ Insufficient data detected; attempting broader re-identification.")
+        logger.warning("Insufficient data detected; attempting broader re-identification.")
         state.current_step = "retry_due_to_insufficient_data"
         return "database_identifier"
 
     def _route_schema_missing(self, state: AgentState) -> str:
         """Handle schema missing routing."""
-        logger.info("🔄 Routing to table_identifier due to schema issues (missing tables/columns)")
+        logger.info("Routing to table_identifier due to schema issues (missing tables/columns)")
         state.current_step = "route_to_table_identifier"
         return "table_identifier"
 
     def _route_query_scope_issue(self, state: AgentState) -> str:
         """Handle query scope issue routing - go back to database identification for broader perspective."""
-        logger.info("🔄 Routing to database_identifier due to query_scope_issue (wrong scope/approach)")
+        logger.info("Routing to database_identifier due to query_scope_issue (wrong scope/approach)")
         state.current_step = "route_to_database_identifier_scope_issue"
         return "database_identifier"
 
     def _route_sql_issue(self, state: AgentState, issue_type: str) -> str:
         """Handle SQL generation/planning issue routing."""
-        logger.info(f"🔄 Routing to query_planner due to {issue_type}")
+        logger.info(f"Routing to query_planner due to {issue_type}")
         state.current_step = f"route_to_query_planner_{issue_type}"
         return "query_planner"
 
     def _route_unknown_issue(self, state: AgentState, issue_type: str) -> str:
         """Handle unknown issue type routing."""
-        logger.warning(f"⚠️ Validation failed ({issue_type or 'unknown'}), retrying from database identification.")
+        logger.warning(f"Validation failed ({issue_type or 'unknown'}), retrying from database identification.")
         state.current_step = "retry_unknown_issue"
         return "database_identifier"
 
@@ -624,21 +624,20 @@ class Text2QueryWorkflow:
             self.metadata_agent,
             step_number=1,
             step_name="Metadata Agent",
-            step_emoji="📊",
             success_step="metadata_completed",
             error_step="metadata_error"
         )
     
     def _run_router(self, state: AgentState) -> AgentState:
         """Route the query based on its type and requirements."""
-        log_workflow_step(logger, 0, "Router", "🧭")
+        log_workflow_step(logger, 0, "Router")
 
         # Update current step for real-time display
         state.current_step = "processing_routing"
 
         # If we're resuming, skip routing logic and let routing function handle it
         if getattr(state, "is_resuming", False):
-            logger.info("🔄 Resuming workflow - skipping router processing")
+            logger.info("Resuming workflow - skipping router processing")
             state.current_step = "routing_completed"
             return state
 
@@ -652,19 +651,19 @@ class Text2QueryWorkflow:
                 # Log routing results for live display
                 if hasattr(state, 'is_metadata_query'):
                     query_type = "Metadata Query" if state.is_metadata_query else "Data Query"
-                    logger.info(f"📊 Query Type: {query_type}")
+                    logger.info(f"Query Type: {query_type}")
 
                 if hasattr(state, 'dialect') and state.dialect:
-                    logger.info(f"🗣️ SQL Dialect: {state.dialect}")
+                    logger.info(f"SQL Dialect: {state.dialect}")
 
                 return state
             else:
-                logger.error(f"❌ Query routing failed: {result.message}")
+                logger.error(f"Query routing failed: {result.message}")
                 state.current_step = "routing_failed"
                 return state
 
         except Exception as e:
-            logger.error(f"❌ Query routing error: {e}")
+            logger.error(f"Query routing error: {e}")
             state.current_step = "routing_error"
             return state
     
@@ -675,14 +674,13 @@ class Text2QueryWorkflow:
             self.database_identifier,
             step_number=1,
             step_name="Database Identification",
-            step_emoji="🔍",
             success_step="database_identification_completed",
             error_step="database_identification"
         )
 
     def _run_database_human_review(self, state: AgentState) -> AgentState:
         """Get human approval for identified databases."""
-        log_workflow_step(logger, 2, "Database Review", "👤")
+        log_workflow_step(logger, 2, "Database Review")
 
         # Update current step for real-time display
         state.current_step = "processing_database_review"
@@ -699,25 +697,25 @@ class Text2QueryWorkflow:
                 approvals = getattr(state, 'human_approvals', {}) or {}
                 approved = approvals.get('databases', False)
                 feedback = getattr(state, "human_feedback", "")
-                status = "✅ Approved" if approved else "🔄 Requested Changes"
-                logger.info(f"👤 Database Review: {status}")
+                status = "Approved" if approved else "Requested Changes"
+                logger.info(f"Database Review: {status}")
                 if feedback:
-                    logger.info(f"💬 Feedback: {feedback}")
+                    logger.info(f"Feedback: {feedback}")
 
                 return state
             else:
-                logger.error(f"❌ Database review failed: {result.message}")
+                logger.error(f"Database review failed: {result.message}")
                 state.current_step = "database_review_failed"
                 return state
 
         except Exception as e:
-            logger.error(f"❌ Database review error: {e}")
+            logger.error(f"Database review error: {e}")
             state.current_step = "database_review_error"
             return state
 
     def _run_table_human_review(self, state: AgentState) -> AgentState:
         """Get human approval for identified tables."""
-        log_workflow_step(logger, 4, "Table Review", "👤")
+        log_workflow_step(logger, 4, "Table Review")
 
         # Update current step for real-time display
         state.current_step = "processing_table_review"
@@ -734,19 +732,19 @@ class Text2QueryWorkflow:
                 approvals = getattr(state, 'human_approvals', {}) or {}
                 approved = approvals.get('tables', False)
                 feedback = getattr(state, "human_feedback", "")
-                status = "✅ Approved" if approved else "🔄 Requested Changes"
-                logger.info(f"👤 Table Review: {status}")
+                status = "Approved" if approved else "Requested Changes"
+                logger.info(f"Table Review: {status}")
                 if feedback:
-                    logger.info(f"💬 Feedback: {feedback}")
+                    logger.info(f"Feedback: {feedback}")
 
                 return state
             else:
-                logger.error(f"❌ Table review failed: {result.message}")
+                logger.error(f"Table review failed: {result.message}")
                 state.current_step = "table_review_failed"
                 return state
 
         except Exception as e:
-            logger.error(f"❌ Table review error: {e}")
+            logger.error(f"Table review error: {e}")
             state.current_step = "table_review_error"
             return state
     
@@ -757,7 +755,6 @@ class Text2QueryWorkflow:
             self.table_identifier,
             step_number=2,
             step_name="Table Identifier",
-            step_emoji="📊",
             success_step="table_identification_completed",
             error_step="table_identifier"
         )
@@ -769,7 +766,6 @@ class Text2QueryWorkflow:
             self.column_identifier,
             step_number=3,
             step_name="Column Identifier",
-            step_emoji="🧩",
             success_step="column_identification_completed",
             error_step="column_identifier"
         )
@@ -781,7 +777,6 @@ class Text2QueryWorkflow:
             self.schema_builder,
             step_number=4,
             step_name="Schema Builder",
-            step_emoji="🏗️",
             success_step="schema_building_completed",
             error_step="schema_building"
         )
@@ -793,7 +788,6 @@ class Text2QueryWorkflow:
             self.query_planner,
             step_number=5,
             step_name="Query Planning",
-            step_emoji="🧠",
             success_step="query_planning_completed",
             error_step="query_planning"
         )
@@ -805,7 +799,6 @@ class Text2QueryWorkflow:
             self.query_generator,
             step_number=6,
             step_name="Query Generation",
-            step_emoji="🔨",
             success_step="query_generation_completed",
             error_step="query_generation"
         )
@@ -819,7 +812,6 @@ class Text2QueryWorkflow:
             self.sql_safety_guard,
             step_number=6,
             step_name="Sql Safety Guard",
-            step_emoji="🛡️",
             success_step="sql_safety_check_completed",
             error_step="sql_safety_guard"
         )
@@ -840,7 +832,7 @@ class Text2QueryWorkflow:
         if getattr(state, 'last_error_type', None) == "step_retry":
             current_step = getattr(state, 'current_step', '')
             if current_step.endswith('_retry'):
-                logger.info("🔄 Retrying SQL safety guard step")
+                logger.info("Retrying SQL safety guard step")
                 return "sql_safety_guard"
 
         failure_result = WorkflowRouter.check_permanent_failure(state, "SQL safety guard")
@@ -848,11 +840,11 @@ class Text2QueryWorkflow:
             return failure_result
 
         if getattr(state, "is_sql_safe", False):
-            logger.info("✅ SQL safety check passed; proceeding to semantic validation")
+            logger.info("SQL safety check passed; proceeding to semantic validation")
             return "query_validator"
 
         logger.error(
-            f"🚫 SQL safety check failed: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}. "
+            f"SQL safety check failed: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}. "
             "Hard-stopping (no retry)."
         )
         state.current_step = "sql_safety_check_failed"
@@ -871,7 +863,6 @@ class Text2QueryWorkflow:
             self.query_validator,
             step_number=7,
             step_name="Query Validation",
-            step_emoji="🔍",
             success_step="query_validation_completed",
             error_step="query_validation"
         )
@@ -885,7 +876,7 @@ class Text2QueryWorkflow:
 
     def _handle_exhausted_retries(self, state: AgentState) -> None:
         """Handle the case when maximum retries are exhausted."""
-        logger.warning("⚠️ Maximum retries exhausted; ending workflow with best available query.")
+        logger.warning("Maximum retries exhausted; ending workflow with best available query.")
 
         feedback = getattr(state, "query_validation_feedback", {}) or {}
 
@@ -918,16 +909,16 @@ class Text2QueryWorkflow:
     def _decrement_retry_and_log(self, state: AgentState) -> None:
         """Decrement retry counter and log the change."""
         state.retries_left -= 1
-        logger.info(f"🔄 Retries decremented. Retries left: {state.retries_left}")
+        logger.info(f"Retries decremented. Retries left: {state.retries_left}")
 
 
     def _process_query_stream(self, natural_language_query: str, interaction_mode: str = "ask", callback: Optional[callable] = None):
         """
         Internal generator to process a query and yield streaming updates.
         """
-        log_section_header(logger, f"🚀 PROCESSING QUERY (STREAMING): {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
-        logger.info(f"{Colors.BRIGHT_CYAN}📝 Full Query: {natural_language_query}{Colors.RESET}")
-        logger.info(f"🎯 Interaction Mode: {interaction_mode}")
+        log_section_header(logger, f"PROCESSING QUERY (STREAMING): {natural_language_query[:50]}{'...' if len(natural_language_query) > 50 else ''}")
+        logger.info(f"{Colors.BRIGHT_CYAN}Full Query: {natural_language_query}{Colors.RESET}")
+        logger.info(f"Interaction Mode: {interaction_mode}")
 
         # Create initial state
         initial_state = AgentState(
@@ -973,10 +964,10 @@ class Text2QueryWorkflow:
 
                     # Log the step
                     step_display = self.get_current_step_display(state)
-                    logger.info(f"📊 Stream update from {node_name}: {step_display}")
+                    logger.info(f"Stream update from {node_name}: {step_display}")
 
         except Exception as e:
-            logger.error(f"❌ Workflow streaming failed: {e}")
+            logger.error(f"Workflow streaming failed: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
 

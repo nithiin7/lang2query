@@ -550,7 +550,7 @@ def main():
         print(f"Files processed: {processed_files}/{len(md_files)}")
         print(f"Total chunks created: {total_chunks}")
         if chunker.parsing_errors:
-            print(f"\n⚠️  Parsing errors encountered: {len(chunker.parsing_errors)}")
+            print(f"\n Parsing errors encountered: {len(chunker.parsing_errors)}")
             for error in chunker.parsing_errors:
                 print(f"  - {error}")
 
@@ -586,7 +586,7 @@ def main():
         print(f"\nChunks saved to: {json_output_file}")
         
         if chunker.parsing_errors:
-            print(f"\n⚠️  Parsing errors encountered: {len(chunker.parsing_errors)}")
+            print(f"\n Parsing errors encountered: {len(chunker.parsing_errors)}")
             for error in chunker.parsing_errors:
                 print(f"  - {error}")
         sys.exit(0)

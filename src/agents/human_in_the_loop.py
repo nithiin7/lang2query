@@ -127,10 +127,10 @@ class HumanInTheLoopAgent(BaseAgent):
             is_valid = self._validate_item_with_retriever(item, state)
             if is_valid:
                 valid_suggestions.append(item)
-                logger.info(f"✅ Validated {self.confirmation_type} suggestion: {item}")
+                logger.info(f"Validated {self.confirmation_type} suggestion: {item}")
             else:
                 invalid_suggestions.append(item)
-                logger.warning(f"⚠️ Invalid {self.confirmation_type} suggestion: {item}")
+                logger.warning(f"Invalid {self.confirmation_type} suggestion: {item}")
 
         feedback.valid_suggestions = valid_suggestions
         feedback.invalid_suggestions = invalid_suggestions
@@ -150,7 +150,7 @@ class HumanInTheLoopAgent(BaseAgent):
             True if item exists in knowledge base, False otherwise
         """
         if not self._retriever:
-            logger.warning("⚠️ No retriever available, accepting suggestion without validation")
+            logger.warning("No retriever available, accepting suggestion without validation")
             return True
 
         try:
@@ -169,13 +169,13 @@ class HumanInTheLoopAgent(BaseAgent):
                     # No database name provided, search in relevant databases
                     relevant_dbs = getattr(state, 'relevant_databases', [])
                     if not relevant_dbs:
-                        logger.warning(f"⚠️ No relevant databases to search for table: {item}")
+                        logger.warning(f"No relevant databases to search for table: {item}")
                         return False
                     
                     # Check if table exists in any of the relevant databases
                     for db in relevant_dbs:
                         if self._check_table_exists(item, db):
-                            logger.info(f"✅ Found table {item} in database {db}")
+                            logger.info(f"Found table {item} in database {db}")
                             return True
                     
                     return False
@@ -183,7 +183,7 @@ class HumanInTheLoopAgent(BaseAgent):
             return False
         
         except Exception as e:
-            logger.error(f"❌ Error validating item {item}: {e}")
+            logger.error(f"Error validating item {item}: {e}")
             return False
 
     def _check_table_exists(self, table_name: str, database_name: str) -> bool:
@@ -210,7 +210,7 @@ class HumanInTheLoopAgent(BaseAgent):
                         return True
             return False
         except Exception as e:
-            logger.error(f"❌ Error checking table {table_name} in {database_name}: {e}")
+            logger.error(f"Error checking table {table_name} in {database_name}: {e}")
             return False
 
     def _default_display_formatter(self, items_data: Any, confirmation_type: str) -> str:
@@ -224,7 +224,7 @@ class HumanInTheLoopAgent(BaseAgent):
                 return f"No {confirmation_type} identified"
             lines = []
             for key, values in items_data.items():
-                lines.append(f"  📊 {key}:")
+                lines.append(f"  {key}:")
                 if isinstance(values, list):
                     for value in values:
                         lines.append(f"    • {value}")
@@ -357,19 +357,19 @@ For "use wallet.user table as well":
             updates['feedback_processed'] = False  # No modifications made
             updates['last_modification_type'] = 'approve'
             updates['human_feedback'] = None  # Clear feedback after approval
-            logger.info(f"✅ User approved {self.confirmation_type} selection")
+            logger.info(f"User approved {self.confirmation_type} selection")
         else:
             approvals[self.confirmation_type] = False
             if feedback.approval_status == 'REJECT':
                 updates['feedback_processed'] = False  # Will re-identify
                 updates['last_modification_type'] = 'reject'
                 updates['human_feedback'] = None  # Clear feedback to prevent re-processing
-                logger.info(f"🔄 User rejected {self.confirmation_type} selection - needs complete restart")
+                logger.info(f"User rejected {self.confirmation_type} selection - needs complete restart")
             else:  # MODIFY
                 # Will determine if modifications were actually made below
                 # Don't set feedback_processed yet - will be set based on actual changes
                 updates['last_modification_type'] = feedback.modification_type
-                logger.info(f"🔄 User requested {self.confirmation_type} modifications (type: {feedback.modification_type})")
+                logger.info(f"User requested {self.confirmation_type} modifications (type: {feedback.modification_type})")
 
         updates['human_approvals'] = approvals
 
@@ -385,12 +385,12 @@ For "use wallet.user table as well":
                 if feedback.selected_values:
                     updates[f'relevant_{self.confirmation_type}'] = feedback.selected_values
                     changes_made = (feedback.selected_values != original_items)
-                    logger.info(f"🔄 Replaced {self.confirmation_type} with: {feedback.selected_values}")
+                    logger.info(f"Replaced {self.confirmation_type} with: {feedback.selected_values}")
                 else:
                     # Clear items if no selection provided
                     updates[f'relevant_{self.confirmation_type}'] = []
                     changes_made = len(original_items) > 0
-                    logger.info(f"🔄 Cleared {self.confirmation_type} selection")
+                    logger.info(f"Cleared {self.confirmation_type} selection")
 
             elif feedback.modification_type == 'add':
                 # Normalize items (add database name to tables if missing)
@@ -406,13 +406,13 @@ For "use wallet.user table as well":
                     if added_count > 0:
                         updates[f'relevant_{self.confirmation_type}'] = current_items
                         changes_made = True
-                        logger.info(f"➕ Added {added_count} to {self.confirmation_type}: {items_to_add}")
+                        logger.info(f"Added {added_count} to {self.confirmation_type}: {items_to_add}")
                     else:
                         logger.info(f"ℹ️  No new items to add (all already present)")
 
                 # Log invalid suggestions that couldn't be added
                 if feedback.invalid_suggestions:
-                    logger.warning(f"⚠️ Could not add invalid {self.confirmation_type}: {feedback.invalid_suggestions}")
+                    logger.warning(f"Could not add invalid {self.confirmation_type}: {feedback.invalid_suggestions}")
                     # Add invalid suggestions to feedback summary for user notification
                     current_feedback = updates.get('human_feedback', feedback.feedback_summary)
                     invalid_list = ", ".join(f'"{item}"' for item in feedback.invalid_suggestions)
@@ -441,8 +441,8 @@ For "use wallet.user table as well":
                 updates[f'relevant_{self.confirmation_type}'] = filtered_items
                 
                 if changes_made:
-                    logger.info(f"➖ Removed from {self.confirmation_type}: {items_to_remove}")
-                    logger.info(f"📋 Remaining {self.confirmation_type}: {filtered_items}")
+                    logger.info(f"Removed from {self.confirmation_type}: {items_to_remove}")
+                    logger.info(f"Remaining {self.confirmation_type}: {filtered_items}")
                 else:
                     logger.info(f"ℹ️  No items removed (none matched)")
 
@@ -451,7 +451,7 @@ For "use wallet.user table as well":
             if changes_made:
                 updates['feedback_processed'] = True
                 updates['human_feedback'] = None  # Clear feedback after successful modifications
-                logger.info(f"✅ Modifications applied, will show updated list to user")
+                logger.info(f"Modifications applied, will show updated list to user")
             else:
                 # No actual changes made - treat as approval to move forward
                 updates['feedback_processed'] = False
@@ -494,10 +494,10 @@ For "use wallet.user table as well":
                     found_db = self._find_database_for_table(item, relevant_dbs)
                     if found_db:
                         normalized.append(f"{found_db}.{item}")
-                        logger.info(f"📍 Normalized table {item} -> {found_db}.{item}")
+                        logger.info(f"Normalized table {item} -> {found_db}.{item}")
                     else:
                         # Couldn't find database, keep as-is and log warning
-                        logger.warning(f"⚠️ Could not find database for table: {item}")
+                        logger.warning(f"Could not find database for table: {item}")
                         normalized.append(item)
             
             return normalized
@@ -524,5 +524,5 @@ For "use wallet.user table as well":
                     return db
             return None
         except Exception as e:
-            logger.error(f"❌ Error finding database for table {table_name}: {e}")
+            logger.error(f"Error finding database for table {table_name}: {e}")
             return None

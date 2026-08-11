@@ -16,7 +16,7 @@ class WorkflowLogger:
     def log_database_results(state: AgentState) -> None:
         """Log database identification results."""
         if hasattr(state, 'relevant_databases') and state.relevant_databases:
-            logger.info(f"🗄️ Databases identified: {', '.join(state.relevant_databases)}")
+            logger.info(f"Databases identified: {', '.join(state.relevant_databases)}")
 
     @staticmethod
     def log_table_results(state: AgentState) -> None:
@@ -25,7 +25,7 @@ class WorkflowLogger:
             tables_preview = ', '.join(state.relevant_tables[:3])
             if len(state.relevant_tables) > 3:
                 tables_preview += f" (+{len(state.relevant_tables) - 3} more)"
-            logger.info(f"📋 Tables identified: {tables_preview}")
+            logger.info(f"Tables identified: {tables_preview}")
 
     @staticmethod
     def log_column_results(state: AgentState) -> None:
@@ -34,27 +34,27 @@ class WorkflowLogger:
             columns_preview = ', '.join(state.relevant_columns[:3])
             if len(state.relevant_columns) > 3:
                 columns_preview += f" (+{len(state.relevant_columns) - 3} more)"
-            logger.info(f"🔍 Columns identified: {columns_preview}")
+            logger.info(f"Columns identified: {columns_preview}")
 
     @staticmethod
     def log_schema_results(state: AgentState) -> None:
         """Log schema building results."""
         if hasattr(state, 'schema_context') and state.schema_context:
-            logger.info(f"🏗️ Schema context built with {len(str(state.schema_context))} characters")
+            logger.info(f"Schema context built with {len(str(state.schema_context))} characters")
 
     @staticmethod
     def log_planning_results(state: AgentState) -> None:
         """Log query planning results."""
         if hasattr(state, 'query_plan') and state.query_plan:
             plan_preview = str(state.query_plan)[:100] + "..." if len(str(state.query_plan)) > 100 else str(state.query_plan)
-            logger.info(f"🧠 Query plan created: {plan_preview}")
+            logger.info(f"Query plan created: {plan_preview}")
 
     @staticmethod
     def log_validation_results(state: AgentState) -> None:
         """Log query validation results."""
         if hasattr(state, 'is_query_valid'):
-            status = "✅ Valid" if state.is_query_valid else "❌ Invalid"
-            logger.info(f"🔍 Query validation: {status}")
+            status = "Valid" if state.is_query_valid else "Invalid"
+            logger.info(f"Query validation: {status}")
 
     @staticmethod
     def log_agent_results(step_name: str, state: AgentState) -> None:
@@ -94,7 +94,7 @@ class WorkflowRouter:
         current_step = getattr(state, 'current_step', '')
         if current_step.endswith('_failed') or current_step.endswith('_error'):
             context_msg = f" {step_context}" if step_context else ""
-            logger.error(f"❌{context_msg} failed permanently")
+            logger.error(f"{context_msg} failed permanently")
 
             if return_failed_step:
                 step_name = current_step.replace('_failed', '').replace('_error', '')
@@ -110,14 +110,14 @@ class WorkflowRouter:
         # Check if we're resuming - if so, route directly to the resume node
         if getattr(state, "is_resuming", False):
             resume_node = getattr(state, "resume_start_node", "database_identifier")
-            logger.info(f"🔄 Resuming: Routing directly to {resume_node}")
+            logger.info(f"Resuming: Routing directly to {resume_node}")
             return resume_node
 
         if getattr(state, "is_metadata_query", False):
-            logger.info("🔄 Routing to metadata agent for metadata query")
+            logger.info("Routing to metadata agent for metadata query")
             return "metadata_agent"
         else:
-            logger.info("🔄 Routing to database identifier for data query")
+            logger.info("Routing to database identifier for data query")
             return "database_identifier"
 
     @staticmethod
@@ -130,16 +130,16 @@ class WorkflowRouter:
 
         # Check if this step needs to be retried (only for actual step failures, not resumes)
         if getattr(state, 'last_error_type', None) == "step_retry" and not getattr(state, 'is_resuming', False):
-            logger.info("🔄 Retrying database identifier step")
+            logger.info("Retrying database identifier step")
             return "database_identifier"
 
         # Normal routing based on interaction mode
         mode = getattr(state, "interaction_mode", "ask")
         if mode == "interactive":
-            logger.info("🔄 Interactive mode: Routing to database human review")
+            logger.info("Interactive mode: Routing to database human review")
             return "database_human_review"
         else:
-            logger.info("🔄 Ask mode: Skipping human review, proceeding to table identifier")
+            logger.info("Ask mode: Skipping human review, proceeding to table identifier")
             return "table_identifier"
 
     @staticmethod
@@ -149,7 +149,7 @@ class WorkflowRouter:
         approved = approvals.get('databases', False)
         
         if approved:
-            logger.info("✅ User approved databases, proceeding to table identifier")
+            logger.info("User approved databases, proceeding to table identifier")
             return "table_identifier"
         
         # Check if we need to show updated list (modifications made) or re-identify
@@ -157,12 +157,12 @@ class WorkflowRouter:
         feedback_processed = getattr(state, 'feedback_processed', False)
         
         if feedback_processed and modification_type in ['add', 'remove', 'modify']:
-            logger.info("🔄 Modifications applied, showing updated database list to user")
+            logger.info("Modifications applied, showing updated database list to user")
             # Clear the flag so next iteration doesn't loop
             state.feedback_processed = False
             return "database_human_review"
         else:
-            logger.info("🔄 User rejected databases, re-running database identification")
+            logger.info("User rejected databases, re-running database identification")
             return "database_identifier"
 
     @staticmethod
@@ -175,16 +175,16 @@ class WorkflowRouter:
 
         # Check if this step needs to be retried (only for actual step failures, not resumes)
         if getattr(state, 'last_error_type', None) == "step_retry" and not getattr(state, 'is_resuming', False):
-            logger.info("🔄 Retrying table identifier step")
+            logger.info("Retrying table identifier step")
             return "table_identifier"
 
         # Normal routing based on interaction mode
         mode = getattr(state, "interaction_mode", "ask")
         if mode == "interactive":
-            logger.info("🔄 Interactive mode: Routing to table human review")
+            logger.info("Interactive mode: Routing to table human review")
             return "table_human_review"
         else:
-            logger.info("🔄 Ask mode: Skipping human review, proceeding to column identifier")
+            logger.info("Ask mode: Skipping human review, proceeding to column identifier")
             return "column_identifier"
 
     @staticmethod
@@ -194,7 +194,7 @@ class WorkflowRouter:
         approved = approvals.get('tables', False)
         
         if approved:
-            logger.info("✅ User approved tables, proceeding to column identifier")
+            logger.info("User approved tables, proceeding to column identifier")
             return "column_identifier"
         
         # Check if we need to show updated list (modifications made) or re-identify
@@ -202,12 +202,12 @@ class WorkflowRouter:
         feedback_processed = getattr(state, 'feedback_processed', False)
         
         if feedback_processed and modification_type in ['add', 'remove', 'modify']:
-            logger.info("🔄 Modifications applied, showing updated table list to user")
+            logger.info("Modifications applied, showing updated table list to user")
             # Clear the flag so next iteration doesn't loop
             state.feedback_processed = False
             return "table_human_review"
         else:
-            logger.info("🔄 User rejected tables, re-running table identification")
+            logger.info("User rejected tables, re-running table identification")
             return "table_identifier"
 
     @staticmethod
@@ -220,7 +220,7 @@ class WorkflowRouter:
             current_step = getattr(state, 'current_step', '')
             if current_step.endswith('_retry'):
                 step_name = current_step.replace('_retry', '')
-                logger.info(f"🔄 Retrying pipeline step: {step_name}")
+                logger.info(f"Retrying pipeline step: {step_name}")
                 return step_name
 
         # Check if step failed permanently
@@ -238,7 +238,7 @@ class WorkflowRouter:
 
         # Check if this step needs to be retried
         if getattr(state, 'last_error_type', None) == "step_retry":
-            logger.info("🔄 Retrying metadata agent step")
+            logger.info("Retrying metadata agent step")
             return "metadata_agent"
 
         # Check if step failed permanently
@@ -247,7 +247,7 @@ class WorkflowRouter:
             return failure_result
 
         # Metadata queries end the workflow
-        logger.info("✅ Metadata query completed")
+        logger.info("Metadata query completed")
         return END
 
     @staticmethod
@@ -303,7 +303,6 @@ class AgentRunner:
     def create_agent_config(
         step_number: int,
         step_name: str,
-        step_emoji: str,
         success_step: str,
         error_step: str
     ) -> dict:
@@ -311,7 +310,6 @@ class AgentRunner:
         return {
             'step_number': step_number,
             'step_name': step_name,
-            'step_emoji': step_emoji,
             'success_step': success_step,
             'error_step': error_step
         }

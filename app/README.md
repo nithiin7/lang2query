@@ -1,36 +1,36 @@
 # Lang2Query Frontend
 
-🎨 **Modern Next.js Frontend** for Lang2Query - A beautiful, responsive web interface for natural language to SQL conversion with real-time AI-powered processing.
+**Modern Next.js Frontend** for Lang2Query - A beautiful, responsive web interface for natural language to SQL conversion with real-time AI-powered processing.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black.svg)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19.0.0-blue.svg)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.2-blue.svg)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.17-38B2AC.svg)](https://tailwindcss.com)
 
-## ✨ Features
+## Features
 
-### 🎨 Modern User Interface
+### Modern User Interface
 
 - **TypeScript**: Full type safety with comprehensive type definitions
 - **Responsive Design**: Clean, modern interface that works on all devices
 - **Dark/Light Mode**: Automatic theme switching based on system preferences
 - **Component Library**: Reusable, well-documented React components
 
-### 📡 Real-time Communication
+### Real-time Communication
 
 - **WebSocket Integration**: Live workflow progress tracking with real-time updates
 - **Interactive Mode**: Step-by-step query processing visualization
 - **Live State Display**: Watch as databases, tables, and columns are identified
 - **Progress Indicators**: Beautiful loading states and progress bars
 
-### 🛠️ Developer Experience
+### Developer Experience
 
 - **Hot Reload**: Instant development feedback with Next.js dev server
 - **ESLint**: Comprehensive code quality enforcement
 - **TypeScript**: Full type safety and IntelliSense support
 - **Component Architecture**: Modular, reusable component design
 
-### 🚀 Performance
+### Performance
 
 - **Server-Side Rendering**: Fast initial page loads with Next.js SSR
 - **Code Splitting**: Automatic code splitting for optimal bundle sizes
@@ -47,7 +47,7 @@
 - **HTTP Client**: Axios 1.7.9
 - **Code Quality**: ESLint 9.17.0 with TypeScript rules
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -92,7 +92,7 @@ make run
 
 This will start both the FastAPI backend (`http://localhost:8000`) and Next.js frontend (`http://localhost:3000`) simultaneously.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 app/
@@ -160,7 +160,7 @@ app/
 └── eslint.config.js           # ESLint configuration
 ```
 
-## 🛠️ Scripts
+## Scripts
 
 | Command              | Description                              |
 | -------------------- | ---------------------------------------- |
@@ -171,7 +171,7 @@ app/
 | `npm run type-check` | Run TypeScript type checking             |
 | `npm run clean`      | Clean build artifacts and cache          |
 
-## 🔌 API Integration
+## API Integration
 
 The frontend communicates with the Lang2Query backend via REST API and WebSocket connections.
 
@@ -234,7 +234,7 @@ const { sendMessage, lastMessage, readyState } = useWebSocket(
 );
 ```
 
-## 🧪 Development
+## Development
 
 ### Code Quality Standards
 
@@ -263,7 +263,7 @@ const { sendMessage, lastMessage, readyState } = useWebSocket(
 5. **Commit Changes**: Use conventional commit messages
 6. **Create Pull Request**: Submit PR with detailed description
 
-## 🚀 Deployment
+## Deployment
 
 ### Production Build
 
@@ -313,7 +313,7 @@ NEXT_PUBLIC_WS_URL=wss://your-backend-api.com/ws
 - **Code Splitting**: Leverage Next.js automatic code splitting
 - **Caching**: Implement proper caching strategies for API calls
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -324,6 +324,6 @@ NEXT_PUBLIC_WS_URL=wss://your-backend-api.com/ws
 7. Push to branch: `git push origin feature/amazing-feature`
 8. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.

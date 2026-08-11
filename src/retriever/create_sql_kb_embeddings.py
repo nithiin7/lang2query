@@ -41,13 +41,13 @@ class SQLKnowledgeBaseEmbedder:
         # Detect and set device for MPS optimization on M1 Macs
         self.device = 'mps' if torch.backends.mps.is_available() else 'cpu'
 
-        print(f"🚀 Using device: {self.device}")
-        print(f"🚀 Loading BGE-M3 model")
+        print(f"Using device: {self.device}")
+        print(f"Loading BGE-M3 model")
 
         # Load model with device optimization
         if Path(model_path).exists():
             self.model = SentenceTransformer(model_path, device=self.device)
-            print("✅ Model loaded from local cache with MPS optimization" if self.device == 'mps' else "✅ Model loaded from local cache")
+            print("Model loaded from local cache with MPS optimization" if self.device == 'mps' else "Model loaded from local cache")
         else:
             raise FileNotFoundError(f"Model not found at {model_path}. Please ensure BGE-M3 is downloaded.")
         
@@ -56,7 +56,7 @@ class SQLKnowledgeBaseEmbedder:
             path=chroma_persist_dir,
             settings=Settings(anonymized_telemetry=False)
         )
-        print(f"✅ ChromaDB initialized at: {chroma_persist_dir}")
+        print(f"ChromaDB initialized at: {chroma_persist_dir}")
         
         self.collection_name = collection_name
         self.chunker = SQLKnowledgeBaseChunker()
@@ -68,7 +68,7 @@ class SQLKnowledgeBaseEmbedder:
             # Delete existing collection if reset
             try:
                 self.chroma_client.delete_collection(name=self.collection_name)
-                print(f"🗑️  Deleted existing collection: {self.collection_name}")
+                print(f" Deleted existing collection: {self.collection_name}")
             except:
                 pass
         
@@ -77,10 +77,10 @@ class SQLKnowledgeBaseEmbedder:
                 name=self.collection_name,
                 embedding_function=embedding_function
             )
-            print(f"✅ Using existing collection: {self.collection_name}")
+            print(f"Using existing collection: {self.collection_name}")
             # Get count of existing documents
             count = collection.count()
-            print(f"📊 Existing documents in collection: {count}")
+            print(f"Existing documents in collection: {count}")
         except:
             # Create new collection
             collection = self.chroma_client.create_collection(
@@ -93,7 +93,7 @@ class SQLKnowledgeBaseEmbedder:
                     "chunk_strategy": "contextual_v2"
                 }
             )
-            print(f"✅ Created new collection: {self.collection_name}")
+            print(f"Created new collection: {self.collection_name}")
         
         return collection
     
@@ -105,13 +105,13 @@ class SQLKnowledgeBaseEmbedder:
         
         # Get all markdown files
         md_files = list(md_path.glob("*.md"))
-        print(f"\n📁 Found {len(md_files)} markdown files to process")
+        print(f"\nFound {len(md_files)} markdown files to process")
         
         all_chunks = []
         parsing_errors = []
         
         # Process each file
-        print("\n🔍 Chunking markdown files...")
+        print("\nChunking markdown files...")
         for md_file in tqdm(md_files, desc="Processing files"):
             try:
                 chunks = self.chunker.parse_markdown_file(str(md_file))
@@ -119,14 +119,14 @@ class SQLKnowledgeBaseEmbedder:
             except Exception as e:
                 error_msg = f"Error processing {md_file.name}: {str(e)}"
                 parsing_errors.append(error_msg)
-                print(f"\n❌ {error_msg}")
+                print(f"\n{error_msg}")
         
-        print(f"\n✅ Created {len(all_chunks)} chunks from {len(md_files)} files")
+        print(f"\nCreated {len(all_chunks)} chunks from {len(md_files)} files")
 
         self._print_chunk_statistics(all_chunks)
         
         if parsing_errors:
-            print(f"\n⚠️  Encountered {len(parsing_errors)} parsing errors:")
+            print(f"\n Encountered {len(parsing_errors)} parsing errors:")
             for error in parsing_errors[:5]:  # Show first 5 errors
                 print(f"   - {error}")
             if len(parsing_errors) > 5:
@@ -147,7 +147,7 @@ class SQLKnowledgeBaseEmbedder:
             if 'module_name' in chunk.metadata:
                 unique_modules.add(chunk.metadata['module_name'])
         
-        print("\n📊 Chunk Statistics:")
+        print("\nChunk Statistics:")
         print(f"   - Total chunks: {len(chunks)}")
         print(f"   - Database info chunks: {len(db_chunks)}")
         print(f"   - Table summary chunks: {len(table_chunks)}")
@@ -157,7 +157,7 @@ class SQLKnowledgeBaseEmbedder:
     
     def embed_chunks(self, chunks: List, collection, batch_size: int = 5):
         """Embed chunks and store in ChromaDB with memory-aware batching"""
-        print(f"\n🚀 Creating embeddings for {len(chunks)} chunks...")
+        print(f"\nCreating embeddings for {len(chunks)} chunks...")
 
         # Adaptive batch sizing based on content size
         if batch_size > 1:
@@ -166,10 +166,10 @@ class SQLKnowledgeBaseEmbedder:
             # Reduce batch size for large chunks to prevent memory issues
             if avg_chunk_size > 2000:  # Large chunks
                 adaptive_batch_size = max(1, batch_size // 2)
-                print(f"📊 Large chunks detected (avg {avg_chunk_size:.0f} chars), reducing batch size to {adaptive_batch_size}")
+                print(f"Large chunks detected (avg {avg_chunk_size:.0f} chars), reducing batch size to {adaptive_batch_size}")
             elif avg_chunk_size > 5000:  # Very large chunks
                 adaptive_batch_size = 1
-                print(f"📊 Very large chunks detected (avg {avg_chunk_size:.0f} chars), using batch size 1")
+                print(f"Very large chunks detected (avg {avg_chunk_size:.0f} chars), using batch size 1")
             else:
                 adaptive_batch_size = batch_size
         else:
@@ -224,8 +224,8 @@ class SQLKnowledgeBaseEmbedder:
                 collection.add(documents=documents, metadatas=processed_metadatas, ids=ids)
             except Exception as e:
                 batch_num = i//adaptive_batch_size + 1
-                print(f"\n❌ Error embedding batch {batch_num}: {str(e)}")
-                print(f"   📋 Batch contains {len(batch)} chunks:")
+                print(f"\nError embedding batch {batch_num}: {str(e)}")
+                print(f"   Batch contains {len(batch)} chunks:")
                 for c in batch[:5]:  # Show first 5 chunks
                     print(f"     - {c.chunk_id} (content size: {len(c.content)} chars)")
                 if len(batch) > 5:
@@ -242,16 +242,16 @@ class SQLKnowledgeBaseEmbedder:
                     except Exception as inner_e:
                         failed_count += 1
                         if failed_count <= 3:  # Only print first few errors
-                            print(f"   ❌ Failed to add chunk {c.chunk_id}: {str(inner_e)}")
+                            print(f"   Failed to add chunk {c.chunk_id}: {str(inner_e)}")
                         continue
                 if failed_count > 0:
-                    print(f"   ⚠️  Failed to add {failed_count} chunks from batch {batch_num}")
+                    print(f"    Failed to add {failed_count} chunks from batch {batch_num}")
 
-        print(f"\n✅ Successfully embedded chunks into collection '{self.collection_name}'")
+        print(f"\nSuccessfully embedded chunks into collection '{self.collection_name}'")
     
     def verify_embeddings(self, collection, sample_queries: List[str] = None):
         """Verify embeddings with sample queries"""
-        print("\n🔍 Verifying embeddings with sample queries...")
+        print("\nVerifying embeddings with sample queries...")
         
         if sample_queries is None:
             sample_queries = [
@@ -262,7 +262,7 @@ class SQLKnowledgeBaseEmbedder:
             ]
         
         for query in sample_queries:
-            print(f"\n📝 Query: '{query}'")
+            print(f"\nQuery: '{query}'")
             
             try:
                 results = collection.query(
@@ -311,7 +311,7 @@ class SQLKnowledgeBaseEmbedder:
         with open(output_file, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        print(f"\n📄 Saved knowledge base metadata to {output_file}")
+        print(f"\nSaved knowledge base metadata to {output_file}")
 
     def save_metadata_from_stats(self, stats: Dict[str, Any], output_file: str = "src/retriever/output/sql_kb_metadata.json"):
         """Save metadata using pre-aggregated stats to avoid holding all chunks in memory"""
@@ -333,7 +333,7 @@ class SQLKnowledgeBaseEmbedder:
         with open(output_file, 'w') as f:
             json.dump(metadata, f, indent=2)
 
-        print(f"\n📄 Saved knowledge base metadata to {output_file}")
+        print(f"\nSaved knowledge base metadata to {output_file}")
 
     def embed_markdown_directory_streaming(self, md_directory: str, collection, batch_size: int = 5, test_only: bool = False,
                                            per_file_output_dir: str = None, per_file_chunked_json_dir: str = None):
@@ -350,7 +350,7 @@ class SQLKnowledgeBaseEmbedder:
         if test_only:
             md_files = md_files[:3]
 
-        print(f"\n📁 Found {len(md_files)} markdown files to process (streaming mode)")
+        print(f"\nFound {len(md_files)} markdown files to process (streaming mode)")
 
         # Prepare optional output directories for per-file JSON dumps
         if per_file_output_dir:
@@ -403,10 +403,10 @@ class SQLKnowledgeBaseEmbedder:
             except Exception as e:
                 error_msg = f"Error processing {md_file.name}: {str(e)}"
                 parsing_errors.append(error_msg)
-                print(f"\n❌ {error_msg}")
+                print(f"\n{error_msg}")
 
         # Print brief statistics summary
-        print("\n📊 Chunk Statistics (streaming):")
+        print("\nChunk Statistics (streaming):")
         print(f"   - Total chunks: {stats['total_chunks']}")
         print(f"   - Database info chunks: {stats['database']}")
         print(f"   - Table summary chunks: {stats['table']}")
@@ -415,7 +415,7 @@ class SQLKnowledgeBaseEmbedder:
         print(f"   - Unique modules: {len(stats['modules'])}")
 
         if parsing_errors:
-            print(f"\n⚠️  Encountered {len(parsing_errors)} parsing errors (streaming):")
+            print(f"\n Encountered {len(parsing_errors)} parsing errors (streaming):")
             for error in parsing_errors[:5]:
                 print(f"   - {error}")
             if len(parsing_errors) > 5:
@@ -434,7 +434,7 @@ class SQLKnowledgeBaseEmbedder:
             seen.add(c.chunk_id)
             unique.append(c)
         if dup_count:
-            print(f"⚠️  Deduped {dup_count} duplicate chunks (by chunk_id)")
+            print(f" Deduped {dup_count} duplicate chunks (by chunk_id)")
         return unique
 
 
@@ -467,16 +467,16 @@ def main():
     # Handle single-chunk option
     if args.single_chunk:
         args.batch_size = 1
-        print("🔒 Single-chunk mode enabled (maximum memory safety)")
+        print("Single-chunk mode enabled (maximum memory safety)")
 
-    print("🚀 SQL Knowledge Base Embedding Creation")
+    print("SQL Knowledge Base Embedding Creation")
     print("=" * 60)
-    print(f"📁 Markdown directory: {args.md_dir}")
-    print(f"💾 ChromaDB directory: {args.chroma_dir}")
-    print(f"📚 Collection name: {args.collection_name}")
-    print(f"🔄 Reset collection: {args.reset}")
-    print(f"🧪 Test mode: {args.test_only}")
-    print(f"📦 Batch size: {args.batch_size}")
+    print(f"Markdown directory: {args.md_dir}")
+    print(f"ChromaDB directory: {args.chroma_dir}")
+    print(f"Collection name: {args.collection_name}")
+    print(f"Reset collection: {args.reset}")
+    print(f"Test mode: {args.test_only}")
+    print(f"Batch size: {args.batch_size}")
     print("=" * 60)
     
     # Initialize embedder
@@ -500,7 +500,7 @@ def main():
     )
 
     if stats.get("total_chunks", 0) == 0:
-        print("\n❌ No chunks created. Please check your markdown files.")
+        print("\nNo chunks created. Please check your markdown files.")
         return
 
     # Save metadata using aggregated stats
@@ -509,8 +509,8 @@ def main():
     # Verify embeddings
     embedder.verify_embeddings(collection)
     
-    print("\n✅ SQL Knowledge Base embedding creation completed!")
-    print(f"📊 Total documents in collection: {collection.count()}")
+    print("\nSQL Knowledge Base embedding creation completed!")
+    print(f"Total documents in collection: {collection.count()}")
 
 
 if __name__ == "__main__":

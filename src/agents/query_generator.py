@@ -29,7 +29,7 @@ class QueryGeneratorAgent(BaseAgent):
     
     def process(self, state: AgentState) -> AgentResult:
         """Generate query from query plan and schema."""
-        logger.info("🔨 Generating query from query plan...")
+        logger.info("Generating query from query plan...")
 
         try:
             # Validate prerequisites
@@ -47,13 +47,13 @@ class QueryGeneratorAgent(BaseAgent):
             # Generate schema and query
             query = self._generate_query_from_plan(state, state.query_plan)
             if not query:
-                logger.error("❌ Failed to generate query")
+                logger.error("Failed to generate query")
                 return AgentResult(success=False, message="Failed to generate query")
 
             return self._create_success_result(query)
 
         except Exception as e:
-            logger.error(f"❌ Query generation failed: {e}")
+            logger.error(f"Query generation failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
 
@@ -74,7 +74,7 @@ class QueryGeneratorAgent(BaseAgent):
             )
             human_message = state.natural_language_query
 
-            logger.debug("🤖 Generating query from plan with LLM...")
+            logger.debug("Generating query from plan with LLM...")
 
             response = self.generate_with_llm(
                 system_message=system_message,
@@ -85,7 +85,7 @@ class QueryGeneratorAgent(BaseAgent):
             query_text = self._extract_query_from_response(response)
 
             if not query_text:
-                logger.warning("⚠️ Could not extract query from response")
+                logger.warning("Could not extract query from response")
                 return None
 
             # Determine database name from available databases
@@ -97,7 +97,7 @@ class QueryGeneratorAgent(BaseAgent):
                     # For multiple databases, use the first one as primary
                     # The query will handle cross-database references
                     database_name = state.relevant_databases[0]
-                    logger.info(f"🔗 Query spans multiple databases: {state.relevant_databases}, using {database_name} as primary")
+                    logger.info(f"Query spans multiple databases: {state.relevant_databases}, using {database_name} as primary")
 
             return Query(
                 query=query_text,
@@ -108,7 +108,7 @@ class QueryGeneratorAgent(BaseAgent):
             )
 
         except Exception as e:
-            logger.error(f"❌ Query generation from plan failed: {e}")
+            logger.error(f"Query generation from plan failed: {e}")
             return None
 
     
@@ -313,11 +313,11 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
                 if self._is_valid_sql_query(clean_query):
                     return clean_query
 
-            logger.warning("⚠️ No valid query found in response")
+            logger.warning("No valid query found in response")
             return ""
 
         except Exception as e:
-            logger.error(f"❌ Failed to extract query from response: {e}")
+            logger.error(f"Failed to extract query from response: {e}")
             return ""
 
     def _clean_query_text(self, query_text: str) -> str:
@@ -357,7 +357,7 @@ WHERE c.registration_date BETWEEN '2023-01-01' AND '2023-12-31'
             return cleaned_query
             
         except Exception as e:
-            logger.error(f"❌ Failed to clean query: {e}")
+            logger.error(f"Failed to clean query: {e}")
             return query
     
     def _extract_tables_from_query(self, query: str) -> List[str]:

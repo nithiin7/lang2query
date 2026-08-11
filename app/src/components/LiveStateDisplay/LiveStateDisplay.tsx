@@ -11,13 +11,13 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
-  const displayListWithPreview = (title: string, items: string[], icon: string) => (
+  const displayListWithPreview = (title: string, items: string[]) => (
     <div>
       <h4 className="font-semibold text-gray-900 mb-2">{title}:</h4>
       <div className="space-y-1">
         {items.slice(0, 5).map((item, index) => (
           <code key={index} className="block text-sm bg-gray-100 px-2 py-1 rounded">
-            {icon} {item}
+            {item}
           </code>
         ))}
         {items.length > 5 && (
@@ -31,7 +31,7 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-gray-900">🔍 Live Workflow State</h3>
+      <h3 className="text-xl font-bold text-gray-900">Live Workflow State</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Info */}
@@ -54,7 +54,7 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Query Type:</h4>
               <code className="block bg-gray-100 px-3 py-2 rounded text-sm">
-                {state.is_metadata_query ? "📊 Metadata Query" : "🔍 Data Query"}
+                {state.is_metadata_query ? "Metadata Query" : "Data Query"}
               </code>
             </div>
           )}
@@ -82,7 +82,7 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
                     key={index}
                     className="block text-sm bg-gray-100 px-2 py-1 rounded"
                   >
-                    🗄️ {db}
+                    {db}
                   </code>
                 ))}
               </div>
@@ -91,11 +91,11 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
 
           {state.relevant_tables &&
             state.relevant_tables.length > 0 &&
-            displayListWithPreview("Identified Tables", state.relevant_tables, "📋")}
+            displayListWithPreview("Identified Tables", state.relevant_tables)}
 
           {state.relevant_columns &&
             state.relevant_columns.length > 0 &&
-            displayListWithPreview("Identified Columns", state.relevant_columns, "🔍")}
+            displayListWithPreview("Identified Columns", state.relevant_columns)}
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function LiveStateDisplay({ state }: LiveStateDisplayProps) {
                   : "bg-error-100 text-error-800"
               }`}
             >
-              {state.is_query_valid ? "✅ Valid" : "❌ Invalid"}
+              {state.is_query_valid ? "Valid" : "Invalid"}
             </code>
           </div>
         )}

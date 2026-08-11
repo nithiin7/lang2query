@@ -44,7 +44,7 @@ class SchemaBuilderAgent(BaseAgent):
             return self._create_success_result(schema_context)
 
         except Exception as e:
-            logger.error(f"❌ Schema building failed: {e}")
+            logger.error(f"Schema building failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
     def _build_schema_context(self, databases: List[str], tables: List[str],
@@ -60,7 +60,7 @@ class SchemaBuilderAgent(BaseAgent):
         Returns:
             Dictionary containing formatted schema context
         """
-        logger.info(f"📊 Building schema context for {len(databases)} databases, {len(tables)} tables")
+        logger.info(f"Building schema context for {len(databases)} databases, {len(tables)} tables")
 
         schema_context = {
             "databases": {},
@@ -126,7 +126,7 @@ class SchemaBuilderAgent(BaseAgent):
                     "metadata": metadata
                 }
         except Exception as e:
-            logger.warning(f"⚠️ Could not retrieve database info for '{database_name}': {e}")
+            logger.warning(f"Could not retrieve database info for '{database_name}': {e}")
 
         return None
 
@@ -153,7 +153,7 @@ class SchemaBuilderAgent(BaseAgent):
                 db_name = self._find_database_for_table(table_name, databases)
 
             if not db_name:
-                logger.warning(f"⚠️ Could not determine database for table '{table_name}'")
+                logger.warning(f"Could not determine database for table '{table_name}'")
                 continue
 
             # Get table summary and columns from schemas
@@ -223,7 +223,7 @@ class SchemaBuilderAgent(BaseAgent):
                     "metadata": metadata
                 }
         except Exception as e:
-            logger.warning(f"⚠️ Could not retrieve table info for '{database_name}.{table_name}': {e}")
+            logger.warning(f"Could not retrieve table info for '{database_name}.{table_name}': {e}")
 
         return None
 
@@ -249,7 +249,7 @@ class SchemaBuilderAgent(BaseAgent):
                 return columns
 
         except Exception as e:
-            logger.warning(f"⚠️ Could not retrieve column info for '{database_name}.{table_name}': {e}")
+            logger.warning(f"Could not retrieve column info for '{database_name}.{table_name}': {e}")
 
         return []
 
@@ -315,7 +315,7 @@ class SchemaBuilderAgent(BaseAgent):
                 columns.append(column_info)
 
         except Exception as e:
-            logger.warning(f"⚠️ Error parsing columns from schemas: {e}")
+            logger.warning(f"Error parsing columns from schemas: {e}")
 
         return columns
 
@@ -333,7 +333,7 @@ class SchemaBuilderAgent(BaseAgent):
 
         lines = ["**DATABASES:**"]
         for db_name, db_info in databases.items():
-            lines.append(f"\n📁 **{db_name}**")
+            lines.append(f"\n**{db_name}**")
             lines.append(f"   System: {db_info.get('system', 'Unknown')}")
             lines.append(f"   Module: {db_info.get('module', 'Unknown')}")
             purpose = self._extract_purpose_from_content(db_info.get('content'))
@@ -361,7 +361,7 @@ class SchemaBuilderAgent(BaseAgent):
     def _format_single_table(self, table_data: Dict[str, Any]) -> List[str]:
         db_name = table_data['database']
         table_name = table_data['table']
-        lines = [f"\n🗂️ **{db_name}.{table_name}**"]
+        lines = [f"\n**{db_name}.{table_name}**"]
 
         purpose = table_data.get('summary', {}).get('purpose')
         if purpose:

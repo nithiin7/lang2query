@@ -12,7 +12,7 @@ import torch
 
 def get_model_choice():
     """Prompt user to select which model to download"""
-    print("\n🚀 Model Download Options")
+    print("\nModel Download Options")
     print("=" * 50)
     print("1. BGE-M3 (Embedding Model) - For text similarity and retrieval")
     print("2. LLaMA 3.2 3B Instruct (Language Model) - For text generation")
@@ -26,9 +26,9 @@ def get_model_choice():
             elif choice == "2":
                 return "llama"
             else:
-                print("❌ Please enter 1 or 2")
+                print("Please enter 1 or 2")
         except KeyboardInterrupt:
-            print("\n\n❌ Operation cancelled")
+            print("\n\nOperation cancelled")
             exit(1)
 
 def download_bge_m3():
@@ -45,11 +45,11 @@ def download_bge_m3():
 
     # Check if model already exists locally
     if local_model_path.exists() and any(local_model_path.iterdir()):
-        print(f"\n✅ Model already exists at {local_model_path}")
+        print(f"\nModel already exists at {local_model_path}")
         print("Loading from local cache...")
         model = SentenceTransformer(str(local_model_path))
     else:
-        print(f"\n📥 Downloading model {model_name} from HuggingFace...")
+        print(f"\nDownloading model {model_name} from HuggingFace...")
         print("This may take a while on first download...")
 
         # Try different approaches to download the model
@@ -57,9 +57,9 @@ def download_bge_m3():
             # First attempt with trust_remote_code
             model = SentenceTransformer(model_name, trust_remote_code=True)
             model.save(str(local_model_path))
-            print(f"\n✅ Model downloaded and saved to {local_model_path}")
+            print(f"\nModel downloaded and saved to {local_model_path}")
         except Exception as e:
-            print(f"\n⚠️  First attempt failed: {e}")
+            print(f"\n First attempt failed: {e}")
             print("Trying alternative download method...")
 
             # Alternative: Download using transformers directly
@@ -103,13 +103,13 @@ def download_bge_m3():
                     json.dump(pooling_config, f, indent=2)
 
                 model = SentenceTransformer(str(local_model_path))
-                print(f"\n✅ Model downloaded and saved to {local_model_path}")
+                print(f"\nModel downloaded and saved to {local_model_path}")
             except Exception as e2:
-                print(f"\n❌ Alternative method also failed: {e2}")
+                print(f"\nAlternative method also failed: {e2}")
                 raise
 
     # Test the model
-    print("\n🧪 Testing model...")
+    print("\nTesting model...")
     test_sentences = [
         "This is a test sentence.",
         "BGE-M3 is a powerful embedding model.",
@@ -119,14 +119,14 @@ def download_bge_m3():
     # Generate embeddings
     embeddings = model.encode(test_sentences, show_progress_bar=True)
 
-    print("\n✅ Model loaded successfully!")
-    print("📊 Model info:")
+    print("\nModel loaded successfully!")
+    print("Model info:")
     print(f"   - Embedding dimension: {embeddings.shape[1]}")
     print(f"   - Max sequence length: {model.max_seq_length}")
     print(f"   - Device: {model.device}")
 
     # Show sample embeddings
-    print("\n📝 Sample embeddings (first 5 dimensions):")
+    print("\nSample embeddings (first 5 dimensions):")
     for i, (sentence, embedding) in enumerate(zip(test_sentences, embeddings)):
         print(f"   {i+1}. '{sentence[:50]}...' -> {embedding[:5].tolist()}")
 
@@ -149,7 +149,7 @@ def download_llama():
 
     # Check if model already exists locally
     if local_model_path.exists() and any(local_model_path.iterdir()):
-        print(f"\n✅ Model already exists at {local_model_path}")
+        print(f"\nModel already exists at {local_model_path}")
         print("Loading from local cache...")
 
         tokenizer = AutoTokenizer.from_pretrained(str(local_model_path), trust_remote_code=True)
@@ -160,7 +160,7 @@ def download_llama():
             trust_remote_code=True
         )
     else:
-        print(f"\n📥 Downloading model {model_name} from HuggingFace...")
+        print(f"\nDownloading model {model_name} from HuggingFace...")
         print("This may take a while on first download (approximately 15-16 GB)...")
 
         # Try different approaches to download the model
@@ -182,9 +182,9 @@ def download_llama():
             tokenizer.save_pretrained(str(local_model_path))
             model.save_pretrained(str(local_model_path))
 
-            print(f"\n✅ Model downloaded and saved to {local_model_path}")
+            print(f"\nModel downloaded and saved to {local_model_path}")
         except Exception as e:
-            print(f"\n⚠️  First attempt failed: {e}")
+            print(f"\n First attempt failed: {e}")
             print("Trying alternative download method...")
 
             # Alternative: Download with different parameters
@@ -208,13 +208,13 @@ def download_llama():
                 tokenizer.save_pretrained(str(local_model_path))
                 model.save_pretrained(str(local_model_path))
 
-                print(f"\n✅ Model downloaded and saved to {local_model_path}")
+                print(f"\nModel downloaded and saved to {local_model_path}")
             except Exception as e2:
-                print(f"\n❌ Alternative method also failed: {e2}")
+                print(f"\nAlternative method also failed: {e2}")
                 raise
 
     # Test the model
-    print("\n🧪 Testing model...")
+    print("\nTesting model...")
 
     # Test prompt
     prompt = "Give me a short introduction to large language models."
@@ -257,13 +257,13 @@ def download_llama():
     thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
     content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
 
-    print("\n✅ Model loaded successfully!")
-    print("📊 Model info:")
+    print("\nModel loaded successfully!")
+    print("Model info:")
     print(f"   - Device: {model.device}")
     print(f"   - Model path: {local_model_path}")
 
     # Show sample response
-    print("\n📝 Sample response:")
+    print("\nSample response:")
     print(f"Prompt: '{prompt}'")
     if thinking_content:
         print(f"Thinking: '{thinking_content[:200]}...'")
@@ -272,7 +272,7 @@ def download_llama():
     return model, tokenizer, local_model_path
 
 def main():
-    print("🚀 Unified Model Download Script")
+    print("Unified Model Download Script")
     print("=" * 60)
     print("=" * 60)
 
@@ -281,25 +281,25 @@ def main():
 
     try:
         if model_choice == "bge_m3":
-            print("\n🔍 Selected: BGE-M3 Embedding Model")
+            print("\nSelected: BGE-M3 Embedding Model")
             print("-" * 40)
             model_path = download_bge_m3()
-            print("\n✅ Success! BGE-M3 model is ready to use.")
-            print("\n💡 To use this model in your code:")
+            print("\nSuccess! BGE-M3 model is ready to use.")
+            print("\nTo use this model in your code:")
             print("   from sentence_transformers import SentenceTransformer")
             print(f"   model = SentenceTransformer('{model_path}')")
         else:
-            print("\n🤖 Selected: LLaMA 3.2 3B Instruct Language Model")
+            print("\nSelected: LLaMA 3.2 3B Instruct Language Model")
             print("-" * 50)
             model_path = download_llama()
-            print("\n✅ Success! LLaMA model is ready to use.")
-            print("\n💡 To use this model in your code:")
+            print("\nSuccess! LLaMA model is ready to use.")
+            print("\nTo use this model in your code:")
             print("   from transformers import AutoModelForCausalLM, AutoTokenizer")
             print(f"   tokenizer = AutoTokenizer.from_pretrained('{model_path}', trust_remote_code=True)")
             print(f"   model = AutoModelForCausalLM.from_pretrained('{model_path}', torch_dtype='auto', device_map='auto', trust_remote_code=True)")
 
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         print("\nTroubleshooting:")
         print("1. Make sure you have internet connection")
         print("2. Check if you need to set proxy settings")

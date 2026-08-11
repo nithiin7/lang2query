@@ -25,7 +25,7 @@ class QueryPlannerAgent(BaseAgent):
     
     def process(self, state: AgentState) -> AgentResult:
         """Create a step-by-step query plan based on the question and schema."""
-        logger.info(f"🧠 {self.name}: Creating query plan")
+        logger.info(f"{self.name}: Creating query plan")
 
         try:
             # Validate prerequisites
@@ -54,7 +54,7 @@ class QueryPlannerAgent(BaseAgent):
             return self._create_success_result(query_plan_result)
 
         except Exception as e:
-            logger.error(f"❌ Query planning failed: {e}")
+            logger.error(f"Query planning failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
 

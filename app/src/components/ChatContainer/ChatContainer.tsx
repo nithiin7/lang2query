@@ -250,13 +250,13 @@ export function ChatContainer({
       // Add user response to chat
       let userResponse = "";
       if (feedback.action === "approve") {
-        userResponse = `✅ Approved the suggested ${feedback.review_type}`;
+        userResponse = `Approved the suggested ${feedback.review_type}`;
         if (feedback.feedback_text) {
           userResponse += ` with note: "${feedback.feedback_text}"`;
         }
       } else if (feedback.action === "modify") {
         const approvedCount = feedback.approved_items?.length || 0;
-        userResponse = `🔧 Modified ${feedback.review_type} selection (${approvedCount} approved)`;
+        userResponse = `Modified ${feedback.review_type} selection (${approvedCount} approved)`;
         if (feedback.feedback_text) {
           userResponse += ` with note: "${feedback.feedback_text}"`;
         }
@@ -311,7 +311,6 @@ export function ChatContainer({
           </div>
           {messages.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">💬</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Welcome to Text2Query
               </h3>

@@ -26,7 +26,7 @@ class ColumnIdentifier(BaseAgent):
 
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant columns from previously identified tables."""
-        logger.info(f"🧩 {self.name}: Identifying relevant columns from tables")
+        logger.info(f"{self.name}: Identifying relevant columns from tables")
 
         try:
             # Validate prerequisites
@@ -49,23 +49,23 @@ class ColumnIdentifier(BaseAgent):
 
             # Extract selected columns from the structured response
             selected_columns = self._extract_columns_from_selection(column_selection)
-            logger.info(f"🧩 Selected columns: {selected_columns}")
+            logger.info(f"Selected columns: {selected_columns}")
 
             # If no columns were found
             if not selected_columns:
-                logger.warning("🧩 No columns selected - query may not be answerable with current schema")
+                logger.warning("No columns selected - query may not be answerable with current schema")
 
             # Return success result
             return self._create_success_result(selected_columns)
 
         except Exception as e:
-            logger.error(f"❌ Column identifier failed: {e}")
+            logger.error(f"Column identifier failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
     def _get_table_columns(self, state: AgentState) -> Dict[str, List[Dict[str, Any]]]:
         """Get column details for selected tables using retriever."""
         if not self._retriever:
-            logger.warning("🧩 Retriever not available, returning empty column details")
+            logger.warning("Retriever not available, returning empty column details")
             return {}
 
         table_columns = {}
@@ -81,9 +81,9 @@ class ColumnIdentifier(BaseAgent):
                 )
                 table_columns.update(db_table_columns)
             except Exception as e:
-                logger.error(f"🧩 Failed to get columns for database {db_name}: {e}")
+                logger.error(f"Failed to get columns for database {db_name}: {e}")
 
-        logger.info(f"🧩 Retrieved column details for {len(table_columns)} tables")
+        logger.info(f"Retrieved column details for {len(table_columns)} tables")
         return table_columns
 
     def _group_tables_by_database(self, table_names: List[str]) -> Dict[str, List[str]]:

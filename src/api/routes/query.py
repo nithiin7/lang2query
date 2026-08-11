@@ -91,7 +91,7 @@ async def _check_for_cancellation(websocket: WebSocket, timeout: float = 0.01) -
         message = await asyncio.wait_for(websocket.receive_text(), timeout=timeout)
         data = json.loads(message)
         if data.get("type") == "cancel":
-            print("🛑 Received cancellation request from client")
+            print("Received cancellation request from client")
             return True
     except:
         pass
@@ -156,7 +156,7 @@ async def _handle_hitl_checkpoint(websocket: WebSocket, state: AgentState, pendi
         
         # Check for cancellation during HITL
         if feedback.get("type") == "cancel":
-            print("🛑 Received cancellation during HITL review")
+            print("Received cancellation during HITL review")
             await _send_cancellation_message(websocket, "Workflow cancelled by user during review")
             return True, None
         
@@ -196,9 +196,9 @@ async def _send_final_result(websocket: WebSocket, final_state: AgentState, wf: 
         
         final_message = {"type": "final_result", "result": response}
         await websocket.send_text(json.dumps(final_message))
-        print("📤 Sent final result")
+        print("Sent final result")
     except Exception as e:
-        print(f"❌ Error sending final result: {e}")
+        print(f"Error sending final result: {e}")
         await websocket.send_text(json.dumps({
             "type": "error",
             "message": f"Error sending final result: {str(e)}"
@@ -221,7 +221,7 @@ async def _process_workflow_stream(websocket: WebSocket, wf: Text2QueryWorkflow,
     while True:
         # Check for cancellation before processing next state
         if await _check_for_cancellation(websocket):
-            print("⛔ Workflow cancelled by user")
+            print("Workflow cancelled by user")
             await _send_cancellation_message(websocket)
             cancelled = True
             break
@@ -235,13 +235,13 @@ async def _process_workflow_stream(websocket: WebSocket, wf: Text2QueryWorkflow,
 
         final_state = state
         update_count += 1
-        print(f"📊 Received state update #{update_count}: {state.current_step}")
+        print(f"Received state update #{update_count}: {state.current_step}")
 
         # Send state update to client
         try:
             await _send_state_update(websocket, state)
         except Exception as e:
-            print(f"❌ Error sending state update #{update_count}: {e}")
+            print(f"Error sending state update #{update_count}: {e}")
             break
 
         # Handle HITL checkpoint if present
@@ -300,7 +300,7 @@ async def websocket_query(websocket: WebSocket):
         start_time = time.time()
         interaction_mode = "interactive" if mode == "interactive" else "ask"
         
-        print(f"🔄 Starting workflow streaming for query: {user_query[:50]}...")
+        print(f"Starting workflow streaming for query: {user_query[:50]}...")
         
         cancelled, final_state, update_count = await _process_workflow_stream(
             websocket, wf, user_query, interaction_mode, start_time
@@ -308,9 +308,9 @@ async def websocket_query(websocket: WebSocket):
 
         # Send final result or cancellation message
         if cancelled:
-            print(f"⛔ Workflow cancelled after {update_count} updates")
+            print(f"Workflow cancelled after {update_count} updates")
         elif final_state:
-            print(f"✅ Workflow streaming completed. Total updates: {update_count}")
+            print(f"Workflow streaming completed. Total updates: {update_count}")
             await _send_final_result(websocket, final_state, wf, start_time)
         
     except WebSocketDisconnect:
@@ -328,6 +328,6 @@ async def websocket_query(websocket: WebSocket):
         try:
             if websocket.client_state.name != "CLOSED":
                 await websocket.close()
-                print("🔌 WebSocket closed gracefully")
+                print("WebSocket closed gracefully")
         except Exception as close_error:
             print(f"Error closing WebSocket: {close_error}")

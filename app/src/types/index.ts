@@ -80,7 +80,6 @@ export interface QueryRequest {
   export interface WorkflowStep {
     name: string;
     description: string;
-    emoji: string;
   }
   
   export interface LiveStateDisplayProps {

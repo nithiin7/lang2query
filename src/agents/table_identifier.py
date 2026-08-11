@@ -25,7 +25,7 @@ class TableIdentifier(BaseAgent):
     
     def process(self, state: AgentState) -> AgentResult:
         """Identify relevant tables from the selected databases."""
-        logger.info(f"🔍 {self.name}: Identifying relevant tables from databases")
+        logger.info(f"{self.name}: Identifying relevant tables from databases")
 
         try:
             # Validate prerequisites and get available tables
@@ -49,12 +49,12 @@ class TableIdentifier(BaseAgent):
 
             # Extract table names from the structured response
             table_names = table_selection.table_names
-            logger.info(f"🔍 Identified tables: {table_names}")
+            logger.info(f"Identified tables: {table_names}")
 
             return self._create_success_result(table_names)
 
         except Exception as e:
-            logger.error(f"❌ Table identification failed: {e}")
+            logger.error(f"Table identification failed: {e}")
             return AgentUtils.create_error_result(str(e))
 
 
@@ -79,7 +79,7 @@ class TableIdentifier(BaseAgent):
 
         # Try to retrieve and format relevant table chunks
         tables_section = self._retrieve_table_chunks(state.natural_language_query, n_results=15)
-        logger.info(f"🔍 Tables section: {tables_section}")
+        logger.info(f"Tables section: {tables_section}")
 
         # Use fallback if no chunks found
         if not tables_section:
@@ -153,21 +153,21 @@ class TableIdentifier(BaseAgent):
 
         selected_databases = getattr(self, '_selected_databases', [])
         if not selected_databases:
-            logger.warning("⚠️ No selected databases available")
+            logger.warning("No selected databases available")
             return ""
 
         try:
             results = self._retriever.search_tables_in_databases(query, selected_databases, n_results=max(n_results, 25))
             chunk_count = len(results.get('documents', [[]])[0]) if results.get('documents') else 0
-            logger.info(f"🔍 Found {chunk_count} table chunks in databases {selected_databases}")
+            logger.info(f"Found {chunk_count} table chunks in databases {selected_databases}")
 
             formatted_content = ChunkParsers.format_table_chunks_filtered_by_databases(results, selected_databases)
             if formatted_content and formatted_content != "**Available Tables:**\n(None found)":
-                logger.info(f"🔍 Formatted table chunks: {len(formatted_content)} characters")
+                logger.info(f"Formatted table chunks: {len(formatted_content)} characters")
                 return formatted_content
             else:
                 return ""
 
         except Exception as e:
-            logger.error(f"❌ Error retrieving chunks: {e}")
+            logger.error(f"Error retrieving chunks: {e}")
             return ""

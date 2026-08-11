@@ -38,7 +38,7 @@ main_logger = logging.getLogger(__name__)
 def create_model_wrapper() -> ModelWrapper:
     """Create and return model wrapper based on config provider."""
     provider = PROVIDER.lower()
-    main_logger.info(f"📥 Initializing {provider.upper()} model wrapper...")
+    main_logger.info(f"Initializing {provider.upper()} model wrapper...")
 
     if provider == "nvidia":
         return ModelWrapper(model=NVIDIA_MODEL)
@@ -56,20 +56,20 @@ def display_model_info(model_wrapper: ModelWrapper, provider: str):
     model_info = model_wrapper.get_model_info()
 
     if provider.lower() == "nvidia":
-        main_logger.info(f"📊 Connected to NVIDIA model: {model_info['model']}")
+        main_logger.info(f"Connected to NVIDIA model: {model_info['model']}")
     elif provider.lower() == "ollama":
-        main_logger.info(f"📊 Connected to Ollama: {model_info.get('model', 'unknown')}")
+        main_logger.info(f"Connected to Ollama: {model_info.get('model', 'unknown')}")
     elif provider.lower() == "chatgpt":
-        main_logger.info(f"📊 Connected to ChatGPT: {model_info.get('model', 'unknown')}")
-        main_logger.info(f"🔗 Provider: {model_info.get('provider', 'openai')}")
+        main_logger.info(f"Connected to ChatGPT: {model_info.get('model', 'unknown')}")
+        main_logger.info(f"Provider: {model_info.get('provider', 'openai')}")
     else:
-        main_logger.info(f"📊 Using local model: {model_info['model_type']} from {model_info['model_path']}")
-        main_logger.info(f"🔧 Device: {model_info['device']}, Quantization: {model_info['quantization']}")
+        main_logger.info(f"Using local model: {model_info['model_type']} from {model_info['model_path']}")
+        main_logger.info(f"Device: {model_info['device']}, Quantization: {model_info['quantization']}")
 
 
 def display_workflow_results_header():
     """Display the workflow results header."""
-    print(f"\n{Colors.BOLD}{Colors.BRIGHT_CYAN}📊 Workflow Results:{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.BRIGHT_CYAN}Workflow Results:{Colors.RESET}")
 
 
 def display_status_line(label: str, value: str, color: str = Colors.BRIGHT_WHITE):
@@ -80,7 +80,7 @@ def display_status_line(label: str, value: str, color: str = Colors.BRIGHT_WHITE
 def display_boolean_status(label: str, value: bool, count: int = None, details: str = None):
     """Display boolean status with appropriate colors and symbols."""
     status_color = Colors.BRIGHT_GREEN if value else Colors.BRIGHT_RED
-    status_symbol = "✅" if value else "❌"
+    status_symbol = "Yes" if value else "No"
     count_text = f" ({count})" if count is not None else ""
     details_text = f" ({details})" if details else ""
     print(f"{Colors.BRIGHT_WHITE}{label}: {status_color}{status_symbol}{Colors.RESET}{count_text}{details_text}")
@@ -107,7 +107,7 @@ def highlight_sql_query(query: str) -> str:
 def display_sql_query(query: str):
     """Display SQL query with syntax highlighting."""
     if query:
-        print(f"\n{Colors.BOLD}{Colors.BRIGHT_MAGENTA}🔍 Generated SQL Query:{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{Colors.BRIGHT_MAGENTA}Generated SQL Query:{Colors.RESET}")
         print(f"{Colors.DIM}{'─' * 80}{Colors.RESET}")
         highlighted_query = highlight_sql_query(query)
         for line in highlighted_query.split('\n'):
@@ -121,7 +121,7 @@ def display_sql_query(query: str):
 def display_query_plan(plan_preview: str):
     """Display query plan if available."""
     if plan_preview:
-        print(f"\n{Colors.BOLD}{Colors.BRIGHT_CYAN}🧠 Query Plan:{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{Colors.BRIGHT_CYAN}Query Plan:{Colors.RESET}")
         print(f"{Colors.DIM}{'─' * 80}{Colors.RESET}")
 
         # Try to parse and format the plan as JSON
@@ -161,31 +161,31 @@ def check_embeddings_exist(kb_directory: str = "src/kb") -> bool:
     db_file = kb_path / "chroma.sqlite3"
 
     if db_file.exists():
-        main_logger.info("✅ Knowledge base embeddings found and ready to use")
+        main_logger.info("Knowledge base embeddings found and ready to use")
         return True
     else:
-        main_logger.error("❌ Knowledge base embeddings not found")
-        main_logger.info("💡 Run 'make embeddings' to create the knowledge base embeddings")
+        main_logger.error("Knowledge base embeddings not found")
+        main_logger.info("Run 'make embeddings' to create the knowledge base embeddings")
         return False
 
 
 def display_success_message():
     """Display success message."""
     print(f"\n{Colors.BOLD}{Colors.BRIGHT_GREEN}{'='*60}{Colors.RESET}")
-    print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}✅ Query processed successfully!{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}Query processed successfully!{Colors.RESET}")
     print(f"{Colors.BOLD}{Colors.BRIGHT_GREEN}{'='*60}{Colors.RESET}")
 
 
 def display_welcome_message():
     """Display welcome message and example queries."""
     print("\n" + "="*70)
-    print("🚀 Text2Query - Natural Language to Query Processing")
+    print("Text2Query - Natural Language to Query Processing")
     print("="*70)
     print("Type your query and press Enter.")
     print("Type 'quit' or 'exit' to stop the program.")
     print("="*70)
 
-    print("\n📊 METADATA QUERIES:")
+    print("\nMETADATA QUERIES:")
     metadata_queries = [
         "List all databases",
         "Show me all tables in the system",
@@ -197,7 +197,7 @@ def display_welcome_message():
     for query in metadata_queries:
         print(f"  • {query}")
 
-    print("\n🔍 DATA QUERIES:")
+    print("\nDATA QUERIES:")
     data_queries = [
         "Find all customers with pending verification",
         "Show me payment transactions for the last 30 days",
@@ -226,7 +226,7 @@ def display_workflow_summary(summary, final_state=None):
 
 def display_metadata_response(summary, final_state):
     """Display metadata query response."""
-    print(f"\n{Colors.BOLD}{Colors.BRIGHT_GREEN}📊 Metadata Query Response:{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.BRIGHT_GREEN}Metadata Query Response:{Colors.RESET}")
     print(f"{Colors.DIM}{'═' * 60}{Colors.RESET}")
     
     # Display the metadata response with proper formatting
@@ -238,7 +238,7 @@ def display_metadata_response(summary, final_state):
     
     # Display execution time and status
     print(f"\n{Colors.BRIGHT_WHITE}Execution Time: {Colors.BRIGHT_BLUE}{summary.get('execution_time', 'N/A')}{Colors.RESET}")
-    print(f"{Colors.BRIGHT_WHITE}Status: {Colors.BRIGHT_GREEN}✅ Successfully completed{Colors.RESET}")
+    print(f"{Colors.BRIGHT_WHITE}Status: {Colors.BRIGHT_GREEN}Successfully completed{Colors.RESET}")
 
 
 def _parse_metadata_response(metadata_response):
@@ -310,13 +310,13 @@ def display_sql_workflow_summary(summary):
 def main():
     """Main function for the LangGraph-based text2query workflow."""
     try:
-        log_section_header(main_logger, "🚀 TEXT2QUERY WORKFLOW 🚀")
+        log_section_header(main_logger, "TEXT2QUERY WORKFLOW ")
 
         # Check if knowledge base embeddings exist
         embeddings_ready = check_embeddings_exist(kb_directory=str(KB_DIRECTORY))
 
         if not embeddings_ready:
-            main_logger.error("❌ Knowledge base embeddings not found. Please run 'make embeddings' first.")
+            main_logger.error("Knowledge base embeddings not found. Please run 'make embeddings' first.")
             return
 
         # Initialize the model wrapper
@@ -334,20 +334,20 @@ def main():
         while True:
             try:
                 # Get user input
-                user_query = input("\n💬 Enter your query: ").strip()
+                user_query = input("\nEnter your query: ").strip()
                 
                 # Check for exit commands
                 if user_query.lower() in ['quit', 'exit', 'q']:
-                    print("\n👋 Goodbye!")
+                    print("\nGoodbye!")
                     break
                 
                 # Check for empty input
                 if not user_query:
-                    print("❌ Please enter a valid query.")
+                    print("Please enter a valid query.")
                     continue
 
                 # Get interaction mode
-                print("\n🎯 Choose interaction mode:")
+                print("\nChoose interaction mode:")
                 print("  1. Ask mode - Automatic processing (default)")
                 print("  2. Interactive mode - Human-in-the-loop for Agentic selection approval")
 
@@ -355,10 +355,10 @@ def main():
 
                 if mode_input == "2":
                     interaction_mode = "interactive"
-                    print("👤 Interactive mode selected - you'll be asked to approve Agent selections")
+                    print("Interactive mode selected - you'll be asked to approve Agent selections")
                 else:
                     interaction_mode = "ask"
-                    print("🤖 Ask mode selected - automatic processing")
+                    print("Ask mode selected - automatic processing")
 
                 print("-" * 50)
                 
@@ -385,15 +385,15 @@ def main():
                 display_success_message()
                 
             except KeyboardInterrupt:
-                print("\n\n👋 Program interrupted. Goodbye!")
+                print("\n\nProgram interrupted. Goodbye!")
                 break
             except Exception as e:
-                print(f"\n❌ Error processing query: {e}")
+                print(f"\nError processing query: {e}")
                 main_logger.error(f"Error in main loop: {e}")
                 continue
         
     except Exception as e:
-        main_logger.error(f"❌ Application failed: {e}")
+        main_logger.error(f"Application failed: {e}")
         raise
 
 

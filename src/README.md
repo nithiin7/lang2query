@@ -1,13 +1,13 @@
 # Lang2Query Backend
 
-🚀 **Python Backend** for Lang2Query - A high-performance FastAPI application with multi-agent workflows for natural language to SQL conversion.
+**Python Backend** for Lang2Query - A high-performance FastAPI application with multi-agent workflows for natural language to SQL conversion.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agents-orange.svg)](https://langchain-ai.github.io/langgraph/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20DB-purple.svg)](https://www.trychroma.com)
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 
@@ -31,7 +31,7 @@ The backend uses a sophisticated multi-agent system powered by LangGraph:
 8. **Metadata Agent** (`metadata_agent.py`): Handles metadata operations
 9. **Human-in-the-Loop** (`human_in_the_loop.py`): Enables human validation
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -68,7 +68,7 @@ The backend uses a sophisticated multi-agent system powered by LangGraph:
 
 The API will be available at `http://localhost:8000` with interactive docs at `http://localhost:8000/docs`.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -124,7 +124,7 @@ src/
 └── workflow.py             # Main workflow orchestration
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -167,7 +167,7 @@ API_HOST = "0.0.0.0"
 API_PORT = 8000
 ```
 
-## 🧠 Knowledge Base System
+## Knowledge Base System
 
 ### Adding Database Documentation
 
@@ -219,7 +219,7 @@ The system provides several LangChain tools for knowledge retrieval:
 - `validate_database_exists`: Validate database existence
 - `validate_table_exists`: Validate table existence
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Query Processing
 
@@ -237,7 +237,7 @@ The system provides several LangChain tools for knowledge retrieval:
 
 - `WS /ws/query` - Real-time query processing updates
 
-## 🧪 Testing
+## Testing
 
 ### Run Tests
 
@@ -263,7 +263,7 @@ tests/
 └── conftest.py          # Test configuration
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Docker
 
@@ -304,7 +304,7 @@ CMD ["uvicorn", "src.api.app:create_app", "--factory", "--host", "0.0.0.0", "--p
    - ELK Stack
    - Sentry for error tracking
 
-## 🔍 Debugging
+## Debugging
 
 ### Logging
 
@@ -329,7 +329,7 @@ logger.info("Processing query: %s", query)
 3. **API key issues**: Check environment variables and configuration
 4. **Memory issues**: Reduce batch sizes or use smaller models
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -340,6 +340,6 @@ logger.info("Processing query: %s", query)
 7. Push to branch: `git push origin feature/amazing-feature`
 8. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.

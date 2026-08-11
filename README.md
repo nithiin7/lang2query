@@ -1,6 +1,6 @@
 # Lang2Query
 
-🤖 **Lang2Query** - Transform natural language into SQL queries with AI-powered precision using multi-agent workflows and intelligent knowledge base retrieval.
+**Lang2Query** - Transform natural language into SQL queries with AI-powered precision using multi-agent workflows and intelligent knowledge base retrieval.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black.svg)](https://nextjs.org)
@@ -8,7 +8,7 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agents-orange.svg)](https://langchain-ai.github.io/langgraph/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Docker (Recommended)
 
@@ -43,35 +43,35 @@ make download
 make run
 ```
 
-## ✨ Features
+## Features
 
-### 🤖 AI-Powered Query Generation
+### AI-Powered Query Generation
 
 - **Multi-Agent Workflow**: Intelligent LangGraph agents for database identification, table selection, and SQL generation
 - **Natural Language Processing**: Convert complex queries like "Show me all customers with pending verification" into precise SQL
 - **Context-Aware**: Understands database schemas and relationships for accurate query generation
 
-### 🧠 Knowledge Base & Retrieval
+### Knowledge Base & Retrieval
 
 - **Vector Search**: ChromaDB-powered semantic search over database documentation
 - **Schema Understanding**: Automatic database, table, and column identification
 - **BGE-M3 Embeddings**: State-of-the-art multilingual embeddings for precise retrieval
 
-### 🎨 Modern User Interface
+### Modern User Interface
 
 - **Next.js Frontend**: React 19 with TypeScript for type-safe development
 - **Real-time Updates**: Live WebSocket streaming of workflow progress
 - **Interactive Mode**: Step-by-step query processing visualization
 - **Responsive Design**: Clean, modern UI with Tailwind CSS
 
-### ⚡ High-Performance Backend
+### High-Performance Backend
 
 - **FastAPI**: Async Python API with automatic OpenAPI documentation
 - **WebSocket Support**: Real-time communication for live updates
 - **Multiple LLM Providers**: Support for OpenAI, Ollama, NVIDIA, and local models
 - **Modular Architecture**: Extensible agent system for custom workflows
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -79,7 +79,7 @@ make run
 - **Node.js 18+** (for frontend)
 - **Git**
 
-### 🛠️ Setup
+### Setup
 
 1. **Clone the repository:**
 
@@ -104,7 +104,7 @@ make run
    cd ..
    ```
 
-### 🎯 Make Commands
+### Make Commands
 
 | Command         | Description                                         |
 | --------------- | --------------------------------------------------- |
@@ -115,7 +115,7 @@ make run
 | `make clean`    | Clean up temporary files                            |
 | `make test`     | Run test suite                                      |
 
-### 🐳 Docker Commands
+### Docker Commands
 
 | Command                                          | Description                      |
 | ------------------------------------------------ | -------------------------------- |
@@ -125,9 +125,9 @@ make run
 | `docker-compose build`                           | Rebuild all images               |
 | `docker-compose -f docker-compose.dev.yml up -d` | Start development environment    |
 
-## 🚀 Usage
+## Usage
 
-### 🌐 Web Interface (Recommended)
+### Web Interface (Recommended)
 
 Start the complete application:
 
@@ -139,11 +139,11 @@ This will start both the FastAPI backend (`http://localhost:8000`) and Next.js f
 
 #### Web Interface Features:
 
-- **🎯 Mode Selection**: Choose between Interactive and Normal processing modes
-- **📡 Live Updates**: Real-time WebSocket streaming of workflow progress
-- **🔍 Dynamic Discovery**: Watch as databases, tables, and columns are identified
-- **📊 Clean Results**: View formatted SQL queries and detailed summaries
-- **📱 Responsive Design**: Modern interface that works on all devices
+- **Mode Selection**: Choose between Interactive and Normal processing modes
+- **Live Updates**: Real-time WebSocket streaming of workflow progress
+- **Dynamic Discovery**: Watch as databases, tables, and columns are identified
+- **Clean Results**: View formatted SQL queries and detailed summaries
+- **Responsive Design**: Modern interface that works on all devices
 
 #### Example Queries:
 
@@ -152,7 +152,7 @@ This will start both the FastAPI backend (`http://localhost:8000`) and Next.js f
 - "Find products with low inventory levels"
 - "Get user profiles created in the last 30 days"
 
-### 💻 Development Mode
+### Development Mode
 
 #### Backend Only:
 
@@ -170,7 +170,7 @@ cd app
 npm run dev
 ```
 
-### 🔧 CLI Mode
+### CLI Mode
 
 For command-line usage:
 
@@ -178,9 +178,9 @@ For command-line usage:
 python src/main.py
 ```
 
-## ⚙️ Configuration
+## Configuration
 
-### 🤖 LLM Provider Setup
+### LLM Provider Setup
 
 Edit `src/config.py` to configure your preferred LLM provider:
 
@@ -226,7 +226,7 @@ PROVIDER = "local"
 # Models auto-downloaded via make download
 ```
 
-### 🗄️ Knowledge Base Setup
+### Knowledge Base Setup
 
 1. **Add your database documentation** to `src/retriever/input/` as markdown files
 2. **Create embeddings:**
@@ -234,7 +234,7 @@ PROVIDER = "local"
    python -m src.retriever.create_sql_kb_embeddings --md-dir src/retriever/input
    ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (Python)
 
@@ -258,7 +258,7 @@ PROVIDER = "local"
 - **Query Generator**: Creates SQL queries
 - **Query Validator**: Validates and optimizes queries
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 lang2query/
@@ -285,7 +285,7 @@ lang2query/
 └── Makefile                     # Build automation
 ```
 
-## 🐳 Docker Setup
+## Docker Setup
 
 Lang2Query includes comprehensive Docker support for easy deployment and development.
 
@@ -316,7 +316,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 For detailed Docker documentation, see [DOCKER.md](DOCKER.md).
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
@@ -326,11 +326,11 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [LangChain](https://langchain.com) for the agent framework
 - [FastAPI](https://fastapi.tiangolo.com) for the backend framework
