@@ -1,6 +1,6 @@
 """
 Read-only retriever over the SQL Knowledge Base ChromaDB collection written
-by create_sql_kb_embeddings.py. Exposes the query methods that
+by document_ingestion.py. Exposes the query methods that
 tools/retriever_tools.py's LangChain @tool functions call into.
 """
 
@@ -45,7 +45,7 @@ class SQLKnowledgeBaseRetriever:
     ):
         """
         Connect to the BGE-M3 model and the ChromaDB collection previously
-        populated by SQLKnowledgeBaseEmbedder.
+        populated by DocumentIngestionPipeline.
 
         Args:
             model_path: Path to local BGE-M3 model
@@ -80,7 +80,7 @@ class SQLKnowledgeBaseRetriever:
         except Exception as e:
             raise RuntimeError(
                 f"Collection '{collection_name}' not found at '{chroma_persist_dir}'. "
-                f"Run the ingestion pipeline (create_sql_kb_embeddings.py) first."
+                f"Run the ingestion pipeline (document_ingestion.py) first."
             ) from e
 
     # ------------------------------------------------------------------

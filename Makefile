@@ -19,7 +19,7 @@ help:
 # Create/update knowledge base embeddings
 embeddings:
 	@echo "🔧 Creating knowledge base embeddings..."
-	cd backend/app && python3 workers/create_sql_kb_embeddings.py \
+	cd backend/app && python3 workers/document_ingestion.py \
 		--md-dir "ai/input" \
 		--chroma-dir "ai/kb" \
 		--collection-name "sql_generation_kb" \

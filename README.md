@@ -96,7 +96,7 @@ lang2query/
 │   │   ├── modules/query/     # LangGraph agents + workflow — one file per agent
 │   │   ├── api/                 # FastAPI routes (REST + WebSocket)
 │   │   ├── ai/                   # LLM provider abstraction (llm/) + RAG retrieval stack
-│   │   ├── workers/              # Ingestion pipeline (create_sql_kb_embeddings.py)
+│   │   ├── workers/              # Ingestion pipeline (document_ingestion.py)
 │   │   ├── models/                # Pydantic schemas — the typed AgentState contract
 │   │   └── tools/                  # LangChain @tool retrieval functions
 │   ├── tests/

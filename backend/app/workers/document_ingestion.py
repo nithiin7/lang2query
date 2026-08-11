@@ -11,16 +11,13 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
-# Add the app directory to Python path so this script can be run standalone
-# (the rest of the app imports as if backend/app/ is the root, e.g. `from
-# models.models import ...`; this script mirrors that convention).
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ai.embedding_utils import BGE_M3_EmbeddingFunction
 from ai.sql_kb_chunker import SQLKnowledgeBaseChunker
 
 
-class SQLKnowledgeBaseEmbedder:
+class DocumentIngestionPipeline:
     """Creates embeddings for SQL Knowledge Base using BGE-M3 and ChromaDB"""
 
     def __init__(
@@ -81,7 +78,7 @@ class SQLKnowledgeBaseEmbedder:
             try:
                 self.chroma_client.delete_collection(name=self.collection_name)
                 print(f" Deleted existing collection: {self.collection_name}")
-            except:
+            except Exception:
                 pass
 
         try:
@@ -92,7 +89,7 @@ class SQLKnowledgeBaseEmbedder:
             # Get count of existing documents
             count = collection.count()
             print(f"Existing documents in collection: {count}")
-        except:
+        except Exception:
             # Create new collection
             collection = self.chroma_client.create_collection(
                 name=self.collection_name,
@@ -108,90 +105,90 @@ class SQLKnowledgeBaseEmbedder:
 
         return collection
 
-    def process_markdown_files(self, md_directory: str, batch_size: int = 5):
-        """Process all markdown files in the directory"""
-        md_path = Path(md_directory)
-        if not md_path.exists():
-            raise FileNotFoundError(f"Directory not found: {md_directory}")
+    def _adaptive_batch_size(self, chunks: List, batch_size: int) -> int:
+        """Shrink the batch size for large chunks to avoid memory spikes."""
+        if batch_size <= 1 or not chunks:
+            return batch_size
 
-        # Get all markdown files
-        md_files = list(md_path.glob("*.md"))
-        print(f"\nFound {len(md_files)} markdown files to process")
-
-        all_chunks = []
-        parsing_errors = []
-
-        # Process each file
-        print("\nChunking markdown files...")
-        for md_file in tqdm(md_files, desc="Processing files"):
-            try:
-                chunks = self.chunker.parse_markdown_file(str(md_file))
-                all_chunks.extend(chunks)
-            except Exception as e:
-                error_msg = f"Error processing {md_file.name}: {str(e)}"
-                parsing_errors.append(error_msg)
-                print(f"\n{error_msg}")
-
-        print(f"\nCreated {len(all_chunks)} chunks from {len(md_files)} files")
-
-        self._print_chunk_statistics(all_chunks)
-
-        if parsing_errors:
-            print(f"\n Encountered {len(parsing_errors)} parsing errors:")
-            for error in parsing_errors[:5]:  # Show first 5 errors
-                print(f"   - {error}")
-            if len(parsing_errors) > 5:
-                print(f"   ... and {len(parsing_errors) - 5} more errors")
-
-        return all_chunks, parsing_errors
-
-    def _print_chunk_statistics(self, chunks: List):
-        db_chunks = [c for c in chunks if c.chunk_type == "database"]
-        table_chunks = [c for c in chunks if c.chunk_type == "table"]
-        column_chunks = [c for c in chunks if c.chunk_type == "column"]
-
-        unique_dbs = set()
-        unique_modules = set()
-        for chunk in chunks:
-            if "database_name" in chunk.metadata:
-                unique_dbs.add(chunk.metadata["database_name"])
-            if "module_name" in chunk.metadata:
-                unique_modules.add(chunk.metadata["module_name"])
-
-        print("\nChunk Statistics:")
-        print(f"   - Total chunks: {len(chunks)}")
-        print(f"   - Database info chunks: {len(db_chunks)}")
-        print(f"   - Table summary chunks: {len(table_chunks)}")
-        print(f"   - Table columns chunks: {len(column_chunks)}")
-        print(f"   - Unique databases: {len(unique_dbs)}")
-        print(f"   - Unique modules: {len(unique_modules)}")
-
-    def embed_chunks(self, chunks: List, collection, batch_size: int = 5):
-        """Embed chunks and store in ChromaDB with memory-aware batching"""
-        print(f"\nCreating embeddings for {len(chunks)} chunks...")
-
-        # Adaptive batch sizing based on content size
-        if batch_size > 1:
-            # Calculate average chunk size
-            avg_chunk_size = (
-                sum(len(c.content) for c in chunks) / len(chunks) if chunks else 0
-            )
-            # Reduce batch size for large chunks to prevent memory issues
-            if avg_chunk_size > 2000:  # Large chunks
-                adaptive_batch_size = max(1, batch_size // 2)
-                print(
-                    f"Large chunks detected (avg {avg_chunk_size:.0f} chars), reducing batch size to {adaptive_batch_size}"
-                )
-            elif avg_chunk_size > 5000:  # Very large chunks
-                adaptive_batch_size = 1
-                print(
-                    f"Very large chunks detected (avg {avg_chunk_size:.0f} chars), using batch size 1"
-                )
-            else:
-                adaptive_batch_size = batch_size
+        avg_chunk_size = sum(len(c.content) for c in chunks) / len(chunks)
+        if avg_chunk_size > 5000:  # Very large chunks
+            adaptive_batch_size = 1
+        elif avg_chunk_size > 2000:  # Large chunks
+            adaptive_batch_size = max(1, batch_size // 2)
         else:
             adaptive_batch_size = batch_size
 
+        if adaptive_batch_size != batch_size:
+            print(
+                f"Avg chunk size {avg_chunk_size:.0f} chars, reducing batch size to {adaptive_batch_size}"
+            )
+        return adaptive_batch_size
+
+    def _dedupe_batch(self, batch: List) -> List:
+        """Drop duplicate chunk_ids within a single batch."""
+        seen_ids = set()
+        unique = []
+        for c in batch:
+            if c.chunk_id in seen_ids:
+                continue
+            seen_ids.add(c.chunk_id)
+            unique.append(c)
+        return unique
+
+    def _filter_new(self, batch: List, collection) -> List:
+        """Drop chunks whose ids already exist in the collection."""
+        ids = [c.chunk_id for c in batch]
+        try:
+            existing = collection.get(ids=ids)
+            existing_ids = set(existing.get("ids", [])) if existing else set()
+        except Exception:
+            existing_ids = set()
+        return [c for c in batch if c.chunk_id not in existing_ids]
+
+    def _normalize_metadata(self, chunk) -> Dict[str, Any]:
+        metadata = {
+            k: (",".join(str(x) for x in v) if isinstance(v, list) else v)
+            for k, v in chunk.metadata.items()
+        }
+        metadata["chunk_type"] = chunk.chunk_type
+        return metadata
+
+    def _add_batch(self, collection, batch: List, batch_num: int) -> None:
+        """Add a batch to the collection, falling back to one-by-one on failure."""
+        documents = [c.content for c in batch]
+        metadatas = [self._normalize_metadata(c) for c in batch]
+        ids = [c.chunk_id for c in batch]
+
+        try:
+            collection.add(documents=documents, metadatas=metadatas, ids=ids)
+            return
+        except Exception as e:
+            print(f"\nError embedding batch {batch_num}: {str(e)}")
+            print(f"   Batch contains {len(batch)} chunks:")
+            for c in batch[:5]:
+                print(f"     - {c.chunk_id} (content size: {len(c.content)} chars)")
+            if len(batch) > 5:
+                print(f"     ... and {len(batch) - 5} more chunks")
+
+        # Best-effort: retry one chunk at a time, skipping conflicts
+        failed_count = 0
+        for idx, c in enumerate(batch):
+            try:
+                collection.add(
+                    documents=[c.content], metadatas=[metadatas[idx]], ids=[c.chunk_id]
+                )
+            except Exception as inner_e:
+                failed_count += 1
+                if failed_count <= 3:  # Only print first few errors
+                    print(f"   Failed to add chunk {c.chunk_id}: {str(inner_e)}")
+        if failed_count:
+            print(f"    Failed to add {failed_count} chunks from batch {batch_num}")
+
+    def embed_chunks(self, chunks: List, collection, batch_size: int = 5):
+        """Embed chunks and store in ChromaDB, skipping ids already present."""
+        print(f"\nCreating embeddings for {len(chunks)} chunks...")
+
+        adaptive_batch_size = self._adaptive_batch_size(chunks, batch_size)
         total_batches = (len(chunks) + adaptive_batch_size - 1) // adaptive_batch_size
 
         for i in tqdm(
@@ -199,86 +196,15 @@ class SQLKnowledgeBaseEmbedder:
             desc="Embedding batches",
             total=total_batches,
         ):
-            batch = chunks[i : i + adaptive_batch_size]
-
-            # Remove within-batch dup ids
-            uniq = []
-            seen_ids = set()
-            for c in batch:
-                if c.chunk_id in seen_ids:
-                    continue
-                seen_ids.add(c.chunk_id)
-                uniq.append(c)
-            batch = uniq
+            batch = self._dedupe_batch(chunks[i : i + adaptive_batch_size])
             if not batch:
                 continue
 
-            # Skip IDs that already exist in the collection
-            ids = [c.chunk_id for c in batch]
-            try:
-                existing = collection.get(ids=ids)
-                existing_ids = (
-                    set(existing.get("ids", []))
-                    if existing and existing.get("ids")
-                    else set()
-                )
-            except Exception:
-                existing_ids = set()
-
-            batch = [c for c in batch if c.chunk_id not in existing_ids]
+            batch = self._filter_new(batch, collection)
             if not batch:
                 continue
 
-            documents = [c.content for c in batch]
-
-            processed_metadatas = []
-            for c in batch:
-                m = {}
-                for k, v in c.metadata.items():
-                    if isinstance(v, list):
-                        m[k] = ",".join(str(x) for x in v)
-                    else:
-                        m[k] = v
-
-                m["chunk_type"] = c.chunk_type
-                processed_metadatas.append(m)
-
-            ids = [c.chunk_id for c in batch]
-
-            try:
-                collection.add(
-                    documents=documents, metadatas=processed_metadatas, ids=ids
-                )
-            except Exception as e:
-                batch_num = i // adaptive_batch_size + 1
-                print(f"\nError embedding batch {batch_num}: {str(e)}")
-                print(f"   Batch contains {len(batch)} chunks:")
-                for c in batch[:5]:  # Show first 5 chunks
-                    print(f"     - {c.chunk_id} (content size: {len(c.content)} chars)")
-                if len(batch) > 5:
-                    print(f"     ... and {len(batch) - 5} more chunks")
-
-                # Best-effort: try to add one-by-one skipping conflicts
-                failed_count = 0
-                for idx, c in enumerate(batch):
-                    try:
-                        # Use the corresponding metadata from the same index
-                        collection.add(
-                            documents=[c.content],
-                            metadatas=[processed_metadatas[idx]],
-                            ids=[c.chunk_id],
-                        )
-                    except Exception as inner_e:
-                        failed_count += 1
-                        if failed_count <= 3:  # Only print first few errors
-                            print(
-                                f"   Failed to add chunk {c.chunk_id}: {str(inner_e)}"
-                            )
-                        continue
-                if failed_count > 0:
-                    print(
-                        f"    Failed to add {failed_count} chunks from batch {batch_num}"
-                    )
+            self._add_batch(collection, batch, batch_num=i // adaptive_batch_size + 1)
 
         print(
             f"\nSuccessfully embedded chunks into collection '{self.collection_name}'"
@@ -329,44 +255,10 @@ class SQLKnowledgeBaseEmbedder:
 
     def save_metadata(
         self,
-        chunks: List,
-        output_file: str = "ai/output/sql_kb_metadata.json",
-    ):
-        """Save metadata about the knowledge base"""
-        metadata = {
-            "created_at": datetime.now().isoformat(),
-            "total_chunks": len(chunks),
-            "chunk_types": {
-                "database": len([c for c in chunks if c.chunk_type == "database"]),
-                "table": len([c for c in chunks if c.chunk_type == "table"]),
-                "column": len([c for c in chunks if c.chunk_type == "column"]),
-            },
-            "databases": list(
-                set(c.metadata.get("database_name", "unknown") for c in chunks)
-            ),
-            "modules": list(
-                set(
-                    c.metadata.get("module_name", "unknown")
-                    for c in chunks
-                    if "module_name" in c.metadata
-                )
-            ),
-            "collection_name": self.collection_name,
-            "embedding_model": "BAAI/bge-m3",
-            "chunk_strategy": "contextual_v2",
-        }
-
-        with open(output_file, "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        print(f"\nSaved knowledge base metadata to {output_file}")
-
-    def save_metadata_from_stats(
-        self,
         stats: Dict[str, Any],
         output_file: str = "ai/output/sql_kb_metadata.json",
     ):
-        """Save metadata using pre-aggregated stats to avoid holding all chunks in memory"""
+        """Save metadata about the knowledge base using pre-aggregated stats"""
         metadata = {
             "created_at": datetime.now().isoformat(),
             "total_chunks": int(stats.get("total_chunks", 0)),
@@ -484,23 +376,8 @@ class SQLKnowledgeBaseEmbedder:
 
         return stats, parsing_errors
 
-    def _deduplicate_chunks(self, chunks):
-        seen = set()
-        unique = []
-        dup_count = 0
-        for c in chunks:
-            if c.chunk_id in seen:
-                dup_count += 1
-                continue
-            seen.add(c.chunk_id)
-            unique.append(c)
-        if dup_count:
-            print(f" Deduped {dup_count} duplicate chunks (by chunk_id)")
-        return unique
 
-
-def main():
-    """Main function to create SQL KB embeddings"""
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create SQL Knowledge Base embeddings")
     parser.add_argument(
         "--md-dir",
@@ -562,10 +439,16 @@ def main():
 
     args = parser.parse_args()
 
-    # Handle single-chunk option
     if args.single_chunk:
         args.batch_size = 1
         print("Single-chunk mode enabled (maximum memory safety)")
+
+    return args
+
+
+def main():
+    """Main function to create SQL KB embeddings"""
+    args = _parse_args()
 
     print("SQL Knowledge Base Embedding Creation")
     print("=" * 60)
@@ -577,18 +460,16 @@ def main():
     print(f"Batch size: {args.batch_size}")
     print("=" * 60)
 
-    # Initialize embedder
-    embedder = SQLKnowledgeBaseEmbedder(
+    pipeline = DocumentIngestionPipeline(
         model_path=args.model_path,
         chroma_persist_dir=args.chroma_dir,
         collection_name=args.collection_name,
     )
 
-    # Create or get collection
-    collection = embedder.create_or_get_collection(reset=args.reset)
+    collection = pipeline.create_or_get_collection(reset=args.reset)
 
     # Stream-process markdown files to avoid holding all chunks in memory
-    stats, parsing_errors = embedder.embed_markdown_directory_streaming(
+    stats, parsing_errors = pipeline.embed_markdown_directory_streaming(
         args.md_dir,
         collection,
         batch_size=args.batch_size,
@@ -601,11 +482,8 @@ def main():
         print("\nNo chunks created. Please check your markdown files.")
         return
 
-    # Save metadata using aggregated stats
-    embedder.save_metadata_from_stats(stats)
-
-    # Verify embeddings
-    embedder.verify_embeddings(collection)
+    pipeline.save_metadata(stats)
+    pipeline.verify_embeddings(collection)
 
     print("\nSQL Knowledge Base embedding creation completed!")
     print(f"Total documents in collection: {collection.count()}")

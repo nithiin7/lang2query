@@ -51,7 +51,7 @@ app/
 │       ├── agents/    # LangGraph nodes (see table above)
 │       └── workflow/  # Graph wiring, routing, retries, resume, display
 ├── ai/           # LLM provider abstraction (llm/) + RAG retrieval stack (chunking, embeddings, retriever, input/output/kb data)
-├── workers/      # Ingestion CLI (create_sql_kb_embeddings.py)
+├── workers/      # Ingestion CLI (document_ingestion.py)
 ├── api/          # FastAPI app, routes, request/response mapping
 ├── models/       # Pydantic schemas — AgentState + per-agent output schemas
 ├── tools/        # LangChain @tool retrieval functions
