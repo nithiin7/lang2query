@@ -15,7 +15,7 @@ Contains all specialized agents for the new hybrid architecture:
 All agents use a generic model wrapper that can work with any transformer model.
 """
 
-from models.models import AgentResult, AgentState, AgentType, Query
+from models import AgentResult, AgentState, AgentType, Query
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

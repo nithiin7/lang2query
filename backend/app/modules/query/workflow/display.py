@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Dict
 
-from models.models import AgentState
+from models import AgentState
 
 logger = logging.getLogger(__name__)
 

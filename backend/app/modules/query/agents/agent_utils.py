@@ -8,7 +8,7 @@ to ensure consistency and reduce code duplication.
 import logging
 from typing import List, Optional
 
-from models.models import AgentResult, AgentState
+from models import AgentResult, AgentState
 
 logger = logging.getLogger(__name__)
 

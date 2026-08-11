@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from ai.llm.agent import ModelWrapper
 from core.logging import log_ai_response
-from models.models import AgentResult, AgentState, AgentType
+from models import AgentResult, AgentState, AgentType
 
 logger = logging.getLogger(__name__)
 

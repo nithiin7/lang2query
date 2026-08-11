@@ -8,7 +8,7 @@ in as conditional-edge callbacks.
 
 import logging
 
-from models.models import AgentState
+from models import AgentState
 
 logger = logging.getLogger(__name__)
 

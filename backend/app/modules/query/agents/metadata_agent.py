@@ -9,7 +9,7 @@ to fetch relevant schema chunks and generates natural language responses.
 import logging
 from typing import List
 
-from models.models import AgentResult, AgentState, AgentType
+from models import AgentResult, AgentState, AgentType
 from tools import make_retriever_tools
 
 from .agent_utils import AgentUtils

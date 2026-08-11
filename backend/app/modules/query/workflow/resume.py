@@ -8,7 +8,7 @@ does not touch the LangGraph `StateGraph` itself.
 
 import logging
 
-from models.models import AgentState
+from models import AgentState
 
 logger = logging.getLogger(__name__)
 

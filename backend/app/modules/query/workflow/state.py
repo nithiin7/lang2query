@@ -1,6 +1,6 @@
 """State-update utilities for the Text2Query workflow."""
 
-from models.models import AgentState
+from models import AgentState
 
 
 class StateManager:

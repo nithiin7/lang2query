@@ -8,7 +8,7 @@ This is a crucial reasoning step that happens before any SQL is written.
 import json
 import logging
 
-from models.models import AgentResult, AgentState, AgentType, QueryPlan
+from models import AgentResult, AgentState, AgentType, QueryPlan
 from tools.date_tools import get_current_date
 
 from .agent_utils import AgentUtils

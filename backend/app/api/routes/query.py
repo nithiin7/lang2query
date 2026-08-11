@@ -8,7 +8,7 @@ from api.dependencies import get_workflow
 from api.mapping import state_summary_to_query_response
 from api.websocket_query import process_workflow_stream, send_final_result
 from core.config import KB_DIRECTORY
-from models.models import QueryRequest
+from models import QueryRequest
 
 router = APIRouter()
 

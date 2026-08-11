@@ -8,7 +8,7 @@ the output style of TableIdentifier and provides data for downstream agents.
 import logging
 from typing import Any, Dict, List
 
-from models.models import AgentResult, AgentState, AgentType, ColumnSelection
+from models import AgentResult, AgentState, AgentType, ColumnSelection
 from utils import ChunkParsers
 
 from .agent_utils import AgentUtils

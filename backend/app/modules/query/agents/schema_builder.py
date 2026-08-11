@@ -10,7 +10,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from ai.kb_retriever import KnowledgeBaseRetriever
-from models.models import AgentResult, AgentState, AgentType
+from models import AgentResult, AgentState, AgentType
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

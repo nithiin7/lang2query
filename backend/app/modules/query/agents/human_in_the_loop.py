@@ -8,7 +8,7 @@ and gets their feedback before proceeding with the query generation pipeline.
 import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from models.models import AgentResult, AgentState, AgentType, HumanFeedback
+from models import AgentResult, AgentState, AgentType, HumanFeedback
 from tools import make_retriever_tools
 
 from .base_agent import BaseAgent

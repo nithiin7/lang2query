@@ -8,7 +8,7 @@ This is a much simpler task than going from natural language directly to query.
 import logging
 from typing import List
 
-from models.models import AgentResult, AgentState, AgentType, Query
+from models import AgentResult, AgentState, AgentType, Query
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

@@ -10,7 +10,7 @@ This helps route metadata queries appropriately.
 
 import logging
 
-from models.models import AgentResult, AgentState, AgentType, RoutingInfo
+from models import AgentResult, AgentState, AgentType, RoutingInfo
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

@@ -8,7 +8,7 @@ by the previous database_identifier agent.
 import logging
 from typing import List
 
-from models.models import AgentResult, AgentState, AgentType, TableSelection
+from models import AgentResult, AgentState, AgentType, TableSelection
 from utils import ChunkParsers
 
 from .agent_utils import AgentUtils

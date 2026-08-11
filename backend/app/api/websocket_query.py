@@ -13,7 +13,7 @@ from fastapi import WebSocket
 
 from api.mapping import state_summary_to_query_response
 from api.serialization import create_workflow_state_from_agent_state
-from models.models import AgentState
+from models import AgentState
 from modules.query.workflow import Text2QueryWorkflow
 from modules.query.workflow.state import StateManager
 

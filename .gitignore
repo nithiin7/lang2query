@@ -316,7 +316,7 @@ backend/app/ai/output/
 *.sqlite3
 
 # Model files
-models/
+/models/
 *.bin
 *.safetensors
 *.onnx

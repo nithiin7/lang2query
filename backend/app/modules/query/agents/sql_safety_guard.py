@@ -24,7 +24,7 @@ import sqlglot
 from sqlglot import exp
 from sqlglot.dialects.dialect import Dialect
 
-from models.models import AgentResult, AgentState, AgentType
+from models import AgentResult, AgentState, AgentType
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

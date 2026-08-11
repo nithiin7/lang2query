@@ -10,7 +10,7 @@ state accordingly.
 import logging
 from datetime import datetime
 
-from models.models import AgentResult, AgentState, AgentType, QueryValidation
+from models import AgentResult, AgentState, AgentType, QueryValidation
 from tools.date_tools import get_current_date
 
 from .agent_utils import AgentUtils

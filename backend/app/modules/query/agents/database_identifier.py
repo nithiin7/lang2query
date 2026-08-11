@@ -8,7 +8,7 @@ to answer the user's query. This is the first layer of filtering in the two-tier
 import logging
 from typing import List
 
-from models.models import AgentResult, AgentState, AgentType, DatabaseSelection
+from models import AgentResult, AgentState, AgentType, DatabaseSelection
 from utils import ChunkParsers
 
 from .agent_utils import AgentUtils
