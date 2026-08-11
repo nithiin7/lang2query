@@ -1,76 +1,16 @@
-"""
-Helper functions and utilities for the Text2Query workflow.
-Contains logging, routing, and state management utilities.
+"""Centralized routing and retry-handling logic for the Text2Query workflow.
+
+These functions decide which node the LangGraph `StateGraph` should visit
+next given the current `AgentState`. They contain no graph-wiring code
+themselves (no `add_node`/`add_edge` calls) - `workflow/graph.py` wires them
+in as conditional-edge callbacks.
 """
 
 import logging
+
 from models.models import AgentState
 
 logger = logging.getLogger(__name__)
-
-
-class WorkflowLogger:
-    """Centralized logging utilities for workflow steps and results."""
-
-    @staticmethod
-    def log_database_results(state: AgentState) -> None:
-        """Log database identification results."""
-        if hasattr(state, 'relevant_databases') and state.relevant_databases:
-            logger.info(f"Databases identified: {', '.join(state.relevant_databases)}")
-
-    @staticmethod
-    def log_table_results(state: AgentState) -> None:
-        """Log table identification results."""
-        if hasattr(state, 'relevant_tables') and state.relevant_tables:
-            tables_preview = ', '.join(state.relevant_tables[:3])
-            if len(state.relevant_tables) > 3:
-                tables_preview += f" (+{len(state.relevant_tables) - 3} more)"
-            logger.info(f"Tables identified: {tables_preview}")
-
-    @staticmethod
-    def log_column_results(state: AgentState) -> None:
-        """Log column identification results."""
-        if hasattr(state, 'relevant_columns') and state.relevant_columns:
-            columns_preview = ', '.join(state.relevant_columns[:3])
-            if len(state.relevant_columns) > 3:
-                columns_preview += f" (+{len(state.relevant_columns) - 3} more)"
-            logger.info(f"Columns identified: {columns_preview}")
-
-    @staticmethod
-    def log_schema_results(state: AgentState) -> None:
-        """Log schema building results."""
-        if hasattr(state, 'schema_context') and state.schema_context:
-            logger.info(f"Schema context built with {len(str(state.schema_context))} characters")
-
-    @staticmethod
-    def log_planning_results(state: AgentState) -> None:
-        """Log query planning results."""
-        if hasattr(state, 'query_plan') and state.query_plan:
-            plan_preview = str(state.query_plan)[:100] + "..." if len(str(state.query_plan)) > 100 else str(state.query_plan)
-            logger.info(f"Query plan created: {plan_preview}")
-
-    @staticmethod
-    def log_validation_results(state: AgentState) -> None:
-        """Log query validation results."""
-        if hasattr(state, 'is_query_valid'):
-            status = "Valid" if state.is_query_valid else "Invalid"
-            logger.info(f"Query validation: {status}")
-
-    @staticmethod
-    def log_agent_results(step_name: str, state: AgentState) -> None:
-        """Log specific results from each agent for live display."""
-        step_type = step_name.lower().replace(' ', '_')
-        log_method_map = {
-            'database_identification': WorkflowLogger.log_database_results,
-            'table_identifier': WorkflowLogger.log_table_results,
-            'column_identifier': WorkflowLogger.log_column_results,
-            'schema_builder': WorkflowLogger.log_schema_results,
-            'query_planning': WorkflowLogger.log_planning_results,
-            'query_validation': WorkflowLogger.log_validation_results,
-        }
-
-        if step_type in log_method_map:
-            log_method_map[step_type](state)
 
 
 class WorkflowRouter:
@@ -147,15 +87,15 @@ class WorkflowRouter:
         """Route after database human feedback based on approval status and modification type."""
         approvals = getattr(state, 'human_approvals', {}) or {}
         approved = approvals.get('databases', False)
-        
+
         if approved:
             logger.info("User approved databases, proceeding to table identifier")
             return "table_identifier"
-        
+
         # Check if we need to show updated list (modifications made) or re-identify
         modification_type = getattr(state, 'last_modification_type', None)
         feedback_processed = getattr(state, 'feedback_processed', False)
-        
+
         if feedback_processed and modification_type in ['add', 'remove', 'modify']:
             logger.info("Modifications applied, showing updated database list to user")
             # Clear the flag so next iteration doesn't loop
@@ -192,15 +132,15 @@ class WorkflowRouter:
         """Route after table human feedback based on approval status and modification type."""
         approvals = getattr(state, 'human_approvals', {}) or {}
         approved = approvals.get('tables', False)
-        
+
         if approved:
             logger.info("User approved tables, proceeding to column identifier")
             return "column_identifier"
-        
+
         # Check if we need to show updated list (modifications made) or re-identify
         modification_type = getattr(state, 'last_modification_type', None)
         feedback_processed = getattr(state, 'feedback_processed', False)
-        
+
         if feedback_processed and modification_type in ['add', 'remove', 'modify']:
             logger.info("Modifications applied, showing updated table list to user")
             # Clear the flag so next iteration doesn't loop
@@ -213,8 +153,6 @@ class WorkflowRouter:
     @staticmethod
     def route_after_pipeline_step(state: AgentState) -> str:
         """Route after a pipeline step (column_identifier, schema_builder, etc.) checking for retries."""
-        from langgraph.graph import END
-
         # Check if this step needs to be retried
         if getattr(state, 'last_error_type', None) == "step_retry":
             current_step = getattr(state, 'current_step', '')
@@ -272,44 +210,155 @@ class WorkflowRouter:
         # Default fallback
         return END
 
+    @staticmethod
+    def route_after_sql_safety_guard(state: AgentState) -> str:
+        """Route after the SQL safety guard.
 
-class StateManager:
-    """Utilities for managing agent state updates."""
+        A precondition error (e.g. no generated query reached this node) is
+        retried/failed like any other pipeline step. An actual unsafe-SQL
+        verdict is NOT a step failure the retry machinery sees - the agent
+        still returns success=True with is_sql_safe=False - so it can never
+        be retried or consume step_retries_left; it is always a hard stop.
+        """
+        from langgraph.graph import END
+
+        # Precondition error on this node (e.g. missing generated_query): reuse
+        # the standard pipeline step retry/failure handling.
+        if getattr(state, 'last_error_type', None) == "step_retry":
+            current_step = getattr(state, 'current_step', '')
+            if current_step.endswith('_retry'):
+                logger.info("Retrying SQL safety guard step")
+                return "sql_safety_guard"
+
+        failure_result = WorkflowRouter.check_permanent_failure(state, "SQL safety guard")
+        if failure_result:
+            return failure_result
+
+        if getattr(state, "is_sql_safe", False):
+            logger.info("SQL safety check passed; proceeding to semantic validation")
+            return "query_validator"
+
+        logger.error(
+            f"SQL safety check failed: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}. "
+            "Hard-stopping (no retry)."
+        )
+        state.current_step = "sql_safety_check_failed"
+        state.user_message = (
+            "The generated query was rejected by the read-only safety check and was not "
+            f"executed or returned: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}."
+        )
+        # Do not surface the rejected query to the caller.
+        state.generated_query = None
+        return END
 
     @staticmethod
-    def update_state_with_preservation(state: AgentState, updates: dict) -> None:
-        """Update state while preserving critical system fields."""
-        system_fields_to_preserve = ['retries_left', 'is_query_valid']
+    def route_after_validation(state: AgentState) -> str:
+        """Router to decide next step after query validation with diagnostics.
 
-        # Only preserve system fields that are NOT being updated by the agent
-        preserved_values = {}
-        for field in system_fields_to_preserve:
-            if hasattr(state, field) and field not in updates:
-                preserved_values[field] = getattr(state, field)
+        Rules:
+        - If valid: end.
+        - If any issues found and retries exhausted: end with last generated query and validation feedback.
+        - If feedback indicates missing table/column/schema: route to table_identifier.
+        - If SQL generation issue but schema sufficient: route to query_planner.
+        - If insufficient data: restart from database_identifier.
+        - Otherwise: restart from database_identifier.
+        """
+        # If valid, end workflow
+        if getattr(state, "is_query_valid", False):
+            state.current_step = "workflow_completed"
+            return "end"
 
-        # Apply agent updates
-        for key, value in updates.items():
-            setattr(state, key, value)
+        feedback = getattr(state, "query_validation_feedback", {}) or {}
+        issue_type = feedback.get("issue_type") or state.last_error_type
 
-        # Restore preserved system fields (only those not updated by agent)
-        for field, value in preserved_values.items():
-            setattr(state, field, value)
+        # Check if we've exhausted retries (retries already decremented in node)
+        if state.retries_left <= 0:
+            WorkflowRouter._handle_exhausted_retries(state)
+            return "end"
 
-
-class AgentRunner:
-    """Helper class for running agents with standardized patterns."""
+        # Route based on issue type (retries already decremented in node if needed)
+        if issue_type == "insufficient_data":
+            return WorkflowRouter._route_insufficient_data(state)
+        elif issue_type == "schema_missing":
+            return WorkflowRouter._route_schema_missing(state)
+        elif issue_type == "query_scope_issue":
+            return WorkflowRouter._route_query_scope_issue(state)
+        elif issue_type in ("sql_generation_issue", "data_type_mismatch", "join_relationship_error"):
+            return WorkflowRouter._route_sql_issue(state, issue_type)
+        else:
+            return WorkflowRouter._route_unknown_issue(state, issue_type)
 
     @staticmethod
-    def create_agent_config(
-        step_number: int,
-        step_name: str,
-        success_step: str,
-        error_step: str
-    ) -> dict:
-        """Create configuration for agent execution."""
-        return {
-            'step_number': step_number,
-            'step_name': step_name,
-            'success_step': success_step,
-            'error_step': error_step
-        }
+    def _route_insufficient_data(state: AgentState) -> str:
+        """Handle insufficient data routing."""
+        logger.warning("Insufficient data detected; attempting broader re-identification.")
+        state.current_step = "retry_due_to_insufficient_data"
+        return "database_identifier"
+
+    @staticmethod
+    def _route_schema_missing(state: AgentState) -> str:
+        """Handle schema missing routing."""
+        logger.info("Routing to table_identifier due to schema issues (missing tables/columns)")
+        state.current_step = "route_to_table_identifier"
+        return "table_identifier"
+
+    @staticmethod
+    def _route_query_scope_issue(state: AgentState) -> str:
+        """Handle query scope issue routing - go back to database identification for broader perspective."""
+        logger.info("Routing to database_identifier due to query_scope_issue (wrong scope/approach)")
+        state.current_step = "route_to_database_identifier_scope_issue"
+        return "database_identifier"
+
+    @staticmethod
+    def _route_sql_issue(state: AgentState, issue_type: str) -> str:
+        """Handle SQL generation/planning issue routing."""
+        logger.info(f"Routing to query_planner due to {issue_type}")
+        state.current_step = f"route_to_query_planner_{issue_type}"
+        return "query_planner"
+
+    @staticmethod
+    def _route_unknown_issue(state: AgentState, issue_type: str) -> str:
+        """Handle unknown issue type routing."""
+        logger.warning(f"Validation failed ({issue_type or 'unknown'}), retrying from database identification.")
+        state.current_step = "retry_unknown_issue"
+        return "database_identifier"
+
+    @staticmethod
+    def _handle_exhausted_retries(state: AgentState) -> None:
+        """Handle the case when maximum retries are exhausted."""
+        logger.warning("Maximum retries exhausted; ending workflow with best available query.")
+
+        feedback = getattr(state, "query_validation_feedback", {}) or {}
+
+        if state.generated_query:
+            WorkflowRouter._update_query_with_validation_feedback(state.generated_query, feedback)
+            state.user_message = "Query generated with validation issues after maximum retries. Please review the query and validation feedback carefully."
+
+        state.current_step = "max_retries_exhausted"
+
+    @staticmethod
+    def _update_query_with_validation_feedback(query, feedback: dict) -> None:
+        """Update query explanation with validation feedback."""
+        validation_issues = []
+        if feedback.get('issues'):
+            validation_issues = [issue.get('description', '') for issue in feedback['issues']]
+
+        suggestions = feedback.get('suggestions', [])
+
+        explanation_parts = []
+        if validation_issues:
+            explanation_parts.append(f"Issues found: {'; '.join(validation_issues)}")
+        if suggestions:
+            explanation_parts.append(f"Suggestions: {'; '.join(suggestions)}")
+
+        if explanation_parts:
+            combined_explanation = " ".join(explanation_parts)
+            query.explanation = f"This query has validation issues but is the best result available: {combined_explanation}"
+        else:
+            query.explanation = "This query has validation issues but is the best result available after maximum retry attempts."
+
+    @staticmethod
+    def decrement_retry_and_log(state: AgentState) -> None:
+        """Decrement the global retry counter and log the change."""
+        state.retries_left -= 1
+        logger.info(f"Retries decremented. Retries left: {state.retries_left}")

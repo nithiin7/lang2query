@@ -18,7 +18,7 @@ The core idea: instead of one LLM call given the whole schema and asked to "writ
 
 ## 3. Architecture (the part you must understand before editing agents or the workflow)
 
-The pipeline is a LangGraph `StateGraph(AgentState)` defined in `src/workflow.py`. Nodes are agents; edges are Python routing functions that inspect state, not free-form LLM decisions:
+The pipeline is a LangGraph `StateGraph(AgentState)` defined in `src/workflow/graph.py`. Nodes are agents; edges are Python routing functions that inspect state, not free-form LLM decisions:
 
 ```
 START → router
@@ -31,7 +31,7 @@ query_validator → END (valid)
                 → END (retries exhausted)
 ```
 
-Key mechanisms — know these cold before touching workflow.py:
+Key mechanisms — know these cold before touching the `workflow/` package:
 
 - **`AgentState`** (`src/models/models.py`) is the single typed contract every node reads and writes. Do not pass ad-hoc dicts between agents; extend `AgentState` with a new typed field instead.
 - **Retries are two-tiered**: a global `retries_left` budget for the whole query, and a per-step `step_retries_left` dict. Any change to retry/routing logic must respect both, or you risk infinite loops or silent early termination.
@@ -46,13 +46,12 @@ Key mechanisms — know these cold before touching workflow.py:
 src/
 ├── agents/          # One file per LangGraph node. Each agent: read AgentState in, return AgentResult (state_updates) out. No cross-agent side effects.
 ├── api/              # FastAPI routes + request/response mapping/serialization. HTTP/WS concerns only — no business logic here.
-├── helper/           # Cross-cutting utilities used BY the workflow (logging, routing, state management) — logic here stays generic/reusable, not agent-specific.
 ├── lib/              # LLM provider abstraction (ModelWrapper + provider-specific implementations: ollama, chatgpt, nvidia). New provider = new file here, same interface.
 ├── models/            # Pydantic schemas: AgentState, per-agent output schemas, API request/response models. Single source of truth for shapes.
 ├── retriever/        # Ingestion (chunking + embedding) pipeline, plus the query-side retriever. [Renamed from `retreiver` — see Section 6.]
 ├── tools/            # LangChain @tool-decorated functions the LLM can call (retrieval, date utilities, etc.)
 ├── utils/            # Small stateless helpers (logging formatting, etc.)
-└── workflow.py        # Graph wiring only: nodes, edges, routing. Business logic belongs in agents/helper, not here.
+└── workflow/          # Everything workflow-orchestration related. graph.py: Text2QueryWorkflow — graph wiring (nodes/edges) + public API only, no business logic. router.py: WorkflowRouter — all routing/retry decisions. resume.py: ResumeRouter — resolves which node a paused/resumed run continues from. display.py: WorkflowLogger/WorkflowDisplay — step-name-to-display-text mapping and result logging. state.py: StateManager — state-update helpers. Nothing outside this package should import from `workflow.graph` directly; import `Text2QueryWorkflow` from `workflow`.
 
 app/src/
 ├── components/       # One folder per component (ComponentName/ComponentName.tsx + index.ts barrel export)
@@ -61,13 +60,13 @@ app/src/
 └── types/             # Shared TypeScript types
 ```
 
-**Separation-of-concerns rule for the backend**: an agent file (`agents/*.py`) should contain _decision logic_ — what to ask the LLM, how to interpret the structured response, what state to update. It should not contain generic plumbing (logging formatting, routing between nodes, model-provider details) — that belongs in `helper/`, `workflow.py`, and `lib/` respectively. `helper/workflow_helpers.py`'s `WorkflowLogger` / `WorkflowRouter` / `StateManager` split is the right pattern already in the codebase — follow it when adding new cross-cutting concerns instead of inlining them into an agent.
+**Separation-of-concerns rule for the backend**: an agent file (`agents/*.py`) should contain _decision logic_ — what to ask the LLM, how to interpret the structured response, what state to update. It should not contain generic plumbing (logging formatting, routing between nodes, model-provider details) — that belongs in `workflow/` (routing, resume, display, state) and `lib/` (model-provider details) respectively. The `workflow/` package's `router.py` / `resume.py` / `display.py` / `state.py` split is the right pattern already in the codebase — follow it when adding new cross-cutting workflow concerns instead of inlining them into an agent or into `workflow/graph.py`.
 
 ## 5. Code standards
 
 Follow `CONTRIBUTING.md`'s baseline (PEP 8, Black, isort, flake8, type hints on all function signatures, Google-style docstrings, ESLint/Prettier on the frontend, functional React components with typed props). On top of that, for this project specifically:
 
-- **DRY**: if the same retrieval call, prompt-formatting logic, or state-update pattern appears in more than one agent, extract it — into `agent_utils.py` (agent-facing helpers) or `helper/` (workflow-facing helpers). Do not copy-paste a file's contents into another file as a starting point for a new script (this is exactly how the Section 6 bug happened).
+- **DRY**: if the same retrieval call, prompt-formatting logic, or state-update pattern appears in more than one agent, extract it — into `agent_utils.py` (agent-facing helpers) or `workflow/` (workflow-facing helpers: routing, resume, display, state). Do not copy-paste a file's contents into another file as a starting point for a new script (this is exactly how the Section 6 bug happened).
 - **Abstraction boundaries must stay real, not just aspirational**: `ModelWrapper` exists so agents never talk to a specific provider's SDK directly — if you add code that imports `openai` or `ollama` directly inside an agent file, that's a boundary violation, fix it by extending `lib/`.
 - **No new agent without a typed output schema.** Every agent's LLM call must go through `generate_with_llm(schema_class=...)`, never raw text parsing.
 - **Naming must be exact and consistent** — Python's import system does not forgive typos or synonyms. Before renaming or creating a module, `grep` for every place that imports it. (See Section 6 for what happens when this isn't done.)
@@ -75,26 +74,14 @@ Follow `CONTRIBUTING.md`'s baseline (PEP 8, Black, isort, flake8, type hints on 
 - **Shared expensive resources (model instances, DB connections) are initialized once and injected**, not constructed inline per call. `Text2QueryWorkflow.__init__` does this correctly for the retriever; new code should follow that pattern, not the anti-pattern currently in `retriever_tools.py` (see Section 6).
 - **Every new SQL-generation or SQL-execution code path must be read-only by design** until an explicit, reviewed decision is made to support writes. Given the fintech context, this is a hard rule, not a style preference.
 
-## 6. Known issues / confirmed tech debt (fix these with understanding, not blind acceptance)
-
-These are verified against the actual code, not guesses — treat this as the starting punch list. Items 1–4 and 6 below were fixed and each fix was verified by actually running the affected code path (not just re-reading the diff) — see the dated notes. Item 7 remains open.
-
-1. ~~**Broken import path: `retreiver` vs `retriever`.**~~ **RESOLVED (2026-08-11).** Directory renamed `src/retreiver/` → `src/retriever/` via `git mv`; all imports across `workflow.py`, `tools/retriever_tools.py`, `agents/schema_builder.py`, `config.py` (`MD_DIRECTORY`), and the Makefile's `embeddings` target updated to match. Verified by importing every module on the request→response path in a real Python process — all resolved cleanly.
-2. ~~**`src/retreiver/retrieve_sql_kb.py` does not define `SQLKnowledgeBaseRetriever`.**~~ **RESOLVED (2026-08-11).** `SQLKnowledgeBaseRetriever` implemented in `src/retriever/retrieve_sql_kb.py` with all methods `tools/retriever_tools.py` calls (`semantic_search`, `search_by_chunk_type`, `search_by_database`, `search_by_table`, `search_tables_in_databases`, `complex_filter_search`, `get_all_databases`, `count_databases`, `get_tables_in_database`, `count_tables_in_database`, `get_columns_by_table`). Search methods use `collection.query()` (ANN); enumeration methods (`get_all_databases`, `count_databases`, etc.) deliberately use `collection.get()` with a metadata `where` filter instead, since a top-k vector search offers no completeness guarantee for "list/count everything" questions. The BGE-M3 embedding function is shared (`retriever/embedding_utils.py`) between the ingestion and retrieval code rather than duplicated a third time. Verified by running `make embeddings` end-to-end against `src/retriever/input/*.md` (29 chunks embedded into ChromaDB with no errors) and by a live query that exercised `search_by_chunk_type`, `search_by_table`, and `get_columns_by_table` through the real agent pipeline. **Note**: this verification run surfaced one additional bug the earlier fix missed, since it had only been checked by grepping for the word "retreiver," not by executing the script — `create_sql_kb_embeddings.py` had `sys.path.insert(0, repo_root)` placed *after* its `from src.retriever...` imports instead of before, so `make embeddings` crashed immediately with `ModuleNotFoundError: No module named 'src'`. Fixed by reordering the two lines; no import path or naming changed.
-3. ~~**Second naming mismatch**: `tools.retriever_tool` vs `retriever_tools.py`.~~ **RESOLVED (2026-08-11).** `tools/__init__.py` and `agents/human_in_the_loop.py` now import from `tools.retriever_tools` (plural). No remaining references to the singular form anywhere in the repo (confirmed by repo-wide grep).
-4. ~~**`retriever_tools.py` recreates `SQLKnowledgeBaseRetriever` inside every tool function call.**~~ **RESOLVED (2026-08-11).** `retriever_tools.py` now exposes `make_retriever_tools(retriever)`, a factory that closes over one already-constructed retriever instance and returns the LangChain tool objects bound to it — `Text2QueryWorkflow.__init__` constructs the retriever once and passes it to every agent, matching the shared-instance pattern already used for the model wrapper. No tool function constructs its own retriever.
-5. **No SQL safety guardrail.** ~~Resolved~~ **RESOLVED (2026-08-11).** Added `agents/sql_safety_guard.py`, a deterministic (non-LLM) node wired into `workflow.py` between `query_generator` and `query_validator`. It parses the generated SQL with `sqlglot` and rejects anything whose root statement isn't a read-only `SELECT`/`exp.Query` (covers CTEs, UNION/INTERSECT/EXCEPT) or that contains more than one statement (semicolon-stacked injection) — deliberately AST-based rather than keyword/regex matching, which is trivially defeated by casing, comments, or string literals containing blocked words. A safety failure is a hard stop (routed straight to `END`), not fed into the semantic retry loop, so an unsafe query can never be retried into passing. Verified by a live query that passed the guard, and by reading the routing logic in `workflow.py`'s `_route_after_sql_safety_guard`. **Still open, per the original note**: no read-only DB credentials at the infra level yet — this guard only prevents unsafe SQL from being *returned*, it doesn't (and can't, since nothing here executes SQL yet) enforce anything at a database connection level.
-6. ~~**Blocking sync call inside an async WebSocket handler.**~~ **RESOLVED (2026-08-11).** `_process_workflow_stream` in `src/api/routes/query.py` now advances the workflow generator via `loop.run_in_executor(None, _next_state_or_sentinel, stream)` instead of calling `next(stream)` directly, so each agent's blocking LLM call runs on a worker thread instead of stalling the event loop. `_next_state_or_sentinel` exists to work around PEP 479 (asyncio Futures can't carry a raised `StopIteration`). Not independently load-tested under concurrent WebSocket connections — verified only by reading the code and by one successful non-concurrent query.
-7. **No re-ranking or hybrid search** in the retrieval layer — pure dense vector similarity via ChromaDB. Acceptable for now given the small, well-structured knowledge base, but worth revisiting if the schema documentation grows significantly. **Still open.**
-
-## 7. Production-readiness gaps (roadmap context for future feature work)
+## 6. Production-readiness gaps (roadmap context for future feature work)
 
 Not urgent, but relevant since the stated direction is evolving this into a real multi-user product: no auth/authorization layer, no per-user/tenant isolation of query history or database access, no rate limiting on LLM calls, no observability (structured tracing across the 8+ LLM calls per query, cost/latency dashboards), no automated test suite currently exercised (`CONTRIBUTING.md` documents a testing approach but coverage should be verified, not assumed), and secrets (`OPENAI_API_KEY` etc.) are currently plain config values rather than a secrets-management integration.
 
-## 8. Working agreement for AI-assisted changes in this repo
+## 7. Working agreement for AI-assisted changes in this repo
 
 - Before implementing a fix or feature, state in plain language what the change is and why it's the right approach — don't just produce a diff. The owner wants to understand every change well enough to explain it in an interview, not just approve it.
-- Prefer small, scoped, reviewable changes over large rewrites, especially in `workflow.py` and `agents/` where a routing mistake can silently create infinite loops or dead-end states.
+- Prefer small, scoped, reviewable changes over large rewrites, especially in `workflow/` and `agents/` where a routing mistake can silently create infinite loops or dead-end states.
 - When adding or renaming a module, grep the whole repo for every import of the old name before considering the change complete — the bugs in Section 6 exist because this wasn't done.
 - Don't introduce a new LLM provider call, database connection, or model load outside the existing abstraction layers (`lib/ModelWrapper`, the shared retriever pattern) without a clear reason documented in the commit/PR description.
 - Every fix to an item in Section 6 should come with an explanation of why the original code broke, not just the corrected code.
