@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import asyncio
 from typing import Any, Dict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
@@ -15,6 +16,20 @@ from models.models import AgentState
 import uuid
 
 router = APIRouter()
+
+_STREAM_EXHAUSTED = object()
+
+
+def _next_state_or_sentinel(stream):
+    """Advance a workflow stream, returning a sentinel instead of raising StopIteration.
+
+    Runs on a worker thread via run_in_executor; asyncio Futures refuse to carry a
+    StopIteration (PEP 479), so exhaustion has to be signaled with a plain value instead.
+    """
+    try:
+        return next(stream)
+    except StopIteration:
+        return _STREAM_EXHAUSTED
 
 
 class QueryRequest(BaseModel):
@@ -73,7 +88,6 @@ def query(request: QueryRequest) -> Dict[str, Any]:
 async def _check_for_cancellation(websocket: WebSocket, timeout: float = 0.01) -> bool:
     """Check for cancellation message from client (non-blocking)."""
     try:
-        import asyncio
         message = await asyncio.wait_for(websocket.receive_text(), timeout=timeout)
         data = json.loads(message)
         if data.get("type") == "cancel":
@@ -212,10 +226,11 @@ async def _process_workflow_stream(websocket: WebSocket, wf: Text2QueryWorkflow,
             cancelled = True
             break
 
-        # Get next state from workflow
-        try:
-            state = next(stream)
-        except StopIteration:
+        # Get next state from workflow (offloaded to a worker thread so the
+        # blocking LLM call inside next() doesn't stall the event loop)
+        loop = asyncio.get_running_loop()
+        state = await loop.run_in_executor(None, _next_state_or_sentinel, stream)
+        if state is _STREAM_EXHAUSTED:
             break
 
         final_state = state
