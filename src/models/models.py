@@ -19,6 +19,7 @@ class AgentType(str, Enum):
     SCHEMA_BUILDER = "schema_builder"
     QUERY_PLANNER = "query_planner"
     QUERY_GENERATOR = "query_generator"
+    SQL_SAFETY_GUARD = "sql_safety_guard"
     QUERY_VALIDATOR = "query_validator"
     HUMAN_IN_THE_LOOP = "human_in_the_loop"
 
@@ -60,6 +61,10 @@ class AgentState(BaseModel):
     # Generated Query
     generated_query: Optional[Query] = None
     
+    # Deterministic read-only SQL safety check (runs before semantic validation)
+    is_sql_safe: Optional[bool] = None
+    sql_safety_violation: Optional[str] = None  # Reason the query was rejected, if unsafe
+
     # Validation
     is_query_valid: bool = False
 
@@ -76,6 +81,7 @@ class AgentState(BaseModel):
         "schema_builder": 2,
         "query_planner": 2,
         "query_generator": 2,
+        "sql_safety_guard": 1,
         "query_validator": 2,
         "metadata_agent": 2,
         "database_human_review": 2,

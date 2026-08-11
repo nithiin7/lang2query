@@ -262,7 +262,7 @@ class WorkflowRouter:
             "column_identification_completed": "schema_builder",
             "schema_building_completed": "query_planner",
             "query_planning_completed": "query_generator",
-            "query_generation_completed": "query_validator",
+            "query_generation_completed": "sql_safety_guard",
         }
 
         for completion_step, next_step in next_step_map.items():

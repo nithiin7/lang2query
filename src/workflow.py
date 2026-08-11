@@ -9,7 +9,10 @@ This workflow implements a hybrid agent architecture that combines multiple spec
 4. Schema Builder Agent - builds comprehensive schema context from identified components
 5. Query Planner Agent - creates a logical query plan from the schema context
 6. Query Generator Agent - generates a query from the query plan
-7. Query Validator Agent - validates the generated query
+7. SQL Safety Guard - deterministic (non-LLM) check that the generated SQL
+   is a single read-only SELECT; a failure here is a hard stop, not routed
+   through the semantic retry loop
+8. Query Validator Agent - validates the generated query semantically
 """
 
 import logging
@@ -28,6 +31,7 @@ from agents import (
     SchemaBuilderAgent,
     QueryPlannerAgent,
     QueryGeneratorAgent,
+    SQLSafetyGuardAgent,
     QueryValidatorAgent,
     AgentState,
     HumanInTheLoopAgent
@@ -88,6 +92,7 @@ class Text2QueryWorkflow:
         self.schema_builder = SchemaBuilderAgent(model, retriever=self.retriever)
         self.query_planner = QueryPlannerAgent(model, retriever=self.retriever)
         self.query_generator = QueryGeneratorAgent(model, retriever=self.retriever)
+        self.sql_safety_guard = SQLSafetyGuardAgent(model)
         self.query_validator = QueryValidatorAgent(model, retriever=self.retriever)
         
         # Create the workflow graph
@@ -227,6 +232,8 @@ class Text2QueryWorkflow:
             "processing_schema_builder": "🏗️ Building schema context...",
             "processing_query_planning": "🧠 Creating query plan...",
             "processing_query_generation": "⚡ Generating SQL query...",
+            "processing_sql_safety_guard": "🛡️ Checking query is read-only...",
+            "sql_safety_check_failed": "🚫 Query rejected: not read-only",
             "processing_query_validation": "✅ Validating generated query...",
             "metadata_completed": "✅ Metadata query completed",
             "database_review_completed": "✅ Database review completed",
@@ -294,6 +301,7 @@ class Text2QueryWorkflow:
             ("schema_builder", self._run_schema_builder),
             ("query_planner", self._run_query_planner),
             ("query_generator", self._run_query_generator),
+            ("sql_safety_guard", self._run_sql_safety_guard),
             ("query_validator", self._run_query_validator),
         ]
 
@@ -406,8 +414,21 @@ class Text2QueryWorkflow:
             self._route_after_pipeline_step,
             {
                 "query_generator": "query_generator",  # Retry
-                "query_validator": "query_validator",  # Continue
+                "sql_safety_guard": "sql_safety_guard",  # Continue
                 END: END,  # Fail
+            }
+        )
+
+        # SQL safety guard: deterministic, non-LLM check. A failure here is a
+        # hard stop (END) — it does NOT feed into the semantic retry loop below.
+        # See sql_safety_guard.py for why safety failures aren't treated like
+        # semantic validation failures.
+        workflow.add_conditional_edges(
+            "sql_safety_guard",
+            self._route_after_sql_safety_guard,
+            {
+                "query_validator": "query_validator",  # Safe: continue to semantic validation
+                END: END,  # Unsafe: hard fail, no retry
             }
         )
 
@@ -790,7 +811,59 @@ class Text2QueryWorkflow:
         )
 
         return result_state
-    
+
+    def _run_sql_safety_guard(self, state: AgentState) -> AgentState:
+        """Run the deterministic read-only SQL check. No LLM call is made here."""
+        return self._run_agent(
+            state,
+            self.sql_safety_guard,
+            step_number=6,
+            step_name="Sql Safety Guard",
+            step_emoji="🛡️",
+            success_step="sql_safety_check_completed",
+            error_step="sql_safety_guard"
+        )
+
+    def _route_after_sql_safety_guard(self, state: AgentState) -> str:
+        """Route after the SQL safety guard.
+
+        A precondition error (e.g. no generated query reached this node) is
+        retried/failed like any other pipeline step. An actual unsafe-SQL
+        verdict is NOT a step failure the retry machinery sees — the agent
+        still returns success=True with is_sql_safe=False — so it can never
+        be retried or consume step_retries_left; it is always a hard stop.
+        """
+        from langgraph.graph import END
+
+        # Precondition error on this node (e.g. missing generated_query): reuse
+        # the standard pipeline step retry/failure handling.
+        if getattr(state, 'last_error_type', None) == "step_retry":
+            current_step = getattr(state, 'current_step', '')
+            if current_step.endswith('_retry'):
+                logger.info("🔄 Retrying SQL safety guard step")
+                return "sql_safety_guard"
+
+        failure_result = WorkflowRouter.check_permanent_failure(state, "SQL safety guard")
+        if failure_result:
+            return failure_result
+
+        if getattr(state, "is_sql_safe", False):
+            logger.info("✅ SQL safety check passed; proceeding to semantic validation")
+            return "query_validator"
+
+        logger.error(
+            f"🚫 SQL safety check failed: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}. "
+            "Hard-stopping (no retry)."
+        )
+        state.current_step = "sql_safety_check_failed"
+        state.user_message = (
+            "The generated query was rejected by the read-only safety check and was not "
+            f"executed or returned: {getattr(state, 'sql_safety_violation', 'unsafe SQL')}."
+        )
+        # Do not surface the rejected query to the caller.
+        state.generated_query = None
+        return END
+
     def _run_query_validator(self, state: AgentState) -> AgentState:
         """Validate the generated query."""
         result_state = self._run_agent(
@@ -919,7 +992,7 @@ class Text2QueryWorkflow:
         current_step = getattr(state, 'current_step', '')
 
         # If workflow completed or failed, no resume needed
-        if current_step in ['workflow_completed', 'workflow_failed', 'max_retries_exhausted']:
+        if current_step in ['workflow_completed', 'workflow_failed', 'max_retries_exhausted', 'sql_safety_check_failed']:
             return "end"
 
         # PRIORITY 1: If there's human feedback to process, route to the appropriate human review agent first
@@ -957,7 +1030,8 @@ class Text2QueryWorkflow:
             "column_identification_completed": "schema_builder",
             "schema_building_completed": "query_planner",
             "query_planning_completed": "query_generator",
-            "query_generation_completed": "query_validator",
+            "query_generation_completed": "sql_safety_guard",
+            "sql_safety_check_completed": "query_validator",
             "query_validation_completed": "end",
             # Error states - retry from appropriate points
             "database_identification_failed": "database_identifier",
@@ -966,6 +1040,7 @@ class Text2QueryWorkflow:
             "schema_building_failed": "schema_builder",
             "query_planning_failed": "query_planner",
             "query_generation_failed": "query_generator",
+            "sql_safety_guard_failed": "sql_safety_guard",
             "query_validation_failed": "query_validator",
         }
 

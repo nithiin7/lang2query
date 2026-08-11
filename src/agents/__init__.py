@@ -25,6 +25,7 @@ from .column_identifier import ColumnIdentifier
 from .schema_builder import SchemaBuilderAgent
 from .query_planner import QueryPlannerAgent
 from .query_generator import QueryGeneratorAgent
+from .sql_safety_guard import SQLSafetyGuardAgent
 from .query_validator import QueryValidatorAgent
 from .human_in_the_loop import HumanInTheLoopAgent
 from models.models import (
@@ -45,6 +46,7 @@ __all__ = [
     "SchemaBuilderAgent",
     "QueryPlannerAgent",
     "QueryGeneratorAgent",
+    "SQLSafetyGuardAgent",
     "QueryValidatorAgent",
     "AgentState",
     "AgentResult",
