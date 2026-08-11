@@ -10,7 +10,7 @@ from typing import Optional
 
 from langchain_ollama import ChatOllama
 
-from .chat_wrapper_base import LangChainChatWrapperBase
+from .base import LangChainChatWrapperBase
 
 # Configure logging
 logger = logging.getLogger(__name__)
