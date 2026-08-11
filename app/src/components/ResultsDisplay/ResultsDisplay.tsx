@@ -1,10 +1,6 @@
 "use client";
 
-import { QueryResponse } from "@/types";
-
-interface ResultsDisplayProps {
-  results: QueryResponse;
-}
+import { ResultsDisplayProps } from "@/types";
 
 export function ResultsDisplay({ results }: ResultsDisplayProps) {
   if (results.type === "error") {

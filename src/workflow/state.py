@@ -24,3 +24,22 @@ class StateManager:
         # Restore preserved system fields (only those not updated by agent)
         for field, value in preserved_values.items():
             setattr(state, field, value)
+
+    @staticmethod
+    def apply_hitl_feedback(state: AgentState, feedback: dict) -> None:
+        """Apply human-in-the-loop approval/edit feedback to workflow state."""
+        review_type = (feedback.get("review_type") or "").strip()
+        action = (feedback.get("action") or "").strip().lower()
+        approved_items = feedback.get("approved_items") or []
+        feedback_text = feedback.get("feedback_text")
+
+        if review_type not in ("databases", "tables"):
+            return
+
+        approvals = dict(getattr(state, "human_approvals", {}) or {})
+        approvals[review_type] = action == "approve"
+        state.human_approvals = approvals
+        state.human_feedback = feedback_text
+
+        if approved_items:
+            setattr(state, f"relevant_{review_type}", approved_items)

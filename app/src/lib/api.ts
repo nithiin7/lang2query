@@ -1,6 +1,6 @@
-import { QueryResponse, WorkflowState, WorkflowStep } from "@/types";
+import { QueryResponse, WebSocketCallbacks, WorkflowState, WorkflowStep } from "@/types";
 import axios, { AxiosResponse } from "axios";
-import { WebSocketCallbacks, getWebSocketService } from "./websocket";
+import { getWebSocketService } from "./websocket";
 
 // Create axios instance with base configuration
 const api = axios.create({

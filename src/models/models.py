@@ -200,3 +200,9 @@ class AgentResult(BaseModel):
     success: bool
     message: str
     state_updates: Optional[Dict[str, Any]] = None
+
+
+class QueryRequest(BaseModel):
+    """Request body for the /query endpoint."""
+    query: str
+    mode: str = "normal"

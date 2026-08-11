@@ -1,31 +1,4 @@
-import { HitlFeedback, HitlRequest, QueryResponse, WorkflowState } from "@/types";
-
-export interface WebSocketMessage {
-  type:
-    | "connected"
-    | "state_update"
-    | "final_result"
-    | "error"
-    | "hitl_request"
-    | "hitl_feedback_ack"
-    | "cancelled";
-  message?: string;
-  node_name?: string;
-  state?: WorkflowState;
-  result?: QueryResponse;
-  checkpoint?: { id: string; review_type: "databases" | "tables"; items: string[] };
-  checkpointId?: string;
-}
-
-export interface WebSocketCallbacks {
-  onConnect?: () => void;
-  onStateUpdate?: (state: WorkflowState, nodeName?: string) => void;
-  onFinalResult?: (result: QueryResponse) => void;
-  onError?: (error: string) => void;
-  onDisconnect?: () => void;
-  onHitlRequest?: (request: HitlRequest) => void;
-  onCancelled?: (message?: string) => void;
-}
+import { HitlFeedback, HitlRequest, WebSocketCallbacks, WebSocketMessage } from "@/types";
 
 export class WebSocketService {
   private ws: WebSocket | null = null;
