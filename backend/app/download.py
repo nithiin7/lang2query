@@ -11,7 +11,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 
-MODELS_DIR = Path(__file__).parent.parent / "models"
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 
 def get_model_choice():
@@ -155,9 +155,7 @@ def download_bge_m3():
             ),
             (
                 "Downloading model components separately",
-                lambda: _download_bge_m3_via_transformers(
-                    model_name, local_model_path
-                ),
+                lambda: _download_bge_m3_via_transformers(model_name, local_model_path),
             ),
         ]
     )

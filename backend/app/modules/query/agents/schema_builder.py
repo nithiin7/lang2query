@@ -9,8 +9,8 @@ formatted schema context that can be used by other agents.
 import logging
 from typing import Any, Dict, List, Optional
 
+from ai.retrieve_sql_kb import SQLKnowledgeBaseRetriever
 from models.models import AgentResult, AgentState, AgentType
-from retriever.retrieve_sql_kb import SQLKnowledgeBaseRetriever
 
 from .agent_utils import AgentUtils
 from .base_agent import BaseAgent

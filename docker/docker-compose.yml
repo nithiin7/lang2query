@@ -13,14 +13,14 @@ services:
       - PROVIDER=chatgpt
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=gpt-4o
-      - KB_DIRECTORY=/app/src/kb
+      - KB_DIRECTORY=/srv/app/ai/kb
       - COLLECTION_NAME=sql_generation_kb
       - API_HOST=0.0.0.0
       - API_PORT=8000
     volumes:
-      - ./src/kb:/app/src/kb
-      - ./src/retriever/input:/app/src/retriever/input
-      - ./src/retriever/output:/app/src/retriever/output
+      - ./backend/app/ai/kb:/srv/app/ai/kb
+      - ./backend/app/ai/input:/srv/app/ai/input
+      - ./backend/app/ai/output:/srv/app/ai/output
     networks:
       - lang2query-network
     restart: unless-stopped

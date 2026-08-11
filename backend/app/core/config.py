@@ -5,12 +5,11 @@ Configuration settings for the text2query application.
 from pathlib import Path
 
 # Base paths
-BASE_DIR = Path(__file__).parent.parent
-DOCS_DIR = BASE_DIR / "docs"
+APP_DIR = Path(__file__).resolve().parent.parent
 
 # Knowledge Base paths
-MD_DIRECTORY = BASE_DIR / "src" / "retriever" / "input"
-KB_DIRECTORY = BASE_DIR / "src" / "kb"
+MD_DIRECTORY = APP_DIR / "ai" / "input"
+KB_DIRECTORY = APP_DIR / "ai" / "kb"
 COLLECTION_NAME = "sql_generation_kb"
 
 # Embedding model path (None = auto-detect from models/bge-m3)

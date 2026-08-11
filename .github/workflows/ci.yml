@@ -13,6 +13,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -37,27 +40,27 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Check code formatting with black
         run: |
-          black --check src/
+          black --check app/
 
       - name: Check import sorting with isort
         run: |
-          isort --check-only src/
+          isort --check-only app/
 
       - name: Test with pytest
         run: |
-          pytest --cov=src --cov-report=xml --cov-report=html
+          pytest --cov=app --cov-report=xml --cov-report=html
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage.xml
+          file: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
 

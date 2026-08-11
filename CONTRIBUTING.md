@@ -26,7 +26,7 @@ cd lang2query
 # Backend
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
-pip install ".[dev]"          # installs dev tooling (pytest, black, isort, flake8, mypy, ...)
+cd backend && pip install ".[dev]" && cd ..   # installs dev tooling (pytest, black, isort, flake8, mypy, ...)
 pre-commit install
 
 # Frontend
@@ -38,14 +38,14 @@ make dev
 
 ## Coding Standards
 
-Baseline: PEP 8, Black, isort, flake8, type hints on all function signatures, Google-style docstrings; ESLint/Prettier and functional components with typed props on the frontend. Project-specific rules — DRY across agents, no direct provider SDK calls outside `lib/`, no new agent without a typed output schema, errors typed and logged rather than swallowed — are documented in [CLAUDE.md](CLAUDE.md#5-code-standards).
+Baseline: PEP 8, Black, isort, flake8, type hints on all function signatures, Google-style docstrings; ESLint/Prettier and functional components with typed props on the frontend. Project-specific rules — DRY across agents, no direct provider SDK calls outside `ai/llm/`, no new agent without a typed output schema, errors typed and logged rather than swallowed — are documented in [CLAUDE.md](CLAUDE.md#5-code-standards).
 
 ## Testing
 
 ```bash
-# Backend
+# Backend (from backend/)
 pytest                              # full suite
-pytest --cov=src --cov-report=html  # with coverage
+pytest --cov=app --cov-report=html  # with coverage
 pytest tests/test_sql_safety_guard.py -v
 
 # Frontend
@@ -59,7 +59,7 @@ Write tests for new functionality, cover both success and error paths, and mock 
 Before submitting, check that:
 
 - [ ] Tests pass locally (`pytest`, `npm test`)
-- [ ] Code is formatted (`black src/`, `isort src/`) and lints clean (`flake8 src/`)
+- [ ] Code is formatted (`black app/`, `isort app/` from `backend/`) and lints clean (`flake8 app/`)
 - [ ] New functionality has tests
 - [ ] Docs are updated if behavior changed
 - [ ] No unrelated changes mixed in

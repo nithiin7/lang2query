@@ -80,3 +80,7 @@ packages = []
 
 [tool.isort]
 profile = "black"
+# isort auto-detects a directory literally named `src` as first-party; since
+# the backend root package is `app/` (not `src/`), that heuristic doesn't
+# apply here and has to be pointed at it explicitly.
+src_paths = ["app"]

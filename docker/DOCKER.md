@@ -98,7 +98,7 @@ OPENAI_MODEL=gpt-4o
 
 # Backend Configuration
 PROVIDER=chatgpt
-KB_DIRECTORY=/app/src/kb
+KB_DIRECTORY=/srv/app/ai/kb
 COLLECTION_NAME=sql_generation_kb
 
 # Frontend Configuration
@@ -114,9 +114,9 @@ PRODUCTION_WS_URL=wss://your-api-domain.com/ws
 
 The following directories are mounted as volumes:
 
-- `./src/kb` → `/app/src/kb` (Knowledge base)
-- `./src/retriever/input` → `/app/src/retriever/input` (Input docs)
-- `./src/retriever/output` → `/app/src/retriever/output` (Generated chunks)
+- `./backend/app/ai/kb` → `/srv/app/ai/kb` (Knowledge base)
+- `./backend/app/ai/input` → `/srv/app/ai/input` (Input docs)
+- `./backend/app/ai/output` → `/srv/app/ai/output` (Generated chunks)
 
 ## Docker Commands
 
@@ -311,7 +311,7 @@ steps:
 2. **Permission issues:**
    ```bash
    # Fix volume permissions
-   sudo chown -R $USER:$USER ./src/kb
+   sudo chown -R $USER:$USER ./backend/app/ai/kb
    ```
 
 3. **Out of memory:**

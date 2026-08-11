@@ -8,9 +8,9 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from lib.agent import ModelWrapper
+from ai.llm.agent import ModelWrapper
+from core.logging import log_ai_response
 from models.models import AgentResult, AgentState, AgentType
-from utils.logging import log_ai_response
 
 logger = logging.getLogger(__name__)
 

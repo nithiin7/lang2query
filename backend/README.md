@@ -1,13 +1,13 @@
 # Lang2Query Backend
 
-FastAPI + LangGraph backend that turns a natural-language question into validated SQL. See the [root README](../README.md) for the product overview and the [architecture diagram](../README.md#how-it-works).
+FastAPI + LangGraph backend that turns a natural-language question into validated SQL. All Python code lives under `app/`. See the [root README](../README.md) for the product overview and the [architecture diagram](../README.md#how-it-works).
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agents-1C3C3C?style=flat-square&logo=langchain&logoColor=white)](https://langchain-ai.github.io/langgraph/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20DB-FF6F00?style=flat-square)](https://www.trychroma.com)
 
-## Agents (`agents/`)
+## Agents (`app/modules/query/agents/`)
 
 Each file is one LangGraph node — decision logic only (what to ask the LLM, how to interpret the structured response, what state to update):
 
@@ -25,17 +25,17 @@ Each file is one LangGraph node — decision logic only (what to ask the LLM, ho
 | `sql_safety_guard.py` | Enforces read-only query generation |
 | `human_in_the_loop.py` | Pauses the graph for a human review checkpoint |
 
-Cross-cutting workflow concerns (routing, retries, resume, display) live in `workflow/`, not in the agent files — see [CLAUDE.md](../CLAUDE.md#3-architecture-the-part-you-must-understand-before-editing-agents-or-the-workflow).
+Cross-cutting workflow concerns (routing, retries, resume, display) live in `app/modules/query/workflow/`, not in the agent files — see [CLAUDE.md](../CLAUDE.md#3-architecture-the-part-you-must-understand-before-editing-agents-or-the-workflow).
 
 ## Quick Start
 
 ```bash
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
-pip install .                 # from repo root
-python download.py            # download local models
+pip install .                 # from backend/
+python app/download.py        # download local models
 
-python -m api.app             # or: uvicorn api.app:create_app --factory --host 0.0.0.0 --port 8000
+cd app && python -m main      # or: uvicorn main:create_app --factory --host 0.0.0.0 --port 8000
 ```
 
 API → `http://localhost:8000` · interactive docs → `http://localhost:8000/docs`
@@ -43,34 +43,37 @@ API → `http://localhost:8000` · interactive docs → `http://localhost:8000/d
 ## Project Structure
 
 ```
-src/
-├── agents/       # LangGraph nodes (see table above)
+app/
+├── main.py       # create_app()/lifespan/CLI entrypoint
+├── core/         # config.py (runtime configuration), logging.py
+├── modules/
+│   └── query/
+│       ├── agents/    # LangGraph nodes (see table above)
+│       └── workflow/  # Graph wiring, routing, retries, resume, display
+├── ai/           # LLM provider abstraction (llm/) + RAG retrieval stack (chunking, embeddings, retriever, input/output/kb data)
+├── workers/      # Ingestion CLI (create_sql_kb_embeddings.py)
 ├── api/          # FastAPI app, routes, request/response mapping
-├── lib/          # LLM provider abstraction (OpenAI, Ollama, local)
 ├── models/       # Pydantic schemas — AgentState + per-agent output schemas
-├── retriever/    # Ingestion pipeline (chunking + embedding) + query-side retriever
 ├── tools/        # LangChain @tool retrieval functions
 ├── utils/        # Small stateless helpers
-├── workflow/     # Graph wiring, routing, retries, resume, display
-├── config.py     # Runtime configuration
 └── download.py   # Model downloader
 ```
 
 ## Configuration
 
-Set via environment variables (see [env.example](../env.example)) or `config.py`:
+Set via environment variables (see [env.example](../env.example)) or `app/core/config.py`:
 
 ```bash
 export OPENAI_API_KEY="..."
 export OPENAI_MODEL="gpt-4o"          # or gpt-4o-mini
 export OLLAMA_MODEL="llama3.1"        # if PROVIDER=ollama
-export KB_DIRECTORY="./src/kb"
+export KB_DIRECTORY="./app/ai/kb"
 export COLLECTION_NAME="sql_generation_kb"
 ```
 
 ## Knowledge Base
 
-Add database documentation as markdown files under `retriever/input/` (database → table → column sections), then build embeddings:
+Add database documentation as markdown files under `app/ai/input/` (database → table → column sections), then build embeddings:
 
 ```bash
 make embeddings   # from repo root
@@ -78,7 +81,7 @@ make embeddings   # from repo root
 
 Re-ingestion is idempotent — chunk IDs that already exist in ChromaDB are skipped, so adding one new doc doesn't re-embed everything.
 
-Agents access this knowledge base through ~13 LangChain-decorated retrieval tools in `tools/retriever_tools.py` (`semantic_search`, `search_by_database`, `search_by_table`, `complex_filter_search`, `get_columns_by_table`, `validate_database_exists`, ...) that the LLM itself chooses to call.
+Agents access this knowledge base through ~13 LangChain-decorated retrieval tools in `app/tools/retriever_tools.py` (`semantic_search`, `search_by_database`, `search_by_table`, `complex_filter_search`, `get_columns_by_table`, `validate_database_exists`, ...) that the LLM itself chooses to call.
 
 ## API
 
@@ -92,8 +95,8 @@ Agents access this knowledge base through ~13 LangChain-decorated retrieval tool
 ## Testing
 
 ```bash
-pytest                              # from repo root
-pytest --cov=src --cov-report=html
+pytest                              # from backend/
+pytest --cov=app --cov-report=html
 ```
 
 Test coverage is currently thin — see [CLAUDE.md's production-readiness notes](../CLAUDE.md#6-production-readiness-gaps-roadmap-context-for-future-feature-work) before assuming a change is covered.

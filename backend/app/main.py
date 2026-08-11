@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from utils import setup_colored_logging
+from core.logging import setup_colored_logging
 
 
 @asynccontextmanager
@@ -38,8 +38,8 @@ def create_app() -> FastAPI:
     )
 
     # Register routers
-    from .routes.query import router as query_router
-    from .routes.system import router as system_router
+    from api.routes.query import router as query_router
+    from api.routes.system import router as system_router
 
     app.include_router(system_router)
     app.include_router(query_router)

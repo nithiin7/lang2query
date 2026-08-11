@@ -11,11 +11,13 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
-# Add the parent directory to Python path to allow absolute imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add the app directory to Python path so this script can be run standalone
+# (the rest of the app imports as if backend/app/ is the root, e.g. `from
+# models.models import ...`; this script mirrors that convention).
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.retriever.embedding_utils import BGE_M3_EmbeddingFunction
-from src.retriever.sql_kb_chunker import SQLKnowledgeBaseChunker
+from ai.embedding_utils import BGE_M3_EmbeddingFunction
+from ai.sql_kb_chunker import SQLKnowledgeBaseChunker
 
 
 class SQLKnowledgeBaseEmbedder:
@@ -24,7 +26,7 @@ class SQLKnowledgeBaseEmbedder:
     def __init__(
         self,
         model_path: str = None,
-        chroma_persist_dir: str = "./src/kb",
+        chroma_persist_dir: str = "./ai/kb",
         collection_name: str = "sql_generation_kb",
     ):
         """
@@ -37,7 +39,11 @@ class SQLKnowledgeBaseEmbedder:
         """
         # Set default model path
         if model_path is None:
-            model_path = str(Path(__file__).parent.parent.parent / "models" / "bge-m3")
+            model_path = str(
+                Path(__file__).resolve().parent.parent.parent.parent
+                / "models"
+                / "bge-m3"
+            )
 
         # Detect and set device for MPS optimization on M1 Macs
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -324,7 +330,7 @@ class SQLKnowledgeBaseEmbedder:
     def save_metadata(
         self,
         chunks: List,
-        output_file: str = "src/retriever/output/sql_kb_metadata.json",
+        output_file: str = "ai/output/sql_kb_metadata.json",
     ):
         """Save metadata about the knowledge base"""
         metadata = {
@@ -358,7 +364,7 @@ class SQLKnowledgeBaseEmbedder:
     def save_metadata_from_stats(
         self,
         stats: Dict[str, Any],
-        output_file: str = "src/retriever/output/sql_kb_metadata.json",
+        output_file: str = "ai/output/sql_kb_metadata.json",
     ):
         """Save metadata using pre-aggregated stats to avoid holding all chunks in memory"""
         metadata = {
@@ -511,7 +517,7 @@ def main():
     parser.add_argument(
         "--chroma-dir",
         type=str,
-        default="./src/kb",
+        default="./ai/kb",
         help="Directory for ChromaDB persistence",
     )
     parser.add_argument(
@@ -544,13 +550,13 @@ def main():
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="src/retriever/output",
+        default="ai/output",
         help="Directory to save per-file chunks JSON copies",
     )
     parser.add_argument(
         "--chunked-json-dir",
         type=str,
-        default="src/retriever/output",
+        default="ai/output",
         help="Directory to save per-file chunks JSON copies (secondary)",
     )
 

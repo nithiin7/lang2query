@@ -7,7 +7,7 @@ both.
 
 import pytest
 
-from agents.sql_safety_guard import check_sql_is_read_only, SQLSafetyGuardAgent
+from modules.query.agents.sql_safety_guard import check_sql_is_read_only, SQLSafetyGuardAgent
 from models.models import AgentState, Query
 
 

@@ -4,7 +4,7 @@ Serialization utilities for converting AgentState to JSON-compatible format for 
 
 from typing import Any, Dict
 
-from agents import AgentState
+from modules.query.agents import AgentState
 
 
 def serialize_agent_state(state: AgentState) -> Dict[str, Any]:

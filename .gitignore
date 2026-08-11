@@ -309,8 +309,8 @@ Thumbs.db
 
 # Lang2Query specific
 # Knowledge base files
-src/kb/
-src/retriever/output/
+backend/app/ai/kb/
+backend/app/ai/output/
 *.db
 *.sqlite
 *.sqlite3

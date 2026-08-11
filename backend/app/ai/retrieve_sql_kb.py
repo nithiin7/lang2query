@@ -13,7 +13,7 @@ import torch
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
-from retriever.embedding_utils import BGE_M3_EmbeddingFunction
+from ai.embedding_utils import BGE_M3_EmbeddingFunction
 
 # Matches a column content line built by
 # SQLKnowledgeBaseChunker._create_table_columns_chunk, e.g.:
@@ -40,7 +40,7 @@ class SQLKnowledgeBaseRetriever:
     def __init__(
         self,
         model_path: str = None,
-        chroma_persist_dir: str = "./src/kb",
+        chroma_persist_dir: str = "./ai/kb",
         collection_name: str = "sql_generation_kb",
     ):
         """
@@ -53,7 +53,11 @@ class SQLKnowledgeBaseRetriever:
             collection_name: Name of the ChromaDB collection to query
         """
         if model_path is None:
-            model_path = str(Path(__file__).parent.parent.parent / "models" / "bge-m3")
+            model_path = str(
+                Path(__file__).resolve().parent.parent.parent.parent
+                / "models"
+                / "bge-m3"
+            )
 
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
 

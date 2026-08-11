@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Union
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-import config as app_config
+import core.config as app_config
 
 from .chatgpt import LangChainChatGPTWrapper
 from .ollama import LangChainOllamaWrapper

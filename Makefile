@@ -19,13 +19,13 @@ help:
 # Create/update knowledge base embeddings
 embeddings:
 	@echo "🔧 Creating knowledge base embeddings..."
-	python3 src/retriever/create_sql_kb_embeddings.py \
-		--md-dir "src/retriever/input" \
-		--chroma-dir "src/kb" \
+	cd backend/app && python3 workers/create_sql_kb_embeddings.py \
+		--md-dir "ai/input" \
+		--chroma-dir "ai/kb" \
 		--collection-name "sql_generation_kb" \
 		--batch-size 1 \
-		--output-dir "src/retriever/output" \
-		--chunked-json-dir "src/retriever/output"
+		--output-dir "ai/output" \
+		--chunked-json-dir "ai/output"
 
 # Run the frontend
 run-app:
@@ -35,23 +35,23 @@ run-app:
 # Run the Flask API
 run-api:
 	@echo "🔌 Starting Flask API..."
-	cd src && python3 -m api.app
+	cd backend/app && python3 -m main
 
 # Run API and frontend together
 dev:
 	@echo "🔧 Starting API and Frontend..."
 	( cd app && npm run dev ) & \
-	cd src && python3 -m api.app
+	cd backend/app && python3 -m main
 
 # Run the download script
 download:
 	@echo "📥 Running model download script..."
-	python3 src/download.py
+	python3 backend/app/download.py
 
 # Install dependencies
 install:
 	@echo "📦 Installing dependencies..."
-	pip install .
+	pip install ./backend
 
 # Setup virtual environment
 venv:

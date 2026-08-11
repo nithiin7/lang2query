@@ -27,7 +27,11 @@ from typing import Any, Dict, Iterator, Optional, Union
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from agents import (
+from ai.llm import ModelWrapper
+from ai.retrieve_sql_kb import SQLKnowledgeBaseRetriever
+from core.config import COLLECTION_NAME, EMBEDDING_MODEL_PATH, KB_DIRECTORY
+from core.logging import Colors, log_section_header, log_workflow_step
+from modules.query.agents import (
     AgentState,
     ColumnIdentifier,
     DatabaseIdentifierAgent,
@@ -41,10 +45,6 @@ from agents import (
     SQLSafetyGuardAgent,
     TableIdentifier,
 )
-from config import COLLECTION_NAME, EMBEDDING_MODEL_PATH, KB_DIRECTORY
-from lib import ModelWrapper
-from retriever.retrieve_sql_kb import SQLKnowledgeBaseRetriever
-from utils import Colors, log_section_header, log_workflow_step
 
 from .display import WorkflowDisplay, WorkflowLogger
 from .resume import ResumeRouter

@@ -87,18 +87,19 @@ Full Docker walkthrough (services, dev vs. prod, hot reload): **[DOCKER.md](DOCK
 
 ```
 lang2query/
-├── app/                # Next.js frontend (React 19, TypeScript, Tailwind)
-├── src/                # Python backend
-│   ├── agents/          # LangGraph nodes — one file per agent
-│   ├── api/              # FastAPI routes (REST + WebSocket)
-│   ├── lib/              # LLM provider abstraction (OpenAI, Ollama, local)
-│   ├── models/            # Pydantic schemas — the typed AgentState contract
-│   ├── retriever/        # Ingestion pipeline + query-side retriever
-│   ├── tools/             # LangChain @tool retrieval functions
-│   └── workflow/          # Graph wiring, routing, retries, resume
-├── docker/              # Dockerfile + docker-compose (prod & dev)
-├── pyproject.toml       # Python dependencies
-└── Makefile             # Build automation
+├── app/                     # Next.js frontend (React 19, TypeScript, Tailwind)
+├── backend/                 # Python backend
+│   ├── app/
+│   │   ├── modules/query/     # LangGraph agents + workflow — one file per agent
+│   │   ├── api/                 # FastAPI routes (REST + WebSocket)
+│   │   ├── ai/                   # LLM provider abstraction (llm/) + RAG retrieval stack
+│   │   ├── workers/              # Ingestion pipeline (create_sql_kb_embeddings.py)
+│   │   ├── models/                # Pydantic schemas — the typed AgentState contract
+│   │   └── tools/                  # LangChain @tool retrieval functions
+│   ├── tests/
+│   └── pyproject.toml       # Python dependencies
+├── docker/                  # Dockerfile + docker-compose (prod & dev)
+└── Makefile                 # Build automation
 ```
 
 ## Documentation
@@ -107,7 +108,7 @@ lang2query/
 | --- | --- |
 | [DOCKER.md](DOCKER.md) | Full Docker guide — services, dev vs. prod, troubleshooting |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, coding standards, PR process |
-| [src/README.md](src/README.md) | Backend architecture, agents, API reference |
+| [backend/README.md](backend/README.md) | Backend architecture, agents, API reference |
 
 ## License
 

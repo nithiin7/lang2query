@@ -4,8 +4,8 @@ import os
 
 from dotenv import load_dotenv
 
-from lib import ModelWrapper
-from workflow import Text2QueryWorkflow
+from ai.llm import ModelWrapper
+from modules.query.workflow import Text2QueryWorkflow
 
 
 def get_workflow() -> Text2QueryWorkflow:
