@@ -39,6 +39,16 @@ class LangChainChatWrapperBase:
         timeout: int = 300,
         **kwargs,
     ):
+        """Build the provider-specific chat model and the plain-text generation chain.
+
+        Args:
+            model: Provider-specific model name/identifier.
+            base_url: Optional base URL for the provider's API (e.g. a local Ollama server).
+            temperature: Default sampling temperature.
+            top_p: Default top-p sampling parameter.
+            timeout: Request timeout in seconds.
+            **kwargs: Additional provider-specific arguments passed to `_build_llm`.
+        """
         self.model_name = model
         self.base_url = base_url
         self.temperature = temperature

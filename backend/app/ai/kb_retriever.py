@@ -88,11 +88,30 @@ class KnowledgeBaseRetriever:
     # ------------------------------------------------------------------
 
     def semantic_search(self, query: str, n_results: int = 5) -> Dict[str, Any]:
+        """Rank all chunks by embedding similarity to query, with no metadata filter.
+
+        Args:
+            query: Natural-language search text.
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result (ids/documents/metadatas/distances).
+        """
         return self.collection.query(query_texts=[query], n_results=n_results)
 
     def search_by_chunk_type(
         self, query: str, chunk_type: str, n_results: int = 5
     ) -> Dict[str, Any]:
+        """Semantic search restricted to chunks of a given type (e.g. "database", "table", "column").
+
+        Args:
+            query: Natural-language search text.
+            chunk_type: The chunk_type metadata value to filter on.
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result.
+        """
         return self.collection.query(
             query_texts=[query], n_results=n_results, where={"chunk_type": chunk_type}
         )
@@ -100,6 +119,16 @@ class KnowledgeBaseRetriever:
     def search_by_database(
         self, query: str, database_name: str, n_results: int = 5
     ) -> Dict[str, Any]:
+        """Semantic search restricted to chunks belonging to one database.
+
+        Args:
+            query: Natural-language search text.
+            database_name: The database_name metadata value to filter on.
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result.
+        """
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
@@ -109,6 +138,17 @@ class KnowledgeBaseRetriever:
     def search_by_table(
         self, query: str, database_name: str, table_name: str, n_results: int = 5
     ) -> Dict[str, Any]:
+        """Semantic search restricted to chunks belonging to one table in one database.
+
+        Args:
+            query: Natural-language search text.
+            database_name: The database_name metadata value to filter on.
+            table_name: The table_name metadata value to filter on.
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result.
+        """
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
@@ -120,6 +160,16 @@ class KnowledgeBaseRetriever:
     def search_tables_in_databases(
         self, query: str, database_names: List[str], n_results: int = 5
     ) -> Dict[str, Any]:
+        """Semantic search for table-level chunks across a set of candidate databases.
+
+        Args:
+            query: Natural-language search text.
+            database_names: Database names to restrict the search to.
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result.
+        """
         return self.collection.query(
             query_texts=[query],
             n_results=n_results,
@@ -134,6 +184,16 @@ class KnowledgeBaseRetriever:
     def complex_filter_search(
         self, query: str, filters: Dict[str, Any], n_results: int = 5
     ) -> Dict[str, Any]:
+        """Semantic search with a caller-supplied ChromaDB `where` filter.
+
+        Args:
+            query: Natural-language search text.
+            filters: A ChromaDB-compatible `where` clause (supports `$and`/`$in` etc.).
+            n_results: Maximum number of ranked chunks to return.
+
+        Returns:
+            The raw ChromaDB query result.
+        """
         return self.collection.query(
             query_texts=[query], n_results=n_results, where=filters
         )
@@ -145,77 +205,82 @@ class KnowledgeBaseRetriever:
     # ------------------------------------------------------------------
 
     def get_all_databases(self) -> List[Dict[str, Any]]:
-        result = self.collection.get(
-            where={"chunk_type": "database"}, include=["metadatas", "documents"]
-        )
-        databases = []
-        for metadata, document in zip(
-            result.get("metadatas", []), result.get("documents", [])
-        ):
-            databases.append(
-                {
-                    "database": metadata.get("database_name"),
-                    "system_name": metadata.get("system_name"),
-                    "module_name": metadata.get("module_name"),
-                    "purpose": self._extract_field(document, "Purpose:"),
-                }
+        """List every ingested database with its name, system, module, and purpose.
+
+        Returns:
+            One dict per database chunk, with keys database/system_name/module_name/purpose.
+        """
+        return [
+            {
+                "database": metadata.get("database_name"),
+                "system_name": metadata.get("system_name"),
+                "module_name": metadata.get("module_name"),
+                "purpose": self._extract_field(document, "Purpose:"),
+            }
+            for metadata, document in self._get_with_documents(
+                {"chunk_type": "database"}
             )
-        return databases
+        ]
 
     def count_databases(self) -> int:
-        result = self.collection.get(where={"chunk_type": "database"}, include=[])
-        return len(result.get("ids", []))
+        """Return the total number of ingested databases."""
+        return self._count({"chunk_type": "database"})
 
     def get_tables_in_database(self, database_name: str) -> List[Dict[str, Any]]:
-        result = self.collection.get(
-            where={"$and": [{"chunk_type": "table"}, {"database_name": database_name}]},
-            include=["metadatas", "documents"],
-        )
-        tables = []
-        for metadata, document in zip(
-            result.get("metadatas", []), result.get("documents", [])
-        ):
-            tables.append(
-                {
-                    "table": metadata.get("table_name"),
-                    "purpose": self._extract_field(document, "Purpose:"),
-                    "primary_keys": self._split_metadata_list(
-                        metadata.get("primary_keys")
-                    ),
-                    "unique_keys": self._split_metadata_list(
-                        metadata.get("unique_keys")
-                    ),
-                }
-            )
-        return tables
+        """List every table in a database with its purpose and key columns.
+
+        Args:
+            database_name: The database to enumerate tables for.
+
+        Returns:
+            One dict per table chunk, with keys table/purpose/primary_keys/unique_keys.
+        """
+        where = {"$and": [{"chunk_type": "table"}, {"database_name": database_name}]}
+        return [
+            {
+                "table": metadata.get("table_name"),
+                "purpose": self._extract_field(document, "Purpose:"),
+                "primary_keys": self._split_metadata_list(
+                    metadata.get("primary_keys")
+                ),
+                "unique_keys": self._split_metadata_list(metadata.get("unique_keys")),
+            }
+            for metadata, document in self._get_with_documents(where)
+        ]
 
     def count_tables_in_database(self, database_name: str) -> int:
-        result = self.collection.get(
-            where={"$and": [{"chunk_type": "table"}, {"database_name": database_name}]},
-            include=[],
-        )
-        return len(result.get("ids", []))
+        """Return the number of tables in a database.
+
+        Args:
+            database_name: The database to count tables for.
+        """
+        where = {"$and": [{"chunk_type": "table"}, {"database_name": database_name}]}
+        return self._count(where)
 
     def get_columns_by_table(
         self, database_name: str, table_names: List[str]
     ) -> Dict[str, List[Dict[str, Any]]]:
-        result = self.collection.get(
-            where={
-                "$and": [
-                    {"chunk_type": "column"},
-                    {"database_name": database_name},
-                    {"table_name": {"$in": table_names}},
-                ]
-            },
-            include=["metadatas", "documents"],
-        )
+        """Fetch and parse the column definitions for a set of tables in one database.
 
-        table_columns: Dict[str, List[Dict[str, Any]]] = {}
-        for metadata, document in zip(
-            result.get("metadatas", []), result.get("documents", [])
-        ):
-            table_name = metadata.get("table_name")
-            table_columns[table_name] = self._parse_column_lines(document)
+        Args:
+            database_name: The database the tables belong to.
+            table_names: Tables to fetch columns for.
+
+        Returns:
+            Mapping of table name to its parsed column list; tables with no
+            matching column chunk still get an (empty) entry.
+        """
+        where = {
+            "$and": [
+                {"chunk_type": "column"},
+                {"database_name": database_name},
+                {"table_name": {"$in": table_names}},
+            ]
+        }
+        table_columns: Dict[str, List[Dict[str, Any]]] = {
+            metadata.get("table_name"): self._parse_column_lines(document)
+            for metadata, document in self._get_with_documents(where)
+        }
 
         # Tables that exist but had no matching column chunk still get an
         # (empty) entry so callers can distinguish "no columns found" from
@@ -229,8 +294,19 @@ class KnowledgeBaseRetriever:
     # Internal helpers
     # ------------------------------------------------------------------
 
+    def _get_with_documents(self, where: Dict[str, Any]):
+        """Fetch matching chunks with metadata+document included, paired up."""
+        result = self.collection.get(where=where, include=["metadatas", "documents"])
+        return zip(result.get("metadatas", []), result.get("documents", []))
+
+    def _count(self, where: Dict[str, Any]) -> int:
+        """Count chunks matching a filter without fetching their content."""
+        result = self.collection.get(where=where, include=[])
+        return len(result.get("ids", []))
+
     @staticmethod
     def _extract_field(content: str, prefix: str) -> Optional[str]:
+        """Return the text after the first line starting with prefix, or None if absent."""
         for line in content.split("\n"):
             line = line.strip()
             if line.startswith(prefix):
@@ -239,12 +315,18 @@ class KnowledgeBaseRetriever:
 
     @staticmethod
     def _split_metadata_list(value: Optional[str]) -> List[str]:
+        """Split a comma-joined metadata string into a list, dropping empty entries."""
         if not value:
             return []
         return [v for v in value.split(",") if v]
 
     @staticmethod
     def _parse_column_lines(content: str) -> List[Dict[str, Any]]:
+        """Parse a table-columns chunk's body into per-column dicts via _COLUMN_LINE_RE.
+
+        Best-effort reconstruction of name/data_type/key_type/nullable/description/
+        category from free text joined with plain spaces (see module docstring).
+        """
         columns = []
         for line in content.split("\n"):
             line = line.strip()

@@ -21,6 +21,7 @@ class QueryPlannerAgent(BaseAgent):
     """Agent responsible for creating a logical query plan."""
 
     def __init__(self, model_wrapper, retriever=None):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.QUERY_PLANNER, model_wrapper)
         self._retriever = retriever
 

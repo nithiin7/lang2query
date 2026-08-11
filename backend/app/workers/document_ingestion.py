@@ -71,6 +71,14 @@ class DocumentIngestionPipeline:
         self.chunker = KnowledgeBaseChunker()
 
     def create_or_get_collection(self, reset: bool = False):
+        """Get the ChromaDB collection, creating it if absent (or recreating it if reset).
+
+        Args:
+            reset: If True, delete any existing collection with this name first.
+
+        Returns:
+            The ChromaDB collection, ready for chunk insertion.
+        """
         embedding_function = BGE_M3_EmbeddingFunction(self.model)
 
         if reset:
@@ -146,6 +154,11 @@ class DocumentIngestionPipeline:
         return [c for c in batch if c.chunk_id not in existing_ids]
 
     def _normalize_metadata(self, chunk) -> Dict[str, Any]:
+        """Flatten a chunk's metadata into ChromaDB-compatible scalar values.
+
+        List values are joined into comma-separated strings, since ChromaDB
+        metadata values must be scalars.
+        """
         metadata = {
             k: (",".join(str(x) for x in v) if isinstance(v, list) else v)
             for k, v in chunk.metadata.items()
@@ -378,6 +391,7 @@ class DocumentIngestionPipeline:
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse CLI arguments for the ingestion pipeline entrypoint."""
     parser = argparse.ArgumentParser(description="Create Knowledge Base embeddings")
     parser.add_argument(
         "--md-dir",

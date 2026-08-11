@@ -68,6 +68,7 @@ class QueryValidation(BaseModel):
     @field_validator('verdict')
     @classmethod
     def validate_verdict(cls, v):
+        """Normalize verdict to uppercase and reject anything other than YES/NO."""
         if v.upper() not in ['YES', 'NO']:
             raise ValueError('verdict must be either "YES" or "NO"')
         return v.upper()
@@ -92,6 +93,7 @@ class HumanFeedback(BaseModel):
     @field_validator('approval_status')
     @classmethod
     def validate_approval_status(cls, v):
+        """Normalize approval_status to uppercase and reject unknown values."""
         if v.upper() not in ['APPROVE', 'MODIFY', 'REJECT']:
             raise ValueError('approval_status must be APPROVE, MODIFY, or REJECT')
         return v.upper()
@@ -99,6 +101,7 @@ class HumanFeedback(BaseModel):
     @field_validator('modification_type')
     @classmethod
     def validate_modification_type(cls, v):
+        """Normalize modification_type to lowercase and reject unknown values."""
         valid_types = ['approve', 'replace', 'add', 'remove', 'modify']
         if v.lower() not in valid_types:
             raise ValueError(f'modification_type must be one of: {valid_types}')

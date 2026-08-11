@@ -57,6 +57,7 @@ def _try_strategies(strategies: list[tuple[str, Callable]]):
 
 
 def _download_bge_m3_via_sentence_transformers(model_name: str, local_model_path: Path):
+    """Download BGE-M3 as a SentenceTransformer and save it to local_model_path."""
     model = SentenceTransformer(model_name, trust_remote_code=True)
     model.save(str(local_model_path))
     return model
@@ -100,6 +101,8 @@ def _write_bge_m3_sentence_transformer_config(local_model_path: Path):
 
 
 def _download_bge_m3_via_transformers(model_name: str, local_model_path: Path):
+    """Download BGE-M3 via raw tokenizer/model classes, then patch in the
+    SentenceTransformer wrapper config so the result can be reloaded as one."""
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     model_transformer = AutoModel.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.save_pretrained(str(local_model_path))
@@ -110,6 +113,7 @@ def _download_bge_m3_via_transformers(model_name: str, local_model_path: Path):
 
 
 def _test_bge_m3(model: SentenceTransformer):
+    """Encode a few sample sentences and print embedding stats as a smoke test."""
     print("\nTesting model...")
     test_sentences = [
         "This is a test sentence.",
@@ -171,6 +175,7 @@ LLAMA_MODEL_NAME = "context-labs/meta-llama-Llama-3.2-3B-Instruct-FP16"
 
 
 def _load_llama_from_cache(local_model_path: Path):
+    """Load a previously-downloaded LLaMA tokenizer and model from local_model_path."""
     tokenizer = AutoTokenizer.from_pretrained(
         str(local_model_path), trust_remote_code=True
     )
@@ -184,6 +189,7 @@ def _load_llama_from_cache(local_model_path: Path):
 
 
 def _download_llama_default(model_name: str, local_model_path: Path):
+    """Download the LLaMA tokenizer and model with default settings and save them locally."""
     print("Downloading tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
@@ -202,6 +208,8 @@ def _download_llama_default(model_name: str, local_model_path: Path):
 
 
 def _download_llama_low_memory(model_name: str, local_model_path: Path):
+    """Download the LLaMA tokenizer and model using a reduced-memory fallback
+    (float16 weights, slow tokenizer, low_cpu_mem_usage) and save them locally."""
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
         trust_remote_code=True,
@@ -220,6 +228,7 @@ def _download_llama_low_memory(model_name: str, local_model_path: Path):
 
 
 def _test_llama(model, tokenizer, local_model_path: Path):
+    """Generate a sample response from the model and print it as a smoke test."""
     print("\nTesting model...")
     prompt = "Give me a short introduction to large language models."
     messages = [{"role": "user", "content": prompt}]
@@ -326,6 +335,7 @@ MODEL_OPTIONS = {
 
 
 def main():
+    """Run the interactive CLI: prompt for a model choice, download it, and print usage info."""
     print("Unified Model Download Script")
     print("=" * 60)
 

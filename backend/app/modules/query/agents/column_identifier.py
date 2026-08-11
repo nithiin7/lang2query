@@ -21,6 +21,7 @@ class ColumnIdentifier(BaseAgent):
     """Agent responsible for identifying relevant columns for the query."""
 
     def __init__(self, model_wrapper, retriever=None):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.COLUMN_IDENTIFIER, model_wrapper)
         self._retriever = retriever
 

@@ -5,20 +5,28 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from api.dependencies import get_workflow
-from api.mapping import state_summary_to_query_response
-from api.websocket_query import process_workflow_stream, send_final_result
 from core.config import KB_DIRECTORY
 from models import QueryRequest
+from services.system_services import SystemServices
 
 router = APIRouter()
 
 
 def _kb_ready() -> bool:
+    """Check whether the ChromaDB knowledge base has been built."""
     return (KB_DIRECTORY / "chroma.sqlite3").exists()
 
 
 @router.post("/query")
 def query(request: QueryRequest) -> Dict[str, Any]:
+    """Run the Text2Query workflow synchronously and return the final response.
+
+    Args:
+        request: The natural-language query request.
+
+    Returns:
+        The mapped query response (status, generated query, execution metadata, etc.).
+    """
     user_query = request.query.strip()
 
     if not user_query:
@@ -36,7 +44,7 @@ def query(request: QueryRequest) -> Dict[str, Any]:
 
     summary = wf.get_workflow_summary(final_state)
     summary["execution_time"] = f"{time.time() - start:.2f} seconds"
-    response = state_summary_to_query_response(summary)
+    response = SystemServices.state_summary_to_query_response(summary)
     response["status"] = (
         "Success"
         if summary.get("status")
@@ -98,7 +106,7 @@ async def websocket_query(websocket: WebSocket):
 
         print(f"Starting workflow streaming for query: {user_query[:50]}...")
 
-        cancelled, final_state, update_count = await process_workflow_stream(
+        cancelled, final_state, update_count = await SystemServices.process_workflow_stream(
             websocket, wf, user_query, interaction_mode, start_time
         )
 
@@ -107,7 +115,7 @@ async def websocket_query(websocket: WebSocket):
             print(f"Workflow cancelled after {update_count} updates")
         elif final_state:
             print(f"Workflow streaming completed. Total updates: {update_count}")
-            await send_final_result(websocket, final_state, wf, start_time)
+            await SystemServices.send_final_result(websocket, final_state, wf, start_time)
 
     except WebSocketDisconnect:
         print("WebSocket client disconnected")

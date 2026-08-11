@@ -10,6 +10,11 @@ from core.logging import setup_colored_logging
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """FastAPI lifespan hook: configure colored logging on startup.
+
+    Args:
+        app: The FastAPI application instance.
+    """
     # Startup
     setup_colored_logging()
     yield
@@ -18,6 +23,11 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    """Build and configure the Text2Query FastAPI application.
+
+    Returns:
+        The configured FastAPI app, with CORS middleware and all routers registered.
+    """
     # Load environment from .env at project root if present
     load_dotenv()
 
@@ -38,8 +48,7 @@ def create_app() -> FastAPI:
     )
 
     # Register routers
-    from api.routes.query import router as query_router
-    from api.routes.system import router as system_router
+    from api.routes.routes import query_router, system_router
 
     app.include_router(system_router)
     app.include_router(query_router)
@@ -48,6 +57,7 @@ def create_app() -> FastAPI:
 
 
 def main() -> None:
+    """CLI entrypoint: build the app and serve it with uvicorn using API_HOST/API_PORT."""
     import uvicorn
 
     app = create_app()

@@ -22,6 +22,7 @@ class MetadataAgent(BaseAgent):
     """Agent responsible for handling metadata queries."""
 
     def __init__(self, model_wrapper, tools: List = None, retriever=None):
+        """Initialize the agent, defaulting its retrieval tools from retriever if tools isn't given."""
         super().__init__(AgentType.METADATA_AGENT, model_wrapper)
 
         self.retriever = retriever

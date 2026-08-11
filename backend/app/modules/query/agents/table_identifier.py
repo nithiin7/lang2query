@@ -21,6 +21,7 @@ class TableIdentifier(BaseAgent):
     """Agent responsible for identifying relevant tables from selected databases."""
 
     def __init__(self, model_wrapper, retriever=None):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.TABLE_SCHEMA_RETRIEVER, model_wrapper)
         self._retriever = retriever
 

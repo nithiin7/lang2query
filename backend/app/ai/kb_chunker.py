@@ -9,73 +9,13 @@ import logging
 import os
 import re
 import sys
-from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
+
+from ai.schema import ColumnChunk, DatabaseChunk, TableChunk
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class DatabaseChunk:
-    """Represents a database-level chunk of documentation"""
-
-    chunk_id: str
-    chunk_type: Literal["database"]
-    content: str
-    metadata: Dict[str, Any]
-
-    def to_dict(self):
-        metadata = dict(self.metadata)
-        if "chunk_type" not in metadata:
-            metadata["chunk_type"] = self.chunk_type
-        return {
-            "chunk_id": self.chunk_id,
-            "content": self.content,
-            "metadata": metadata,
-        }
-
-
-@dataclass
-class TableChunk:
-    """Represents a table-level chunk of documentation"""
-
-    chunk_id: str
-    chunk_type: Literal["table"]
-    content: str
-    metadata: Dict[str, Any]
-
-    def to_dict(self):
-        metadata = dict(self.metadata)
-        if "chunk_type" not in metadata:
-            metadata["chunk_type"] = self.chunk_type
-        return {
-            "chunk_id": self.chunk_id,
-            "content": self.content,
-            "metadata": metadata,
-        }
-
-
-@dataclass
-class ColumnChunk:
-    """Represents a column-level chunk of documentation"""
-
-    chunk_id: str
-    chunk_type: Literal["column"]
-    content: str
-    metadata: Dict[str, Any]
-
-    def to_dict(self):
-        # Ensure chunk_type is in metadata
-        metadata = dict(self.metadata)
-        if "chunk_type" not in metadata:
-            metadata["chunk_type"] = self.chunk_type
-        return {
-            "chunk_id": self.chunk_id,
-            "content": self.content,
-            "metadata": metadata,
-        }
 
 
 class KnowledgeBaseChunker:
@@ -88,6 +28,7 @@ class KnowledgeBaseChunker:
     """
 
     def __init__(self):
+        """Initialize empty chunk and parsing-error accumulators."""
         self.chunks = []
         self.parsing_errors = []
 
@@ -100,9 +41,6 @@ class KnowledgeBaseChunker:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-
-            # Extract basic info
-            workbook, sheet = self._extract_file_info(content)
 
             # Parse database info
             db_info = self._parse_database_info(content)
@@ -144,16 +82,6 @@ class KnowledgeBaseChunker:
             logger.error(f"Error parsing {file_path}: {str(e)}")
             self.parsing_errors.append(f"Error parsing {file_path}: {str(e)}")
             return []
-
-    def _extract_file_info(self, content: str) -> Tuple[str, str]:
-        """Extract workbook and sheet information"""
-        workbook_match = re.search(r"# Workbook: (.+?)\.xlsx", content)
-        sheet_match = re.search(r"## Sheet: (.+?)(?:\n|$)", content)
-
-        workbook = workbook_match.group(1) if workbook_match else "Unknown"
-        sheet = sheet_match.group(1) if sheet_match else "Unknown"
-
-        return workbook, sheet
 
     def _parse_database_info(self, content: str) -> Optional[Dict[str, Any]]:
         """Parse database information section"""
@@ -317,14 +245,17 @@ class KnowledgeBaseChunker:
             chunk_id=chunk_id, chunk_type="database", content=content, metadata=metadata
         )
 
+    @staticmethod
+    def _columns_with_key(columns: List[Dict[str, Any]], key_type: str) -> List[str]:
+        """Return names of columns whose `key` field matches key_type ('PRI', 'UNI', or 'MUL')."""
+        return [c["name"] for c in columns if c.get("key", "").upper() == key_type]
+
     def _create_table_summary_chunk(
         self,
         table: Dict[str, Any],
         db_name: str,
         module_name: str,
         db_purpose: str = "",
-        primary_keys: List[str] = None,
-        unique_keys: List[str] = None,
     ) -> TableChunk:
         """Create streamlined table summary chunk"""
         table_name = table["table_name"]
@@ -333,16 +264,9 @@ class KnowledgeBaseChunker:
         # Simple content - just table name and purpose
         content = f"Table: {table_name}\nPurpose: {table_purpose}"
 
-        # Extract primary keys and unique keys from table columns
         columns = table.get("columns", [])
-        if primary_keys is None:
-            primary_keys = [
-                c["name"] for c in columns if c.get("key", "").upper() == "PRI"
-            ]
-        if unique_keys is None:
-            unique_keys = [
-                c["name"] for c in columns if c.get("key", "").upper() == "UNI"
-            ]
+        primary_keys = self._columns_with_key(columns, "PRI")
+        unique_keys = self._columns_with_key(columns, "UNI")
 
         # Minimal metadata for filtering
         metadata = {
@@ -399,12 +323,9 @@ class KnowledgeBaseChunker:
         content = "\n".join(content_lines)
 
         # Extract useful metadata for SQL generation
-        # primary_keys = [col['name'] for col in columns if 'PRI' in col.get('key', '')]
-        primary_keys = [c["name"] for c in columns if c.get("key", "").upper() == "PRI"]
-        unique_columns = [
-            c["name"] for c in columns if c.get("key", "").upper() == "UNI"
-        ]
-        indexed_cols = [c["name"] for c in columns if c.get("key", "").upper() == "MUL"]
+        primary_keys = self._columns_with_key(columns, "PRI")
+        unique_columns = self._columns_with_key(columns, "UNI")
+        indexed_cols = self._columns_with_key(columns, "MUL")
 
         # Metadata focused on what's needed for SQL generation
         metadata = {
@@ -453,46 +374,12 @@ class KnowledgeBaseChunker:
         logger.info(f"Saved {len(chunks)} chunks to {output_path}")
 
 
-def print_all_chunks(chunks: List[Union["DatabaseChunk", "TableChunk", "ColumnChunk"]]):
-    """Print all chunks in a detailed, readable format"""
-    print("\n" + "=" * 80)
-    print("STREAMLINED CHUNKS")
-    print("=" * 80 + "\n")
-
-    # Group chunks by type
-    db_chunks = [c for c in chunks if c.chunk_type == "database"]
-    table_chunks = [c for c in chunks if c.chunk_type == "table"]
-    column_chunks = [c for c in chunks if c.chunk_type == "column"]
-
-    # Print database chunks
-    print(f"\n{'='*35} DATABASE CHUNKS ({len(db_chunks)}) {'='*35}")
-    for i, chunk in enumerate(db_chunks, 1):
-        print(f"\n--- Chunk {i} ---")
-        print(f"Chunk ID: {chunk.chunk_id}")
-        print(f"\nCONTENT:")
-        print("-" * 60)
-        print(chunk.content)
-        print("-" * 60)
-        print(f"\nMETADATA:")
-        print(json.dumps(chunk.metadata, indent=2))
-        print("\n" + "=" * 80)
-
-    # Print table chunks
-    print(f"\n{'='*35} TABLE CHUNKS ({len(table_chunks)}) {'='*35}")
-    for i, chunk in enumerate(table_chunks, 1):
-        print(f"\n--- Chunk {i} ---")
-        print(f"Chunk ID: {chunk.chunk_id}")
-        print(f"\nCONTENT:")
-        print("-" * 60)
-        print(chunk.content)
-        print("-" * 60)
-        print(f"\nMETADATA:")
-        print(json.dumps(chunk.metadata, indent=2))
-        print("\n" + "=" * 80)
-
-    # Print column chunks
-    print(f"\n{'='*35} COLUMN CHUNKS ({len(column_chunks)}) {'='*35}")
-    for i, chunk in enumerate(column_chunks, 1):
+def _print_chunk_group(
+    label: str, chunks: List[Union["DatabaseChunk", "TableChunk", "ColumnChunk"]]
+) -> None:
+    """Print one labeled group (database/table/column) of chunks in detail."""
+    print(f"\n{'='*35} {label} ({len(chunks)}) {'='*35}")
+    for i, chunk in enumerate(chunks, 1):
         print(f"\n--- Chunk {i} ---")
         print(f"Chunk ID: {chunk.chunk_id}")
         print("\nCONTENT:")
@@ -502,6 +389,51 @@ def print_all_chunks(chunks: List[Union["DatabaseChunk", "TableChunk", "ColumnCh
         print("\nMETADATA:")
         print(json.dumps(chunk.metadata, indent=2))
         print("\n" + "=" * 80)
+
+
+def print_all_chunks(chunks: List[Union["DatabaseChunk", "TableChunk", "ColumnChunk"]]):
+    """Print all chunks in a detailed, readable format"""
+    print("\n" + "=" * 80)
+    print("STREAMLINED CHUNKS")
+    print("=" * 80 + "\n")
+
+    _print_chunk_group(
+        "DATABASE CHUNKS", [c for c in chunks if c.chunk_type == "database"]
+    )
+    _print_chunk_group("TABLE CHUNKS", [c for c in chunks if c.chunk_type == "table"])
+    _print_chunk_group(
+        "COLUMN CHUNKS", [c for c in chunks if c.chunk_type == "column"]
+    )
+
+
+def _print_parsing_errors(chunker: KnowledgeBaseChunker) -> None:
+    """Print any parsing errors the chunker accumulated while processing files."""
+    if chunker.parsing_errors:
+        print(f"\n Parsing errors encountered: {len(chunker.parsing_errors)}")
+        for error in chunker.parsing_errors:
+            print(f"  - {error}")
+
+
+def _process_file(
+    chunker: KnowledgeBaseChunker, file_path: str, output_dir: str, quiet: bool
+) -> List[Union["DatabaseChunk", "TableChunk", "ColumnChunk"]]:
+    """Parse one markdown file, optionally print its chunks, and save them to JSON."""
+    print(f"\nProcessing file: {file_path}")
+    print("-" * 60)
+    chunks = chunker.parse_markdown_file(file_path)
+
+    if not chunks:
+        print(f"No chunks were created from {file_path}")
+        return chunks
+
+    if not quiet:
+        print_all_chunks(chunks)
+
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
+    out_file = os.path.join(output_dir, f"{base_name}_chunks.json")
+    chunker.save_chunks_to_json(chunks, out_file)
+
+    return chunks
 
 
 def main():
@@ -548,62 +480,34 @@ def main():
             print(f"No .md files found in folder: {input_path}")
             sys.exit(1)
 
-        total_chunks = 0
-        processed_files = 0
-
         print(f"\nProcessing {len(md_files)} markdown files from: {input_path}")
         print("-" * 60)
 
+        total_chunks = 0
+        processed_files = 0
         for fp in md_files:
-            print(f"\nProcessing file: {fp}")
-            print("-" * 60)
-            chunks = chunker.parse_markdown_file(fp)
+            chunks = _process_file(chunker, fp, output_dir, quiet)
+            if chunks:
+                processed_files += 1
+                total_chunks += len(chunks)
 
-            if not chunks:
-                print(f"No chunks were created from {fp}")
-                continue
-
-            if not quiet:
-                print_all_chunks(chunks)
-
-            base_name = os.path.splitext(os.path.basename(fp))[0]
-            out_file = os.path.join(output_dir, f"{base_name}_chunks.json")
-            chunker.save_chunks_to_json(chunks, out_file)
-
-            processed_files += 1
-            total_chunks += len(chunks)
-
-        # Summary for directory processing
         print(f"\n{'='*35} SUMMARY {'='*35}")
         print(f"Files processed: {processed_files}/{len(md_files)}")
         print(f"Total chunks created: {total_chunks}")
-        if chunker.parsing_errors:
-            print(f"\n Parsing errors encountered: {len(chunker.parsing_errors)}")
-            for error in chunker.parsing_errors:
-                print(f"  - {error}")
+        _print_parsing_errors(chunker)
 
         sys.exit(0)
 
     # If single file:
     if os.path.isfile(input_path):
-        print(f"\nProcessing file: {input_path}")
-        print("-" * 60)
-        chunks = chunker.parse_markdown_file(input_path)
+        chunks = _process_file(chunker, input_path, output_dir, quiet)
 
         if not chunks:
-            print(f"\nNo chunks were created from {input_path}")
-            if chunker.parsing_errors:
-                print("\nErrors encountered:")
-                for error in chunker.parsing_errors:
-                    print(f"  - {error}")
+            _print_parsing_errors(chunker)
             sys.exit(1)
-
-        if not quiet:
-            print_all_chunks(chunks)
 
         base_name = os.path.splitext(os.path.basename(input_path))[0]
         json_output_file = os.path.join(output_dir, f"{base_name}_chunks.json")
-        chunker.save_chunks_to_json(chunks, json_output_file)
 
         # Print summary
         print(f"\n{'='*35} SUMMARY {'='*35}")
@@ -615,10 +519,7 @@ def main():
         print(f"Column chunks: {len([c for c in chunks if c.chunk_type == 'column'])}")
         print(f"\nChunks saved to: {json_output_file}")
 
-        if chunker.parsing_errors:
-            print(f"\n Parsing errors encountered: {len(chunker.parsing_errors)}")
-            for error in chunker.parsing_errors:
-                print(f"  - {error}")
+        _print_parsing_errors(chunker)
         sys.exit(0)
 
     print(f"Error: Path is neither a file nor a directory: {input_path}")

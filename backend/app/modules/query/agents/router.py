@@ -22,6 +22,7 @@ class RouterAgent(BaseAgent):
     """Agent responsible for routing queries based on their type and requirements."""
 
     def __init__(self, model_wrapper):
+        """Initialize the agent with its model wrapper."""
         super().__init__(AgentType.LLM_ROUTER, model_wrapper)
 
     def process(self, state: AgentState) -> AgentResult:

@@ -21,6 +21,7 @@ class DatabaseIdentifierAgent(BaseAgent):
     """Agent responsible for identifying relevant databases for the query."""
 
     def __init__(self, model_wrapper, retriever=None):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.DATABASE_IDENTIFIER, model_wrapper)
 
         self._retriever = retriever

@@ -23,6 +23,7 @@ class QueryValidatorAgent(BaseAgent):
     """Lightweight validator that compares user query vs generated query."""
 
     def __init__(self, model_wrapper, retriever=None):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.QUERY_VALIDATOR, model_wrapper)
         self._retriever = retriever
 

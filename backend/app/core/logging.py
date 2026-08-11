@@ -48,9 +48,11 @@ class ColoredFormatter(logging.Formatter):
     }
 
     def __init__(self, fmt=None, datefmt=None, style="%"):
+        """Initialize the formatter, delegating to logging.Formatter."""
         super().__init__(fmt, datefmt, style)
 
     def format(self, record):
+        """Render a log record with level/logger/timestamp coloring and message highlighting."""
         # Get color for level
         level_color = self.LEVEL_COLORS.get(record.levelno, Colors.WHITE)
 

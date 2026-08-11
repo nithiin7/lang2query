@@ -7,11 +7,13 @@ router = APIRouter()
 
 @router.get("/health")
 def health() -> Dict[str, str]:
+    """Liveness check endpoint."""
     return {"status": "ok"}
 
 
 @router.get("/workflow/steps")
 def workflow_steps() -> List[Dict[str, str]]:
+    """Return the static list of workflow step names/descriptions for the frontend UI."""
     steps = [
         {"name": "Router", "description": "Analyzing query type"},
         {"name": "Metadata Agent", "description": "Processing metadata queries"},

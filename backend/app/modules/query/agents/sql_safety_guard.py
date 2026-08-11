@@ -74,6 +74,7 @@ class SQLSafetyGuardAgent(BaseAgent):
     """Deterministic guardrail rejecting any non-read-only generated SQL."""
 
     def __init__(self, model_wrapper):
+        """Initialize the agent with its model wrapper (unused by this deterministic check)."""
         super().__init__(AgentType.SQL_SAFETY_GUARD, model_wrapper)
 
     def process(self, state: AgentState) -> AgentResult:

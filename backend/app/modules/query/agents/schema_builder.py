@@ -24,6 +24,7 @@ class SchemaBuilderAgent(BaseAgent):
     def __init__(
         self, model_wrapper, retriever: Optional[KnowledgeBaseRetriever] = None
     ):
+        """Initialize the agent with its model wrapper and optional knowledge-base retriever."""
         super().__init__(AgentType.SCHEMA_BUILDER, model_wrapper)
         self._retriever = retriever
 
@@ -365,6 +366,7 @@ class SchemaBuilderAgent(BaseAgent):
         return "\n".join(sections)
 
     def _format_databases_section(self, databases: Dict[str, Any]) -> List[str]:
+        """Render the "**DATABASES:**" section listing each database's system/module/purpose."""
         if not databases:
             return []
 
@@ -379,6 +381,7 @@ class SchemaBuilderAgent(BaseAgent):
         return lines
 
     def _extract_purpose_from_content(self, content: Optional[str]) -> str:
+        """Return the text after a "Purpose:" line in content, or "" if absent."""
         if not content:
             return ""
         for ln in content.split("\n"):
@@ -387,6 +390,7 @@ class SchemaBuilderAgent(BaseAgent):
         return ""
 
     def _format_tables_section(self, tables: Dict[str, Dict[str, Any]]) -> List[str]:
+        """Render the "**TABLES & COLUMNS:**" section covering every table in tables."""
         if not tables:
             return []
 
@@ -396,6 +400,7 @@ class SchemaBuilderAgent(BaseAgent):
         return lines
 
     def _format_single_table(self, table_data: Dict[str, Any]) -> List[str]:
+        """Render one table's purpose, columns, primary keys, and unique columns."""
         db_name = table_data["database"]
         table_name = table_data["table"]
         lines = [f"\n**{db_name}.{table_name}**"]
@@ -419,6 +424,7 @@ class SchemaBuilderAgent(BaseAgent):
         return lines
 
     def _format_single_column(self, col: Dict[str, Any]) -> str:
+        """Render one column's name, type, description, and constraint tags (PK/UNIQUE/etc)."""
         parts = [f"      • {col['name']} ({col['data_type']})"]
         if col.get("description"):
             parts.append(f" - {col['description']}")
