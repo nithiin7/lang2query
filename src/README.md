@@ -109,8 +109,7 @@ src/
 │   ├── __init__.py
 │   ├── agent.py            # Agent utilities
 │   ├── chatgpt.py          # OpenAI integration
-│   ├── langchain.py        # LangChain utilities
-│   └── nvidia.py           # NVIDIA API integration
+│   └── langchain.py        # LangChain utilities
 ├── utils/                   # Utilities
 │   ├── __init__.py
 │   ├── chunk_parsers.py    # Chunk parsing
@@ -136,10 +135,6 @@ export OPENAI_MODEL="gpt-4o"  # or gpt-4o-mini
 export OLLAMA_BASE_URL="http://localhost:11434"
 export OLLAMA_MODEL="llama3.1"
 
-# NVIDIA Configuration
-export NVIDIA_API_KEY="your-nvidia-api-key"
-export NVIDIA_BASE_URL="https://api.nvcf.nvidia.com/v1"
-
 # Database Configuration
 export DATABASE_URL="postgresql://user:pass@localhost/db"
 export KB_DIRECTORY="./src/kb"
@@ -150,12 +145,11 @@ export COLLECTION_NAME="sql_generation_kb"
 
 ```python
 # LLM Provider
-PROVIDER = "chatgpt"  # "chatgpt", "ollama", "nvidia", "local"
+PROVIDER = "chatgpt"  # "chatgpt", "ollama", "local"
 
 # Model Settings
 OPENAI_MODEL = "gpt-4o"
 OLLAMA_MODEL = "llama3.1"
-NVIDIA_MODEL = "meta/llama3-70b"
 
 # Knowledge Base
 KB_DIRECTORY = "./src/kb"

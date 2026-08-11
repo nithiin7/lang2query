@@ -258,7 +258,6 @@ class SchemaBuilderAgent(BaseAgent):
         columns = []
 
         try:
-            column_names = metadata.get("column_names", [])
             primary_keys = set(metadata.get("primary_keys", []))
             unique_keys = set(metadata.get("unique_keys", []))
             indexed_columns = set(metadata.get("indexed_columns", []))
@@ -280,7 +279,6 @@ class SchemaBuilderAgent(BaseAgent):
                 data_type = parts[1]
 
                 # Find constraints and nullable info
-                constraints_part = ""
                 nullable_part = ""
                 description_parts = []
 

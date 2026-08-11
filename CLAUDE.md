@@ -12,7 +12,7 @@ The core idea: instead of one LLM call given the whole schema and asked to "writ
 
 ## 2. Tech stack
 
-**Backend** (`src/`): Python, FastAPI (REST + WebSocket), LangGraph (agent orchestration via `StateGraph`), Pydantic (typed state + structured LLM outputs), ChromaDB (vector store), `sentence-transformers` running BGE-M3 locally for embeddings. LLM providers are pluggable: Ollama (local), OpenAI/ChatGPT, NVIDIA, and local HF models — selected via `src/config.py` / env vars.
+**Backend** (`src/`): Python, FastAPI (REST + WebSocket), LangGraph (agent orchestration via `StateGraph`), Pydantic (typed state + structured LLM outputs), ChromaDB (vector store), `sentence-transformers` running BGE-M3 locally for embeddings. LLM providers are pluggable: Ollama (local), OpenAI/ChatGPT, and local HF models — selected via `src/config.py` / env vars.
 
 **Frontend** (`app/`): Next.js 15, React 19, TypeScript, Tailwind CSS, native WebSocket client for streaming workflow state.
 
@@ -46,7 +46,7 @@ Key mechanisms — know these cold before touching the `workflow/` package:
 src/
 ├── agents/          # One file per LangGraph node. Each agent: read AgentState in, return AgentResult (state_updates) out. No cross-agent side effects.
 ├── api/              # FastAPI routes + request/response mapping/serialization. HTTP/WS concerns only — no business logic here.
-├── lib/              # LLM provider abstraction (ModelWrapper + provider-specific implementations: ollama, chatgpt, nvidia). New provider = new file here, same interface.
+├── lib/              # LLM provider abstraction (ModelWrapper + provider-specific implementations: ollama, chatgpt). New provider = new file here, same interface.
 ├── models/            # Pydantic schemas: AgentState, per-agent output schemas, API request/response models. Single source of truth for shapes.
 ├── retriever/        # Ingestion (chunking + embedding) pipeline, plus the query-side retriever. [Renamed from `retreiver` — see Section 6.]
 ├── tools/            # LangChain @tool-decorated functions the LLM can call (retrieval, date utilities, etc.)

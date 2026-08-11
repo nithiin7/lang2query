@@ -20,7 +20,6 @@ from transformers import (
 )
 
 from .langchain import LangChainOllamaWrapper
-from .nvidia import NvidiaWrapper
 from .chatgpt import LangChainChatGPTWrapper
 import config as app_config
 
@@ -61,7 +60,6 @@ class ModelWrapper:
         self.timeout = timeout
     
         self.langchain_wrapper = None
-        self.nvidia_wrapper = None
         self.chatgpt_wrapper = None
 
         self.provider = getattr(app_config, "PROVIDER", None)
@@ -83,9 +81,7 @@ class ModelWrapper:
         self.use_quantization = use_quantization and self.device == "cuda"
         self.model_info = {}
 
-        if self.provider == "nvidia":
-            self._initialize_nvidia_wrapper()
-        elif self.provider == "ollama":
+        if self.provider == "ollama":
             self._initialize_langchain_ollama()
         elif self.provider == "chatgpt":
             self._initialize_chatgpt_wrapper()
@@ -108,28 +104,6 @@ class ModelWrapper:
 
         except Exception as e:
             logger.error(f"Failed to initialize LangChain Ollama wrapper: {e}")
-            raise
-
-    def _initialize_nvidia_wrapper(self):
-        """Initialize NVIDIA wrapper."""
-        try:
-            nvidia_base_url = getattr(app_config, "BASE_URL", None)
-            nvidia_provider = getattr(app_config, "PROVIDER", "nvidia")
-            nvidia_model = getattr(app_config, "MODEL", None)
-
-            self.nvidia_wrapper = NvidiaWrapper(
-                base_url=nvidia_base_url,
-                provider=nvidia_provider,
-                model=nvidia_model,
-                timeout=self.timeout,
-                default_temperature=self.default_temperature,
-                default_top_p=self.default_top_p,
-                default_max_tokens=self.default_max_tokens
-            )
-            logger.info("NVIDIA wrapper initialized successfully")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize NVIDIA wrapper: {e}")
             raise
 
     def _initialize_chatgpt_wrapper(self):
@@ -292,16 +266,7 @@ class ModelWrapper:
         Returns:
             Instance of the Pydantic schema class
         """
-        if self.provider == "nvidia" and self.nvidia_wrapper:
-            return self.nvidia_wrapper.generate(
-                schema_class=schema_class,
-                tools=tools,
-                system_message=system_message,
-                human_message=human_message,
-                **kwargs
-            )
-
-        elif self.provider == "ollama" and self.langchain_wrapper:
+        if self.provider == "ollama" and self.langchain_wrapper:
             return self.langchain_wrapper.generate(
                 schema_class=schema_class,
                 tools=tools,
@@ -320,7 +285,7 @@ class ModelWrapper:
             )
 
 
-        raise NotImplementedError("Structured output is not supported for local models. Use 'ollama' or 'nvidia' provider instead.")
+        raise NotImplementedError("Structured output is not supported for local models. Use 'ollama' or 'chatgpt' provider instead.")
 
     def cleanup(self):
         """Clean up resources, especially GPU memory used by local models."""
@@ -346,11 +311,6 @@ class ModelWrapper:
                 # LangChain wrapper cleanup (if needed)
                 self.langchain_wrapper = None
                 logger.info("✅ LangChain wrapper cleaned up")
-
-            if hasattr(self, 'nvidia_wrapper') and self.nvidia_wrapper:
-                # NVIDIA wrapper cleanup (if needed)
-                self.nvidia_wrapper = None
-                logger.info("✅ NVIDIA wrapper cleaned up")
 
             if hasattr(self, 'chatgpt_wrapper') and self.chatgpt_wrapper:
                 # ChatGPT wrapper cleanup (if needed)
@@ -380,10 +340,7 @@ class ModelWrapper:
     
     def get_model_info(self) -> Dict[str, Any]:
         """Get information about the loaded model."""
-        if self.provider == "nvidia" and self.nvidia_wrapper:
-            return self.nvidia_wrapper.get_model_info()
-
-        elif self.provider == "ollama" and self.langchain_wrapper:
+        if self.provider == "ollama" and self.langchain_wrapper:
             return {
                 "model_type": "ollama",
                 "base_url": self.base_url,

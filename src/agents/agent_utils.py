@@ -5,9 +5,8 @@ This module contains shared functionality that is used across multiple agents
 to ensure consistency and reduce code duplication.
 """
 
-import json
 import logging
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from models.models import AgentResult, AgentState
 
@@ -48,21 +47,6 @@ class AgentUtils:
                 if last_brace > 0:
                     return json_text[:last_brace + 1]
 
-        return None
-
-    @staticmethod
-    def parse_json_response(text: str) -> Optional[Dict[str, Any]]:
-        """
-        Parse JSON from response text with fallback handling.
-
-        Returns the parsed JSON object or None if parsing fails.
-        """
-        try:
-            json_text = AgentUtils.extract_json_text(text)
-            if json_text:
-                return json.loads(json_text)
-        except ValueError as e:
-            logger.warning(f"Failed to parse JSON from response: {e}")
         return None
 
     @staticmethod

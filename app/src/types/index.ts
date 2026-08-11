@@ -67,23 +67,9 @@ export interface QueryRequest {
   }
   
   // Component Props Types
-  export interface QueryInterfaceProps {
-    className?: string;
-  }
-  
-  export interface ProgressIndicatorProps {
-    currentStep: string;
-    progress: number;
-    steps: WorkflowStep[];
-  }
-  
   export interface WorkflowStep {
     name: string;
     description: string;
-  }
-  
-  export interface LiveStateDisplayProps {
-    state: WorkflowState;
   }
   
   export interface ResultsDisplayProps {
@@ -91,12 +77,6 @@ export interface QueryRequest {
     sqlQuery?: string;
     explanation?: string;
     metadataResponse?: string;
-  }
-  
-  // Form Types
-  export interface QueryFormData {
-    query: string;
-    mode: "normal" | "interactive";
   }
   
   // Interactive HITL Types

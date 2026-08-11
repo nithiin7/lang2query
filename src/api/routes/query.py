@@ -50,8 +50,6 @@ def _get_workflow() -> Text2QueryWorkflow:
             if not model_name:
                 raise RuntimeError("MODEL is required for PROVIDER=ollama. Set MODEL in .env or environment")
             mw = ModelWrapper(model=model_name, base_url=base_url)
-        elif provider == "nvidia":
-            mw = ModelWrapper(model=model_name, base_url=base_url)
         else:
             mw = ModelWrapper(use_quantization=True)
 

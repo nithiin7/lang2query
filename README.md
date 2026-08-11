@@ -68,7 +68,7 @@ make dev
 
 - **FastAPI**: Async Python API with automatic OpenAPI documentation
 - **WebSocket Support**: Real-time communication for live updates
-- **Multiple LLM Providers**: Support for OpenAI, Ollama, NVIDIA, and local models
+- **Multiple LLM Providers**: Support for OpenAI, Ollama, and local models
 - **Modular Architecture**: Extensible agent system for custom workflows
 
 ## Installation
@@ -204,13 +204,6 @@ OLLAMA_MODEL = "llama3.1"  # or any Ollama model
 
 1. Install [Ollama](https://ollama.ai)
 2. Pull a model: `ollama pull llama3.1`
-
-#### NVIDIA API
-
-```python
-PROVIDER = "nvidia"
-NVIDIA_MODEL = "meta/llama3-70b"  # or other NVIDIA model
-```
 
 #### Local Models
 

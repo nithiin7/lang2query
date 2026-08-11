@@ -17,7 +17,7 @@ COLLECTION_NAME = "sql_generation_kb"
 EMBEDDING_MODEL_PATH = None
 
 # LLM provider configuration
-# Options: "ollama", "local", "nvidia", "chatgpt"
+# Options: "ollama", "local", "chatgpt"
 PROVIDER = "ollama"
 BASE_URL = "http://localhost:11434"
 MODEL = "gpt-oss:20b" # "qwen2.5:14b"
