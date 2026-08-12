@@ -2,6 +2,7 @@
 
 import { ResultsDisplayProps } from "@/types";
 
+/** Summary card for a completed query result: status, execution time, and query type. */
 export function ResultsDisplay({ results }: ResultsDisplayProps) {
   if (results.type === "error") {
     return (

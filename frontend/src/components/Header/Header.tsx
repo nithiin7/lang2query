@@ -3,6 +3,7 @@
 import { useSystemStatus } from "@/hooks/useSystemStatus";
 import { Database } from "lucide-react";
 
+/** App-wide top bar: branding plus a live backend-health indicator. */
 export function Header() {
   const { isOnline, isChecking } = useSystemStatus(60000);
   const dotColor = isChecking

@@ -4,18 +4,25 @@ import { Header } from "@/components/Header";
 import { getWebSocketService } from "@/lib/websocket";
 import { useEffect, useState } from "react";
 
+/**
+ * The "/chat" page: owns chat session/history state and wires the Sidebar
+ * and ChatContainer together. History is persisted to localStorage.
+ */
 export default function ChatPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mode, setMode] = useState<"agentic" | "ask">("ask");
   const [chatHistory, setChatHistory] = useState<{ id: string; title: string }[]>([]);
+  // Lazily generate a unique session id for the initial chat.
   const [chatSessionId, setChatSessionId] = useState<string>(() =>
     Date.now().toString(),
   );
 
+  /** Add a new chat to the sidebar history, keyed by its first user query. */
   const handleNewUserQuery = (id: string, title: string) => {
     setChatHistory((prev) => [{ id, title }, ...prev]);
   };
 
+  /** Cancel any in-flight workflow and start a fresh chat session. */
   const handleNewChat = () => {
     try {
       getWebSocketService()?.cancel?.();
@@ -23,6 +30,7 @@ export default function ChatPage() {
     setChatSessionId(Date.now().toString());
   };
 
+  /** Remove a chat from history and its persisted messages; start a new session if it was active. */
   const handleDeleteChat = (id: string) => {
     setChatHistory((prev) => prev.filter((c) => c.id !== id));
     try {
@@ -34,6 +42,7 @@ export default function ChatPage() {
     }
   };
 
+  /** Switch the active chat session to id. */
   const handleSelectChat = (id: string) => {
     if (!id || id === chatSessionId) return;
     setChatSessionId(id);
@@ -62,6 +71,7 @@ export default function ChatPage() {
 
   // Cancel on page unload/navigation
   useEffect(() => {
+    /** Cancel any in-flight workflow when the page is unloaded or navigated away from. */
     const handler = () => {
       try {
         getWebSocketService()?.cancel?.();

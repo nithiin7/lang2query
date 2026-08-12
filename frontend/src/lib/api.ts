@@ -53,7 +53,12 @@ api.interceptors.response.use(
 
 // API functions
 export const queryApi = {
-  // Process a query and get streaming workflow states via WebSocket
+  /**
+   * Process a query and stream workflow states back via WebSocket.
+   *
+   * @param request The query text and interaction mode.
+   * @param callbacks Handlers invoked for each WebSocket lifecycle event.
+   */
   async processQueryStreaming(
     request: { query: string; mode: "normal" | "interactive" },
     callbacks: WebSocketCallbacks,
@@ -68,7 +73,11 @@ export const queryApi = {
     }
   },
 
-  // Process a query and get streaming workflow states (HTTP fallback)
+  /**
+   * Process a query synchronously over plain HTTP (fallback when WebSocket streaming isn't used).
+   *
+   * @param request The query text and interaction mode.
+   */
   async processQuery(
     request: { query: string; mode: "normal" | "interactive" },
     _onProgress?: (state: WorkflowState) => void,
@@ -87,7 +96,7 @@ export const queryApi = {
     }
   },
 
-  // Health check endpoint
+  /** Check backend liveness via the /health endpoint. */
   async healthCheck(): Promise<{ status: string }> {
     try {
       const response = await api.get("/health");
@@ -98,7 +107,7 @@ export const queryApi = {
     }
   },
 
-  // Get workflow steps configuration
+  /** Fetch the static workflow step names/descriptions used by the status UI. */
   async getWorkflowSteps(): Promise<WorkflowStep[]> {
     try {
       const response = await api.get("/workflow/steps");
@@ -122,6 +131,7 @@ export class ApiError extends Error {
   }
 }
 
+/** Normalize an axios (or other) error into an ApiError with a user-facing message. */
 export const handleApiError = (error: unknown): ApiError => {
   if (axios.isAxiosError(error)) {
     if (error.response) {

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description: "Transform natural language into SQL queries with AI-powered precision",
 };
 
+/** Root HTML layout shared by every route: sets up global styles and the toast host. */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">

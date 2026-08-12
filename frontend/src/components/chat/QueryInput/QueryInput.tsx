@@ -10,6 +10,10 @@ interface QueryInputProps {
   placeholder?: string;
 }
 
+/**
+ * Auto-growing textarea for submitting a query, with Enter-to-send and a
+ * submit/stop button that swaps based on isLoading.
+ */
 export function QueryInput({
   onSubmit,
   onStop,
@@ -19,6 +23,7 @@ export function QueryInput({
   const [query, setQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  /** Submit the trimmed query (if any and not already loading) and clear the input. */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() && !isLoading) {
@@ -28,6 +33,7 @@ export function QueryInput({
     }
   };
 
+  /** Submit on Enter, allow Shift+Enter to insert a newline. */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -35,6 +41,7 @@ export function QueryInput({
     }
   };
 
+  /** Resize the textarea to fit its content, up to a 120px cap. */
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";

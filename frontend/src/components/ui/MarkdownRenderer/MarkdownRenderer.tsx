@@ -10,6 +10,7 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
+/** Renders markdown content with GFM support and Tailwind-styled elements (tables, headings, code, etc). */
 export function MarkdownRenderer({ content, className = "" }: MarkdownRendererProps) {
   return (
     <div className={`markdown-content ${className}`}>

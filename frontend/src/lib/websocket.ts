@@ -14,6 +14,11 @@ export class WebSocketService {
   private reconnectDelay = 1000; // Start with 1 second
   private isManualClose = false;
 
+  /**
+   * Build the WebSocket URL from an HTTP(S) API base URL.
+   *
+   * @param baseUrl Override for NEXT_PUBLIC_API_URL / the localhost default.
+   */
   constructor(baseUrl?: string) {
     // Convert HTTP URL to WebSocket URL
     const apiUrl =
@@ -21,6 +26,12 @@ export class WebSocketService {
     this.url = apiUrl.replace(/^http/, "ws") + "/ws/query";
   }
 
+  /**
+   * Open the WebSocket connection and wire up the given lifecycle callbacks.
+   *
+   * @param callbacks Handlers invoked for connect/message/disconnect/error events.
+   * @returns Resolves once the connection is open; rejects on connection failure.
+   */
   connect(callbacks: WebSocketCallbacks): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
@@ -71,6 +82,7 @@ export class WebSocketService {
     });
   }
 
+  /** Dispatch a parsed server message to the matching registered callback, by message.type. */
   private handleMessage(message: WebSocketMessage): void {
     switch (message.type) {
       case "connected":
@@ -117,6 +129,7 @@ export class WebSocketService {
     }
   }
 
+  /** Reconnect with exponential backoff after an unclean close, up to maxReconnectAttempts. */
   private attemptReconnect(): void {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
@@ -130,6 +143,7 @@ export class WebSocketService {
     }, delay);
   }
 
+  /** Send the initial query to start a workflow run, if the socket is open. */
   sendQuery(query: string, mode: string = "normal"): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const message = { type: "start", query, mode } as const;
@@ -140,10 +154,12 @@ export class WebSocketService {
     }
   }
 
+  /** Alias for sendQuery, defaulting to interactive mode. */
   sendStart(query: string, mode: "normal" | "interactive" = "interactive"): void {
     this.sendQuery(query, mode);
   }
 
+  /** Send the user's human-in-the-loop approval/modification response, if the socket is open. */
   sendHitlFeedback(payload: HitlFeedback): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const message = { type: "hitl_feedback", payload } as const;
@@ -154,6 +170,7 @@ export class WebSocketService {
     }
   }
 
+  /** Notify the server to cancel the running workflow, then close the connection. */
   cancel(): void {
     // Optionally send a cancel control message to the server, then close
     try {
@@ -165,6 +182,7 @@ export class WebSocketService {
     this.disconnect();
   }
 
+  /** Close the WebSocket cleanly, deferring the close if it's still connecting. */
   disconnect(): void {
     if (!this.ws) return;
 
@@ -194,10 +212,12 @@ export class WebSocketService {
     }
   }
 
+  /** Whether the underlying WebSocket is currently open. */
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
   }
 
+  /** The underlying WebSocket's readyState (CLOSED if no socket exists). */
   getConnectionState(): number {
     return this.ws?.readyState ?? WebSocket.CLOSED;
   }
@@ -205,6 +225,7 @@ export class WebSocketService {
 
 let wsService: WebSocketService | null = null;
 
+/** Get the process-wide WebSocketService singleton, creating it on first use. */
 export const getWebSocketService = (baseUrl?: string): WebSocketService => {
   if (!wsService) {
     wsService = new WebSocketService(baseUrl);
@@ -212,6 +233,7 @@ export const getWebSocketService = (baseUrl?: string): WebSocketService => {
   return wsService;
 };
 
+/** Disconnect and drop the WebSocketService singleton so the next call recreates it. */
 export const resetWebSocketService = (): void => {
   if (wsService) {
     wsService.disconnect();

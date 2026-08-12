@@ -13,6 +13,12 @@ export interface SystemStatus {
 
 const DEFAULT_POLL_MS = 60000;
 
+/**
+ * Polls the backend health endpoint on an interval and reports live status.
+ *
+ * @param pollMs Poll interval in ms; overridden by NEXT_PUBLIC_STATUS_POLL_MS
+ *   if set, and falling back to DEFAULT_POLL_MS if neither is provided.
+ */
 export function useSystemStatus(pollMs?: number): SystemStatus {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(false);
@@ -22,6 +28,7 @@ export function useSystemStatus(pollMs?: number): SystemStatus {
 
   const timerRef = useRef<number | null>(null);
 
+  /** Resolve the effective poll interval: env override, then the pollMs prop, then the default. */
   const intervalMs = useMemo(() => {
     const fromEnv = Number(process.env.NEXT_PUBLIC_STATUS_POLL_MS);
     if (!Number.isNaN(fromEnv) && fromEnv > 0) return fromEnv;
@@ -29,6 +36,7 @@ export function useSystemStatus(pollMs?: number): SystemStatus {
     return DEFAULT_POLL_MS;
   }, [pollMs]);
 
+  /** Call the health endpoint once, updating online/latency/error state. */
   const checkHealth = useCallback(async () => {
     setIsChecking(true);
     const start = performance.now();

@@ -9,11 +9,16 @@ interface SelectionReviewCardProps {
   onCancel?: () => void;
 }
 
+/**
+ * Human-in-the-loop checkpoint card: lets the user toggle which
+ * databases/tables to keep, add notes, and approve or apply the selection.
+ */
 export function SelectionReviewCard({
   request,
   onSubmit,
   onCancel,
 }: SelectionReviewCardProps) {
+  // Lazily initialize with every suggested item pre-selected.
   const [selected, setSelected] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
     for (const it of request.items) init[it] = true;
@@ -21,15 +26,18 @@ export function SelectionReviewCard({
   });
   const [notes, setNotes] = useState("");
 
+  /** Currently-selected item names, derived from the selected map. */
   const approvedItems = useMemo(
     () => Object.keys(selected).filter((k) => selected[k]),
     [selected],
   );
 
+  /** Flip an item's selected/deselected state. */
   const toggle = (item: string) => {
     setSelected((prev) => ({ ...prev, [item]: !prev[item] }));
   };
 
+  /** Submit approval of all originally-suggested items, unchanged. */
   const handleApprove = () => {
     const payload: HitlFeedback = {
       checkpointId: request.id,
@@ -41,6 +49,7 @@ export function SelectionReviewCard({
     onSubmit(payload);
   };
 
+  /** Submit the user's edited selection (only currently-checked items) as a modify action. */
   const handleModify = () => {
     const payload: HitlFeedback = {
       checkpointId: request.id,

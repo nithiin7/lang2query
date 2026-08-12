@@ -19,6 +19,7 @@ interface StatusPanelProps {
   isProcessing: boolean;
 }
 
+/** Collapsible panel showing live workflow progress: current step and identified databases/tables/columns. */
 export function StatusPanel({
   isExpanded,
   onToggle,

@@ -12,6 +12,7 @@ interface SidebarProps {
   onSelectChat?: (id: string) => void;
 }
 
+/** Collapsible chat-history sidebar: new-chat button plus a selectable/deletable chat list. */
 export function Sidebar({
   isCollapsed,
   onToggle,

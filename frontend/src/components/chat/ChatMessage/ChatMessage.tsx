@@ -9,6 +9,7 @@ interface ChatMessageProps {
   timestamp?: Date;
 }
 
+/** A single chat bubble: renders user text plainly and assistant text as markdown. */
 export function ChatMessage({ content, isUser, timestamp }: ChatMessageProps) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>

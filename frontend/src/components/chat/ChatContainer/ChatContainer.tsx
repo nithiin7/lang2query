@@ -26,6 +26,11 @@ interface ChatEntry {
   result?: QueryResponse;
 }
 
+/**
+ * The main chat surface for one session: renders message history, drives the
+ * WebSocket-streamed workflow via queryApi, and hosts the HITL review card,
+ * status panel, and query input.
+ */
 export function ChatContainer({
   chatId,
   mode,
@@ -40,6 +45,7 @@ export function ChatContainer({
   const [isStatusExpanded, setIsStatusExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /** Scroll the message list to the bottom-anchor element. */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -90,6 +96,11 @@ export function ChatContainer({
     setCurrentStep("");
   }, [chatId]);
 
+  /**
+   * Submit a new user query: append it to the chat, persist it, and stream
+   * the workflow over WebSocket, wiring state updates, HITL requests, and
+   * the final result back into local component state.
+   */
   const handleQuerySubmit = async (query: string) => {
     const userMessage: ChatEntry = {
       id: Date.now().toString(),
@@ -216,6 +227,7 @@ export function ChatContainer({
     }
   };
 
+  /** Cancel the in-flight workflow over the WebSocket and reset UI state. */
   const handleStop = () => {
     try {
       const ws = getWebSocketService();
@@ -242,6 +254,7 @@ export function ChatContainer({
     }
   };
 
+  /** Send the user's human-in-the-loop approval/modification feedback over the WebSocket. */
   const handleHitlSubmit = (feedback: any) => {
     try {
       const ws = getWebSocketService();
